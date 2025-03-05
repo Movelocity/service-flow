@@ -1,3 +1,8 @@
+/**
+ * Workflow Editor
+ * Handles the workflow editor interface and functionality
+ */
+
 // Workflow editor state
 let currentWorkflow = {
   id: null,
@@ -10,62 +15,120 @@ let currentWorkflow = {
 };
 
 let nodeIdCounter = 1;
-const nodeEditModal = new bootstrap.Modal(document.getElementById('nodeEditModal'));
 let currentEditingNode = null;
 let isDragging = false;
 let dragOffset = { x: 0, y: 0 };
+let contextMenuPosition = { x: 0, y: 0 };
 
 // Initialize the editor
 document.addEventListener('DOMContentLoaded', () => {
-  loadWorkflowList();
+  // Get workflow ID from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const workflowId = urlParams.get('id');
+  const isNew = urlParams.get('new') === 'true';
+
+  if (workflowId) {
+    if (isNew) {
+      // Create a new workflow with the given ID
+      createNewWorkflow(workflowId);
+    } else {
+      // Load an existing workflow
+      loadWorkflow(workflowId);
+    }
+  } else {
+    // No workflow ID provided, redirect to the list page
+    window.location.href = 'index.html';
+  }
+
   setupEventListeners();
 });
 
-// Setup event listeners
+/**
+ * Sets up all event listeners for the editor
+ */
 function setupEventListeners() {
   // Workflow management buttons
-  document.getElementById('newWorkflowBtn').addEventListener('click', createNewWorkflow);
   document.getElementById('saveWorkflowBtn').addEventListener('click', saveWorkflow);
   document.getElementById('deleteWorkflowBtn').addEventListener('click', deleteWorkflow);
   document.getElementById('testWorkflowBtn').addEventListener('click', testWorkflow);
 
-  // Sidebar toggle
-  document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+  // Canvas mouse events
+  const canvas = document.getElementById('workflowCanvas');
+  canvas.addEventListener('mousedown', handleCanvasMouseDown);
+  canvas.addEventListener('mousemove', handleCanvasMouseMove);
+  canvas.addEventListener('mouseup', handleCanvasMouseUp);
+  canvas.addEventListener('contextmenu', handleContextMenu);
+  canvas.addEventListener('click', handleCanvasClick);
 
-  // Node type drag and drop
-  const nodeTypes = document.querySelectorAll('.node-item');
-  nodeTypes.forEach(node => {
-    node.addEventListener('dragstart', handleDragStart);
-    node.setAttribute('draggable', 'true');
+  // Context menu items
+  const contextMenuItems = document.querySelectorAll('.context-menu-item');
+  contextMenuItems.forEach(item => {
+    item.addEventListener('click', handleContextMenuItemClick);
   });
 
-  const canvas = document.getElementById('workflowCanvas');
-  canvas.addEventListener('dragover', handleDragOver);
-  canvas.addEventListener('drop', handleDrop);
-
-  // Node edit modal
+  // Node editor panel
+  document.getElementById('nodeEditorClose').addEventListener('click', closeNodeEditor);
   document.getElementById('saveNodeBtn').addEventListener('click', saveNodeEdit);
 
-  // Canvas mouse events for node dragging
-  canvas.addEventListener('mousedown', handleCanvasMouseDown);
-  document.addEventListener('mousemove', handleCanvasMouseMove);
-  document.addEventListener('mouseup', handleCanvasMouseUp);
+  // Close context menu when clicking outside
+  document.addEventListener('click', (event) => {
+    const contextMenu = document.getElementById('contextMenu');
+    if (!contextMenu.contains(event.target)) {
+      contextMenu.style.display = 'none';
+    }
+  });
 }
 
-// Sidebar toggle
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const mainContent = document.getElementById('mainContent');
-  const toggleButton = document.getElementById('sidebarToggle');
+/**
+ * Handles right-click context menu on the canvas
+ * @param {MouseEvent} event - The mouse event
+ */
+function handleContextMenu(event) {
+  event.preventDefault();
   
-  sidebar.classList.toggle('collapsed');
-  mainContent.classList.toggle('expanded');
-  toggleButton.innerHTML = sidebar.classList.contains('collapsed') ? 
-    '<i class="bi bi-chevron-right"></i>' : 
-    '<i class="bi bi-chevron-left"></i>';
+  const canvas = document.getElementById('workflowCanvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  
+  // Calculate position relative to the canvas
+  contextMenuPosition = {
+    x: event.clientX - canvasRect.left,
+    y: event.clientY - canvasRect.top
+  };
+  
+  // Show the context menu at the cursor position
+  const contextMenu = document.getElementById('contextMenu');
+  contextMenu.style.display = 'block';
+  contextMenu.style.left = `${event.clientX}px`;
+  contextMenu.style.top = `${event.clientY}px`;
 }
 
-// Node dragging
+/**
+ * Handles clicking on a context menu item
+ * @param {MouseEvent} event - The mouse event
+ */
+function handleContextMenuItemClick(event) {
+  const nodeType = event.currentTarget.dataset.type;
+  createNode(nodeType, contextMenuPosition.x, contextMenuPosition.y);
+  
+  // Hide the context menu
+  document.getElementById('contextMenu').style.display = 'none';
+}
+
+/**
+ * Handles clicking on the canvas
+ * @param {MouseEvent} event - The mouse event
+ */
+function handleCanvasClick(event) {
+  // If clicking on the canvas background (not a node), close the node editor
+  if (event.target.id === 'workflowCanvas') {
+    closeNodeEditor();
+  }
+}
+
+/**
+ * Handles mouse down events on the canvas for node dragging
+ * @param {MouseEvent} event - The mouse event
+ */
 function handleCanvasMouseDown(event) {
   const node = event.target.closest('.node');
   if (node) {
@@ -80,6 +143,10 @@ function handleCanvasMouseDown(event) {
   }
 }
 
+/**
+ * Handles mouse move events on the canvas for node dragging
+ * @param {MouseEvent} event - The mouse event
+ */
 function handleCanvasMouseMove(event) {
   if (!isDragging) return;
   
@@ -99,12 +166,20 @@ function handleCanvasMouseMove(event) {
     const workflowNode = currentWorkflow.nodes.find(n => n.id === nodeId);
     if (workflowNode) {
       workflowNode.position = { x: Math.max(0, x), y: Math.max(0, y) };
+      
+      // Get the SVG layer and update connections
+      const connectionsLayer = document.querySelector('#workflowCanvas > svg');
+      if (connectionsLayer) {
+        renderConnections(connectionsLayer);
+      }
     }
-    
-    renderConnections();
   }
 }
 
+/**
+ * Handles mouse up events on the canvas for node dragging
+ * @param {MouseEvent} event - The mouse event
+ */
 function handleCanvasMouseUp(event) {
   if (isDragging) {
     const node = event.target.closest('.node');
@@ -115,30 +190,12 @@ function handleCanvasMouseUp(event) {
   }
 }
 
-// Node type drag and drop
-function handleDragStart(event) {
-  event.dataTransfer.setData('nodeType', event.target.dataset.type);
-  event.dataTransfer.effectAllowed = 'copy';
-}
-
-function handleDragOver(event) {
-  event.preventDefault();
-  event.dataTransfer.dropEffect = 'copy';
-}
-
-function handleDrop(event) {
-  event.preventDefault();
-  const nodeType = event.dataTransfer.getData('nodeType');
-  const canvas = document.getElementById('workflowCanvas');
-  const canvasRect = canvas.getBoundingClientRect();
-  
-  const x = event.clientX - canvasRect.left;
-  const y = event.clientY - canvasRect.top;
-  
-  createNode(nodeType, x, y);
-}
-
-// Node creation and rendering
+/**
+ * Creates a new node in the workflow
+ * @param {string} type - The type of node to create
+ * @param {number} x - The x position of the node
+ * @param {number} y - The y position of the node
+ */
 function createNode(type, x, y) {
   const nodeId = `node_${nodeIdCounter++}`;
   const node = {
@@ -161,6 +218,9 @@ function createNode(type, x, y) {
   renderWorkflow();
 }
 
+/**
+ * Renders the entire workflow on the canvas
+ */
 function renderWorkflow() {
   const canvas = document.getElementById('workflowCanvas');
   canvas.innerHTML = '';
@@ -191,14 +251,22 @@ function renderWorkflow() {
     nodeElement.style.top = `${node.position.y}px`;
     nodeElement.style.cursor = 'grab';
     
-    nodeElement.addEventListener('click', () => openNodeEditor(node));
+    nodeElement.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openNodeEditor(node);
+    });
     canvas.appendChild(nodeElement);
   });
 
   renderConnections(connectionsLayer);
 }
 
+/**
+ * Renders the connections between nodes
+ * @param {SVGElement} svg - The SVG element to render connections in
+ */
 function renderConnections(svg) {
+  if (!svg) return;
   svg.innerHTML = '';
   
   currentWorkflow.nodes.forEach(sourceNode => {
@@ -213,27 +281,43 @@ function renderConnections(svg) {
   });
 }
 
+/**
+ * Draws a connection between two nodes
+ * @param {SVGElement} svg - The SVG element to draw in
+ * @param {Object} sourceNode - The source node
+ * @param {Object} targetNode - The target node
+ * @param {string} condition - The condition for the connection
+ */
 function drawConnection(svg, sourceNode, targetNode, condition) {
   const sourceElement = document.querySelector(`[data-node-id="${sourceNode.id}"]`);
-  const targetElement = document.querySelector(`[data-node-id="${targetId}"]`);
+  const targetElement = document.querySelector(`[data-node-id="${targetNode.id}"]`);
   
   if (!sourceElement || !targetElement) return;
   
-  const sourceRect = sourceElement.getBoundingClientRect();
-  const targetRect = targetElement.getBoundingClientRect();
-  const canvas = document.getElementById('workflowCanvas');
-  const canvasRect = canvas.getBoundingClientRect();
+  // Get the output and input connection points
+  const outputPoint = sourceElement.querySelector('.connection-point.output');
+  const inputPoint = targetElement.querySelector('.connection-point.input');
+  
+  if (!outputPoint || !inputPoint) return;
+  
+  // Calculate the absolute positions of the connection points
+  const sourceRect = outputPoint.getBoundingClientRect();
+  const targetRect = inputPoint.getBoundingClientRect();
+  const canvasRect = svg.getBoundingClientRect();
   
   const sourceX = sourceNode.position.x + sourceElement.offsetWidth;
-  const sourceY = sourceNode.position.y + sourceElement.offsetHeight / 2;
+  const sourceY = sourceNode.position.y + (sourceElement.offsetHeight / 2);
   const targetX = targetNode.position.x;
-  const targetY = targetNode.position.y + targetElement.offsetHeight / 2;
+  const targetY = targetNode.position.y + (targetElement.offsetHeight / 2);
+  
+  // Calculate control points for the curve
+  const dx = Math.abs(targetX - sourceX);
+  const controlPointOffset = Math.min(80, dx / 2);
+  const controlPoint1X = sourceX + controlPointOffset;
+  const controlPoint2X = targetX - controlPointOffset;
   
   // Create path
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  const controlPoint1X = sourceX + Math.min(100, (targetX - sourceX) / 2);
-  const controlPoint2X = targetX - Math.min(100, (targetX - sourceX) / 2);
-  
   const d = `M ${sourceX} ${sourceY} 
              C ${controlPoint1X} ${sourceY},
                ${controlPoint2X} ${targetY},
@@ -277,32 +361,13 @@ function drawConnection(svg, sourceNode, targetNode, condition) {
   svg.appendChild(arrow);
 }
 
-// Workflow list management
-async function loadWorkflowList() {
-  try {
-    const response = await fetch('/api/workflows');
-    const workflows = await response.json();
-
-    const workflowList = document.getElementById('workflowList');
-    workflowList.innerHTML = '';
-
-    workflows.forEach(workflowId => {
-      const workflowItem = document.createElement('div');
-      workflowItem.className = 'node-item';
-      workflowItem.textContent = workflowId;
-      workflowItem.addEventListener('click', () => loadWorkflow(workflowId));
-      workflowList.appendChild(workflowItem);
-    });
-  } catch (error) {
-    console.error('Error loading workflow list:', error);
-    alert('Failed to load workflow list');
-  }
-}
-
-// Workflow management
-function createNewWorkflow() {
+/**
+ * Creates a new workflow
+ * @param {string} workflowId - The ID for the new workflow
+ */
+function createNewWorkflow(workflowId) {
   currentWorkflow = {
-    id: 'workflow_' + Date.now(),
+    id: workflowId || 'workflow_' + Date.now(),
     name: '',
     description: '',
     nodes: [],
@@ -317,21 +382,46 @@ function createNewWorkflow() {
   nodeIdCounter = 1;
 }
 
+/**
+ * Loads a workflow from the server
+ * @param {string} workflowId - The ID of the workflow to load
+ */
 async function loadWorkflow(workflowId) {
   try {
     const response = await fetch(`/api/workflows/${workflowId}`);
+    if (!response.ok) {
+      throw new Error('Workflow not found');
+    }
+    
     currentWorkflow = await response.json();
 
     document.getElementById('workflowName').value = currentWorkflow.name;
     document.getElementById('workflowDescription').value = currentWorkflow.description;
 
+    // Find the highest node ID to set the counter
+    let maxId = 0;
+    currentWorkflow.nodes.forEach(node => {
+      const idMatch = node.id.match(/node_(\d+)/);
+      if (idMatch) {
+        const id = parseInt(idMatch[1]);
+        if (id > maxId) {
+          maxId = id;
+        }
+      }
+    });
+    nodeIdCounter = maxId + 1;
+
     renderWorkflow();
   } catch (error) {
     console.error('Error loading workflow:', error);
-    alert('Failed to load workflow');
+    alert('Failed to load workflow: ' + error.message);
+    window.location.href = 'index.html';
   }
 }
 
+/**
+ * Saves the current workflow to the server
+ */
 async function saveWorkflow() {
   currentWorkflow.name = document.getElementById('workflowName').value;
   currentWorkflow.description = document.getElementById('workflowDescription').value;
@@ -347,16 +437,18 @@ async function saveWorkflow() {
 
     if (response.ok) {
       alert('Workflow saved successfully');
-      loadWorkflowList();
     } else {
       throw new Error('Failed to save workflow');
     }
   } catch (error) {
     console.error('Error saving workflow:', error);
-    alert('Failed to save workflow');
+    alert('Failed to save workflow: ' + error.message);
   }
 }
 
+/**
+ * Deletes the current workflow
+ */
 async function deleteWorkflow() {
   if (!currentWorkflow.id) {
     alert('No workflow selected');
@@ -374,17 +466,19 @@ async function deleteWorkflow() {
 
     if (response.ok) {
       alert('Workflow deleted successfully');
-      createNewWorkflow();
-      loadWorkflowList();
+      window.location.href = 'index.html';
     } else {
       throw new Error('Failed to delete workflow');
     }
   } catch (error) {
     console.error('Error deleting workflow:', error);
-    alert('Failed to delete workflow');
+    alert('Failed to delete workflow: ' + error.message);
   }
 }
 
+/**
+ * Tests the current workflow
+ */
 async function testWorkflow() {
   if (!currentWorkflow.id) {
     alert('Please save the workflow first');
@@ -407,10 +501,15 @@ async function testWorkflow() {
     pollWorkflowStatus(currentWorkflow.id, executionId);
   } catch (error) {
     console.error('Error testing workflow:', error);
-    alert('Failed to test workflow');
+    alert('Failed to test workflow: ' + error.message);
   }
 }
 
+/**
+ * Polls the server for the status of a workflow execution
+ * @param {string} workflowId - The ID of the workflow
+ * @param {string} executionId - The ID of the execution
+ */
 async function pollWorkflowStatus(workflowId, executionId) {
   const pollInterval = setInterval(async () => {
     try {
@@ -428,8 +527,15 @@ async function pollWorkflowStatus(workflowId, executionId) {
   }, 1000);
 }
 
+/**
+ * Opens the node editor panel for a node
+ * @param {Object} node - The node to edit
+ */
 function openNodeEditor(node) {
   currentEditingNode = node;
+
+  const form = document.getElementById('nodeEditForm');
+  form.reset();
 
   document.getElementById('nodeNameInput').value = node.name;
   document.getElementById('nodeParametersInput').value = JSON.stringify(node.parameters, null, 2);
@@ -444,30 +550,60 @@ function openNodeEditor(node) {
     addConnectionInput(connectionsDiv, 'default', node.nextNodes['default'] || '');
   }
 
-  nodeEditModal.show();
+  // Update the editor title
+  document.getElementById('nodeEditorTitle').textContent = `Edit ${node.type} Node`;
+
+  // Show the editor panel
+  document.getElementById('nodeEditorPanel').classList.add('visible');
 }
 
+/**
+ * Closes the node editor panel
+ */
+function closeNodeEditor() {
+  document.getElementById('nodeEditorPanel').classList.remove('visible');
+  currentEditingNode = null;
+}
+
+/**
+ * Adds a connection input to the node editor
+ * @param {HTMLElement} container - The container to add the input to
+ * @param {string} label - The label for the input
+ * @param {string} value - The current value of the input
+ */
 function addConnectionInput(container, label, value) {
   const div = document.createElement('div');
   div.className = 'mb-2';
+  
+  const selectId = `connection_${label}`;
   div.innerHTML = `
-        <label class="form-label">Next node for "${label}"</label>
-        <select class="form-control" data-connection="${label}">
-            <option value="">Select node</option>
-            ${currentWorkflow.nodes
-      .filter(n => n.id !== currentEditingNode.id)
-      .map(n => `<option value="${n.id}" ${value === n.id ? 'selected' : ''}>${n.name}</option>`)
-      .join('')}
-        </select>
-    `;
+    <label class="form-label" for="${selectId}">Next node for "${label}"</label>
+    <select class="form-control" id="${selectId}" data-connection="${label}">
+      <option value="">Select node</option>
+      ${currentWorkflow.nodes
+        .filter(n => n.id !== currentEditingNode.id)
+        .map(n => `<option value="${n.id}" ${value === n.id ? 'selected' : ''}>${n.name}</option>`)
+        .join('')}
+    </select>
+  `;
   container.appendChild(div);
 }
 
+/**
+ * Saves the changes made in the node editor
+ */
 function saveNodeEdit() {
+  const form = document.getElementById('nodeEditForm');
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
   currentEditingNode.name = document.getElementById('nodeNameInput').value;
 
   try {
-    currentEditingNode.parameters = JSON.parse(document.getElementById('nodeParametersInput').value);
+    const paramsText = document.getElementById('nodeParametersInput').value;
+    currentEditingNode.parameters = paramsText ? JSON.parse(paramsText) : {};
   } catch (error) {
     alert('Invalid JSON in parameters');
     return;
@@ -482,9 +618,14 @@ function saveNodeEdit() {
   });
 
   renderWorkflow();
-  nodeEditModal.hide();
+  closeNodeEditor();
 }
 
+/**
+ * Gets the color for a connection based on the node type
+ * @param {string} nodeType - The type of node
+ * @returns {string} - The color for the connection
+ */
 function getConnectionColor(nodeType) {
   switch (nodeType) {
     case 'START': return '#28a745';

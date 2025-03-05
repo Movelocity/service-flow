@@ -6,78 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Workflow Editor</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
   <style>
     body {
       overflow: hidden;
       height: 100vh;
     }
 
-    .sidebar {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 100;
-      padding: 0;
-      width: 280px;
-      background: white;
-      transition: transform 0.3s ease-in-out;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    }
-
-    .sidebar.collapsed {
-      transform: translateX(-250px);
-    }
-
-    .sidebar-toggle {
-      position: absolute;
-      right: -30px;
-      top: 10px;
-      background: white;
-      border: 1px solid #dee2e6;
-      border-radius: 0 4px 4px 0;
-      padding: 5px 8px;
-      cursor: pointer;
-    }
-
-    .main-content {
-      margin-left: 280px;
-      height: 100vh;
-      transition: margin-left 0.3s ease-in-out;
-    }
-
-    .main-content.expanded {
-      margin-left: 30px;
-    }
-
-    .workflow-canvas {
-      height: calc(100vh - 120px);
-      background-color: #f8f9fa;
-      position: relative;
-      overflow: auto;
-    }
-
-    .toolbar {
+    .editor-header {
       padding: 10px;
       background: white;
       border-bottom: 1px solid #dee2e6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .node-list {
-      padding: 10px;
-    }
-
-    .node-item {
-      cursor: move;
-      padding: 8px;
-      margin: 4px 0;
-      border: 1px solid #e9ecef;
-      border-radius: 4px;
-      user-select: none;
-    }
-
-    .node-item:hover {
+    .workflow-canvas {
+      height: calc(100vh - 60px);
       background-color: #f8f9fa;
+      position: relative;
+      overflow: auto;
     }
 
     .node {
@@ -126,84 +75,138 @@
       right: -5px;
       transform: translateY(-50%);
     }
+
+    /* Context Menu Styles */
+    .context-menu {
+      position: absolute;
+      z-index: 1000;
+      background-color: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+    }
+
+    .context-menu-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .context-menu-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .context-menu-item i {
+      margin-right: 8px;
+    }
+
+    /* Node Editor Panel Styles */
+    .node-editor-panel {
+      position: fixed;
+      top: 60px;
+      right: 0;
+      width: 300px;
+      height: calc(100vh - 60px);
+      background-color: white;
+      border-left: 1px solid #dee2e6;
+      padding: 15px;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 900;
+    }
+
+    .node-editor-panel.visible {
+      transform: translateX(0);
+    }
+
+    .node-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .node-editor-close {
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .back-to-list {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 10px;
+      text-decoration: none;
+    }
+
+    .back-to-list i {
+      margin-right: 5px;
+    }
   </style>
 </head>
 
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <button class="sidebar-toggle" id="sidebarToggle">
-      <i class="bi bi-chevron-left"></i>
-    </button>
-    <div class="h-100 d-flex flex-column">
-      <div class="p-3 border-bottom">
-        <h5 class="mb-0">Workflows</h5>
-        <button class="btn btn-primary btn-sm mt-2 w-100" id="newWorkflowBtn">New Workflow</button>
-      </div>
-      <div class="flex-grow-1 overflow-auto">
-        <div id="workflowList" class="p-2"></div>
-      </div>
-      <div class="border-top">
-        <div class="p-3">
-          <h5 class="mb-2">Node Types</h5>
-          <div class="node-list">
-            <div class="node-item node-start" data-type="START">Start Node</div>
-            <div class="node-item node-function" data-type="FUNCTION">Function Node</div>
-            <div class="node-item node-condition" data-type="CONDITION">Condition Node</div>
-            <div class="node-item node-end" data-type="END">End Node</div>
-          </div>
-        </div>
-      </div>
+  <!-- Editor Header -->
+  <div class="editor-header">
+    <div class="d-flex align-items-center">
+      <a href="index.html" class="back-to-list">
+        <i class="bi bi-arrow-left"></i> Back to List
+      </a>
+      <input type="text" class="form-control form-control-sm d-inline-block w-auto me-2" id="workflowName" placeholder="Workflow Name">
+      <input type="text" class="form-control form-control-sm d-inline-block w-auto" id="workflowDescription" placeholder="Description">
+    </div>
+    <div>
+      <button class="btn btn-success btn-sm me-2" id="saveWorkflowBtn">Save</button>
+      <button class="btn btn-primary btn-sm me-2" id="testWorkflowBtn">Test</button>
+      <button class="btn btn-danger btn-sm" id="deleteWorkflowBtn">Delete</button>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-content" id="mainContent">
-    <div class="toolbar">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <input type="text" class="form-control form-control-sm d-inline-block w-auto me-2" id="workflowName" placeholder="Workflow Name">
-          <input type="text" class="form-control form-control-sm d-inline-block w-auto" id="workflowDescription" placeholder="Description">
-        </div>
-        <div>
-          <button class="btn btn-success btn-sm me-2" id="saveWorkflowBtn">Save</button>
-          <button class="btn btn-primary btn-sm me-2" id="testWorkflowBtn">Test</button>
-          <button class="btn btn-danger btn-sm" id="deleteWorkflowBtn">Delete</button>
-        </div>
-      </div>
+  <!-- Workflow Canvas -->
+  <div class="workflow-canvas" id="workflowCanvas"></div>
+
+  <!-- Context Menu -->
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item node-start" data-type="START">
+      <i class="bi bi-play-circle"></i> Start Node
     </div>
-    <div class="workflow-canvas" id="workflowCanvas"></div>
+    <div class="context-menu-item node-function" data-type="FUNCTION">
+      <i class="bi bi-code-square"></i> Function Node
+    </div>
+    <div class="context-menu-item node-condition" data-type="CONDITION">
+      <i class="bi bi-question-diamond"></i> Condition Node
+    </div>
+    <div class="context-menu-item node-end" data-type="END">
+      <i class="bi bi-stop-circle"></i> End Node
+    </div>
   </div>
 
-  <!-- Node Edit Modal -->
-  <div class="modal fade" id="nodeEditModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Node</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Node Name</label>
-            <input type="text" class="form-control" id="nodeNameInput">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Parameters</label>
-            <textarea class="form-control" id="nodeParametersInput" rows="4"
-              placeholder="Enter parameters in JSON format"></textarea>
-          </div>
-          <div class="mb-3" id="nodeConnectionsDiv">
-            <label class="form-label">Next Nodes</label>
-            <div id="nodeConnectionsInputs"></div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="saveNodeBtn">Save</button>
-        </div>
-      </div>
+  <!-- Node Editor Panel -->
+  <div class="node-editor-panel" id="nodeEditorPanel">
+    <div class="node-editor-header">
+      <h5 id="nodeEditorTitle">Edit Node</h5>
+      <span class="node-editor-close" id="nodeEditorClose"><i class="bi bi-x-lg"></i></span>
     </div>
+    <form id="nodeEditForm">
+      <div class="mb-3">
+        <label for="nodeNameInput" class="form-label">Node Name</label>
+        <input type="text" class="form-control" id="nodeNameInput" required>
+      </div>
+      <div class="mb-3">
+        <label for="nodeParametersInput" class="form-label">Parameters</label>
+        <textarea class="form-control" id="nodeParametersInput" rows="4"
+          placeholder="Enter parameters in JSON format"></textarea>
+      </div>
+      <div class="mb-3" id="nodeConnectionsDiv">
+        <label class="form-label">Next Nodes</label>
+        <div id="nodeConnectionsInputs"></div>
+      </div>
+      <button type="button" class="btn btn-primary w-100" id="saveNodeBtn">Save Changes</button>
+    </form>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
