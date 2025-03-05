@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workflow Editor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .node-list {
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .node-item {
+      cursor: pointer;
+      padding: 8px;
+      margin: 4px 0;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+    }
+
+    .node-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .workflow-canvas {
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      min-height: 500px;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+
+    .node {
+      border: 2px solid #6c757d;
+      border-radius: 6px;
+      padding: 10px;
+      margin: 10px;
+      background-color: white;
+      width: 200px;
+      position: relative;
+    }
+
+    .node-start {
+      border-color: #28a745;
+    }
+
+    .node-end {
+      border-color: #dc3545;
+    }
+
+    .node-condition {
+      border-color: #ffc107;
+    }
+
+    .node-function {
+      border-color: #17a2b8;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container-fluid mt-4">
+    <div class="row">
+      <!-- Left Sidebar -->
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Workflows</h5>
+          </div>
+          <div class="card-body">
+            <button class="btn btn-primary mb-3" id="newWorkflowBtn">New Workflow</button>
+            <div id="workflowList"></div>
+          </div>
+        </div>
+        <div class="card mt-3">
+          <div class="card-header">
+            <h5 class="mb-0">Node Types</h5>
+          </div>
+          <div class="card-body">
+            <div class="node-list" id="nodeTypes">
+              <div class="node-item node-start" data-type="START">Start Node</div>
+              <div class="node-item node-function" data-type="FUNCTION">Function Node</div>
+              <div class="node-item node-condition" data-type="CONDITION">Condition Node</div>
+              <div class="node-item node-end" data-type="END">End Node</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-md-9">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Workflow Editor</h5>
+            <div>
+              <button class="btn btn-success me-2" id="saveWorkflowBtn">Save</button>
+              <button class="btn btn-primary me-2" id="testWorkflowBtn">Test</button>
+              <button class="btn btn-danger" id="deleteWorkflowBtn">Delete</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <input type="text" class="form-control" id="workflowName" placeholder="Workflow Name">
+            </div>
+            <div class="mb-3">
+              <textarea class="form-control" id="workflowDescription" placeholder="Workflow Description"
+                rows="2"></textarea>
+            </div>
+            <div class="workflow-canvas" id="workflowCanvas"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Node Edit Modal -->
+  <div class="modal fade" id="nodeEditModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Node</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Node Name</label>
+            <input type="text" class="form-control" id="nodeNameInput">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Parameters</label>
+            <textarea class="form-control" id="nodeParametersInput" rows="4"
+              placeholder="Enter parameters in JSON format"></textarea>
+          </div>
+          <div class="mb-3" id="nodeConnectionsDiv">
+            <label class="form-label">Next Nodes</label>
+            <div id="nodeConnectionsInputs"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveNodeBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/workflow-editor.js"></script>
+</body>
+
+</html>

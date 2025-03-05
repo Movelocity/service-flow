@@ -1,3 +1,5 @@
 target/
 .vscode
 .idea
+saved_workflows/
+workflow_logs/

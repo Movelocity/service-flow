@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WorkflowLogger {
-    private static final String LOG_DIR = "workflow-logs";
+    private static final String LOG_DIR = "workflow_logs";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public WorkflowLogger() {

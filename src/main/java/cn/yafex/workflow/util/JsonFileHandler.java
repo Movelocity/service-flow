@@ -2,29 +2,46 @@ package cn.yafex.workflow.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import cn.yafex.workflow.model.Workflow;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Utility class for handling JSON workflow definition files
  */
 @Component
 public class JsonFileHandler {
-    private static final String WORKFLOW_DIR = "workflow-definitions";
+    private static final Logger logger = LoggerFactory.getLogger(JsonFileHandler.class);
+    
+    @Value("${workflow.definitions.path:workflow-definitions}")
+    private String workflowPath;
+    
     private final ObjectMapper objectMapper;
+    private Path workflowDir;
 
     public JsonFileHandler() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        this.objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        this.objectMapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
+    }
 
+    @PostConstruct
+    public void init() throws IOException {
+        // Convert relative path to absolute path if necessary
+        workflowDir = Paths.get(workflowPath).toAbsolutePath();
+        
         // Create workflow directory if it doesn't exist
-        File workflowDir = new File(WORKFLOW_DIR);
-        if (!workflowDir.exists()) {
-            workflowDir.mkdirs();
-        }
+        Files.createDirectories(workflowDir);
+        logger.info("Using workflow directory: {}", workflowDir);
     }
 
     /**
@@ -33,8 +50,18 @@ public class JsonFileHandler {
      * @throws IOException If file operations fail
      */
     public void saveWorkflow(Workflow workflow) throws IOException {
-        String fileName = String.format("%s/%s.json", WORKFLOW_DIR, workflow.getId());
-        objectMapper.writeValue(new File(fileName), workflow);
+        if (workflow == null || workflow.getId() == null) {
+            throw new IllegalArgumentException("Workflow or workflow ID cannot be null");
+        }
+
+        Path filePath = workflowDir.resolve(workflow.getId() + ".json");
+        try {
+            objectMapper.writeValue(filePath.toFile(), workflow);
+            logger.info("Saved workflow {} to {}", workflow.getId(), filePath);
+        } catch (IOException e) {
+            logger.error("Failed to save workflow {}: {}", workflow.getId(), e.getMessage());
+            throw e;
+        }
     }
 
     /**
@@ -44,8 +71,21 @@ public class JsonFileHandler {
      * @throws IOException If file operations fail
      */
     public Workflow loadWorkflow(String workflowId) throws IOException {
-        String fileName = String.format("%s/%s.json", WORKFLOW_DIR, workflowId);
-        return objectMapper.readValue(new File(fileName), Workflow.class);
+        if (workflowId == null) {
+            throw new IllegalArgumentException("Workflow ID cannot be null");
+        }
+
+        Path filePath = workflowDir.resolve(workflowId + ".json");
+        if (!Files.exists(filePath)) {
+            throw new IOException("Workflow file does not exist: " + filePath);
+        }
+
+        try {
+            return objectMapper.readValue(filePath.toFile(), Workflow.class);
+        } catch (IOException e) {
+            logger.error("Failed to load workflow {}: {}", workflowId, e.getMessage());
+            throw e;
+        }
     }
 
     /**
@@ -53,8 +93,16 @@ public class JsonFileHandler {
      * @return Array of workflow IDs
      */
     public String[] listWorkflows() {
-        File workflowDir = new File(WORKFLOW_DIR);
-        return workflowDir.list((dir, name) -> name.endsWith(".json"));
+        try {
+            return Files.list(workflowDir)
+                    .filter(path -> path.toString().endsWith(".json"))
+                    .map(path -> path.getFileName().toString())
+                    .map(name -> name.substring(0, name.length() - 5)) // Remove .json extension
+                    .toArray(String[]::new);
+        } catch (IOException e) {
+            logger.error("Failed to list workflows: {}", e.getMessage());
+            return new String[0];
+        }
     }
 
     /**
@@ -63,8 +111,16 @@ public class JsonFileHandler {
      * @return true if deletion was successful
      */
     public boolean deleteWorkflow(String workflowId) {
-        String fileName = String.format("%s/%s.json", WORKFLOW_DIR, workflowId);
-        File file = new File(fileName);
-        return file.delete();
+        if (workflowId == null) {
+            return false;
+        }
+
+        try {
+            Path filePath = workflowDir.resolve(workflowId + ".json");
+            return Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            logger.error("Failed to delete workflow {}: {}", workflowId, e.getMessage());
+            return false;
+        }
     }
 } 

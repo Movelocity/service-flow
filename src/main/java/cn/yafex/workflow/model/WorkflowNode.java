@@ -1,5 +1,7 @@
 package cn.yafex.workflow.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -12,10 +14,12 @@ public class WorkflowNode {
     private NodeType type;
     private Map<String, Object> parameters;
     private Map<String, String> nextNodes; // key: condition/default, value: next node id
+    private Position position;
 
     public WorkflowNode() {
         this.parameters = new HashMap<>();
         this.nextNodes = new HashMap<>();
+        this.position = new Position(0, 0);
     }
 
     // Getters and setters
@@ -39,6 +43,15 @@ public class WorkflowNode {
         return type;
     }
 
+    @JsonCreator
+    public void setType(String type) {
+        try {
+            this.type = NodeType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            this.type = NodeType.FUNCTION; // Default to FUNCTION if unknown
+        }
+    }
+
     public void setType(NodeType type) {
         this.type = type;
     }
@@ -57,5 +70,47 @@ public class WorkflowNode {
 
     public void setNextNodes(Map<String, String> nextNodes) {
         this.nextNodes = nextNodes;
+    }
+
+    public Position getPosition() {
+        return position;
+    }
+
+    public void setPosition(Position position) {
+        this.position = position;
+    }
+
+    /**
+     * Inner class representing a node's position on the canvas
+     */
+    public static class Position {
+        private double x;
+        private double y;
+
+        public Position() {
+            this(0, 0);
+        }
+
+        @JsonCreator
+        public Position(@JsonProperty("x") double x, @JsonProperty("y") double y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public double getX() {
+            return x;
+        }
+
+        public void setX(double x) {
+            this.x = x;
+        }
+
+        public double getY() {
+            return y;
+        }
+
+        public void setY(double y) {
+            this.y = y;
+        }
     }
 } 

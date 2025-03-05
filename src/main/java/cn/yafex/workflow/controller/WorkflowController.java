@@ -48,6 +48,10 @@ public class WorkflowController {
     @PostMapping
     public ResponseEntity<String> saveWorkflow(@RequestBody Workflow workflow) {
         try {
+            // Generate ID for new workflow if not provided
+            if (workflow.getId() == null || workflow.getId().isEmpty()) {
+                workflow.setId("workflow_" + System.currentTimeMillis());
+            }
             jsonFileHandler.saveWorkflow(workflow);
             return ResponseEntity.ok(workflow.getId());
         } catch (IOException e) {
