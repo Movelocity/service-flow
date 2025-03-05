@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workflow Editor</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <title>工作流编辑</title>
+  <link href="lib/bootstrap.min.css" rel="stylesheet">
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css"> -->
   <style>
     body {
       overflow: hidden;
@@ -33,7 +33,6 @@
       border: 2px solid #6c757d;
       border-radius: 6px;
       padding: 10px;
-      margin: 10px;
       background-color: white;
       width: 200px;
       position: absolute;
@@ -154,15 +153,15 @@
   <div class="editor-header">
     <div class="d-flex align-items-center">
       <a href="index.html" class="back-to-list">
-        <i class="bi bi-arrow-left"></i> Back to List
+        <i class="bi bi-arrow-left"></i>  回到主页
       </a>
       <input type="text" class="form-control form-control-sm d-inline-block w-auto me-2" id="workflowName" placeholder="Workflow Name">
       <input type="text" class="form-control form-control-sm d-inline-block w-auto" id="workflowDescription" placeholder="Description">
     </div>
     <div>
-      <button class="btn btn-success btn-sm me-2" id="saveWorkflowBtn">Save</button>
-      <button class="btn btn-primary btn-sm me-2" id="testWorkflowBtn">Test</button>
-      <button class="btn btn-danger btn-sm" id="deleteWorkflowBtn">Delete</button>
+      <button class="btn btn-success btn-sm me-2" id="saveWorkflowBtn">保存</button>
+      <button class="btn btn-primary btn-sm me-2" id="testWorkflowBtn">运行</button>
+      <button class="btn btn-danger btn-sm" id="deleteWorkflowBtn">删除</button>
     </div>
   </div>
 
@@ -209,7 +208,7 @@
     </form>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="lib/bootstrap.bundle.min.js"></script>
   <script src="js/workflow-editor.js"></script>
 </body>
 

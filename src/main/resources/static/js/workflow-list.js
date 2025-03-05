@@ -86,23 +86,17 @@ function createWorkflowCard(workflow) {
   card.innerHTML = `
     <div class="card-body">
       <h5 class="card-title">${workflow.name || 'Unnamed Workflow'}</h5>
-      <h6 class="card-subtitle mb-2 text-muted">ID: ${workflow.id}</h6>
       <p class="card-text">${workflow.description || 'No description'}</p>
+      <span class="card-subtitle mb-2 text-muted">ID: ${workflow.id}</span>
       <div class="d-flex justify-content-between">
         <small class="text-muted">Status: ${workflow.isActive ? 'Active' : 'Inactive'}</small>
         <small class="text-muted">Nodes: ${workflow.nodes.length}</small>
       </div>
-      <div class="mt-2">
-        <span class="badge bg-success me-1">Start: ${nodeCounts.START}</span>
-        <span class="badge bg-info me-1">Function: ${nodeCounts.FUNCTION}</span>
-        <span class="badge bg-warning me-1">Condition: ${nodeCounts.CONDITION}</span>
-        <span class="badge bg-danger">End: ${nodeCounts.END}</span>
-      </div>
     </div>
-    <div class="card-footer bg-transparent d-flex justify-content-between">
-      <button class="btn btn-sm btn-outline-primary edit-btn">Edit</button>
-      <button class="btn btn-sm btn-outline-success test-btn">Test</button>
-      <button class="btn btn-sm btn-outline-danger delete-btn">Delete</button>
+    <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+      <button class="btn btn-sm btn-outline-primary edit-btn">编辑</button>
+      <button class="btn btn-sm btn-outline-success test-btn">测试</button>
+      <button class="btn btn-sm btn-outline-danger delete-btn">删除</button>
     </div>
   `;
   
