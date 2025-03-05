@@ -476,13 +476,13 @@ async function saveWorkflow() {
   try {
     // Use the API service to save the workflow
     await saveWorkflowToServer(currentWorkflow);
-    alert('Workflow saved successfully');
+    alert('工作流已保存');
     
     // Update history after saving
     forceHistoryUpdate(currentWorkflow);
   } catch (error) {
     console.error('Error saving workflow:', error);
-    alert('Failed to save workflow: ' + error.message);
+    alert('保存工作流失败: ' + error.message);
   }
 }
 
@@ -491,11 +491,11 @@ async function saveWorkflow() {
  */
 async function deleteWorkflow() {
   if (!currentWorkflow.id) {
-    alert('No workflow selected');
+    alert('未选择工作流');
     return;
   }
 
-  if (!confirm('Are you sure you want to delete this workflow?')) {
+  if (!confirm('确定要删除此工作流吗？')) {
     return;
   }
 
@@ -506,7 +506,7 @@ async function deleteWorkflow() {
     window.location.href = 'index.html';
   } catch (error) {
     console.error('Error deleting workflow:', error);
-    alert('Failed to delete workflow: ' + error.message);
+    alert('删除工作流失败: ' + error.message);
   }
 }
 
@@ -515,20 +515,20 @@ async function deleteWorkflow() {
  */
 async function testWorkflow() {
   if (!currentWorkflow.id) {
-    alert('Please save the workflow first');
+    alert('请先保存工作流');
     return;
   }
 
   try {
     // Use the API service to start the workflow execution
     const executionId = await startWorkflowExecution(currentWorkflow.id, {});
-    alert(`Workflow execution started. Execution ID: ${executionId}`);
+    alert(`工作流执行已启动。执行ID: ${executionId}`);
 
     // Poll for status
     pollWorkflowStatus(currentWorkflow.id, executionId);
   } catch (error) {
     console.error('Error testing workflow:', error);
-    alert('Failed to test workflow: ' + error.message);
+    alert('测试工作流失败: ' + error.message);
   }
 }
 
@@ -545,7 +545,7 @@ async function pollWorkflowStatus(workflowId, executionId) {
 
       if (status === 'COMPLETED' || status === 'FAILED') {
         clearInterval(pollInterval);
-        alert(`Workflow execution ${status.toLowerCase()}`);
+        alert(`工作流执行${status.toLowerCase()}`);
       }
     } catch (error) {
       console.error('Error polling workflow status:', error);
@@ -612,7 +612,7 @@ function addConnectionInput(container, label, value) {
   
   const selectId = `connection_${label}`;
   div.innerHTML = `
-    <label class="form-label" for="${selectId}">Next node for "${label}"</label>
+    <label class="form-label" for="${selectId}">${label}</label>
     <select class="form-control" id="${selectId}" data-connection="${label}">
       <option value="">Select node</option>
       ${currentWorkflow.nodes

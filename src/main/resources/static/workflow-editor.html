@@ -187,24 +187,24 @@
   <!-- Node Editor Panel -->
   <div class="node-editor-panel" id="nodeEditorPanel">
     <div class="node-editor-header">
-      <h5 id="nodeEditorTitle">Edit Node</h5>
+      <h5 id="nodeEditorTitle">编辑节点</h5>
       <span class="node-editor-close" id="nodeEditorClose"><i class="bi bi-x-lg"></i></span>
     </div>
     <form id="nodeEditForm">
       <div class="mb-3">
-        <label for="nodeNameInput" class="form-label">Node Name</label>
+        <label for="nodeNameInput" class="form-label">节点名称</label>
         <input type="text" class="form-control" id="nodeNameInput" required>
       </div>
       <div class="mb-3">
-        <label for="nodeParametersInput" class="form-label">Parameters</label>
+        <label for="nodeParametersInput" class="form-label">参数</label>
         <textarea class="form-control" id="nodeParametersInput" rows="4"
-          placeholder="Enter parameters in JSON format"></textarea>
+          placeholder="输入参数，格式为JSON"></textarea>
       </div>
       <div class="mb-3" id="nodeConnectionsDiv">
-        <label class="form-label">Next Nodes</label>
+        <label class="form-label">下一个节点</label>
         <div id="nodeConnectionsInputs"></div>
       </div>
-      <button type="button" class="btn btn-primary w-100" id="saveNodeBtn">Save Changes</button>
+      <button type="button" class="btn btn-primary w-100" id="saveNodeBtn">保存</button>
     </form>
   </div>
 

@@ -6,9 +6,12 @@ import cn.yafex.workflow.util.JsonFileHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/workflows")
@@ -53,7 +56,10 @@ public class WorkflowController {
                 workflow.setId("workflow_" + System.currentTimeMillis());
             }
             jsonFileHandler.saveWorkflow(workflow);
-            return ResponseEntity.ok(workflow.getId());
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, String> response = new HashMap<>();
+            response.put("id", workflow.getId());
+            return ResponseEntity.ok(mapper.writeValueAsString(response));
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Failed to save workflow: " + e.getMessage());
         }
