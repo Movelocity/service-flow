@@ -12,6 +12,8 @@ let currentWorkflow = {
 let nodeIdCounter = 1;
 const nodeEditModal = new bootstrap.Modal(document.getElementById('nodeEditModal'));
 let currentEditingNode = null;
+let isDragging = false;
+let dragOffset = { x: 0, y: 0 };
 
 // Initialize the editor
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,6 +29,9 @@ function setupEventListeners() {
   document.getElementById('deleteWorkflowBtn').addEventListener('click', deleteWorkflow);
   document.getElementById('testWorkflowBtn').addEventListener('click', testWorkflow);
 
+  // Sidebar toggle
+  document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
   // Node type drag and drop
   const nodeTypes = document.querySelectorAll('.node-item');
   nodeTypes.forEach(node => {
@@ -40,6 +45,236 @@ function setupEventListeners() {
 
   // Node edit modal
   document.getElementById('saveNodeBtn').addEventListener('click', saveNodeEdit);
+
+  // Canvas mouse events for node dragging
+  canvas.addEventListener('mousedown', handleCanvasMouseDown);
+  document.addEventListener('mousemove', handleCanvasMouseMove);
+  document.addEventListener('mouseup', handleCanvasMouseUp);
+}
+
+// Sidebar toggle
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  const toggleButton = document.getElementById('sidebarToggle');
+  
+  sidebar.classList.toggle('collapsed');
+  mainContent.classList.toggle('expanded');
+  toggleButton.innerHTML = sidebar.classList.contains('collapsed') ? 
+    '<i class="bi bi-chevron-right"></i>' : 
+    '<i class="bi bi-chevron-left"></i>';
+}
+
+// Node dragging
+function handleCanvasMouseDown(event) {
+  const node = event.target.closest('.node');
+  if (node) {
+    isDragging = true;
+    const nodeRect = node.getBoundingClientRect();
+    dragOffset = {
+      x: event.clientX - nodeRect.left,
+      y: event.clientY - nodeRect.top
+    };
+    node.style.cursor = 'grabbing';
+    event.preventDefault();
+  }
+}
+
+function handleCanvasMouseMove(event) {
+  if (!isDragging) return;
+  
+  const node = event.target.closest('.node');
+  if (node) {
+    const canvas = document.getElementById('workflowCanvas');
+    const canvasRect = canvas.getBoundingClientRect();
+    
+    const x = event.clientX - canvasRect.left - dragOffset.x;
+    const y = event.clientY - canvasRect.top - dragOffset.y;
+    
+    node.style.left = `${Math.max(0, x)}px`;
+    node.style.top = `${Math.max(0, y)}px`;
+    
+    // Update node position in workflow data
+    const nodeId = node.dataset.nodeId;
+    const workflowNode = currentWorkflow.nodes.find(n => n.id === nodeId);
+    if (workflowNode) {
+      workflowNode.position = { x: Math.max(0, x), y: Math.max(0, y) };
+    }
+    
+    renderConnections();
+  }
+}
+
+function handleCanvasMouseUp(event) {
+  if (isDragging) {
+    const node = event.target.closest('.node');
+    if (node) {
+      node.style.cursor = 'grab';
+    }
+    isDragging = false;
+  }
+}
+
+// Node type drag and drop
+function handleDragStart(event) {
+  event.dataTransfer.setData('nodeType', event.target.dataset.type);
+  event.dataTransfer.effectAllowed = 'copy';
+}
+
+function handleDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'copy';
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  const nodeType = event.dataTransfer.getData('nodeType');
+  const canvas = document.getElementById('workflowCanvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  
+  const x = event.clientX - canvasRect.left;
+  const y = event.clientY - canvasRect.top;
+  
+  createNode(nodeType, x, y);
+}
+
+// Node creation and rendering
+function createNode(type, x, y) {
+  const nodeId = `node_${nodeIdCounter++}`;
+  const node = {
+    id: nodeId,
+    name: `${type} Node`,
+    type: type,
+    parameters: {},
+    nextNodes: {},
+    position: {
+      x: Math.max(0, x),
+      y: Math.max(0, y)
+    }
+  };
+
+  currentWorkflow.nodes.push(node);
+  if (type === 'START') {
+    currentWorkflow.startNodeId = nodeId;
+  }
+
+  renderWorkflow();
+}
+
+function renderWorkflow() {
+  const canvas = document.getElementById('workflowCanvas');
+  canvas.innerHTML = '';
+
+  // Create SVG layer for connections
+  const connectionsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  connectionsLayer.style.position = 'absolute';
+  connectionsLayer.style.top = '0';
+  connectionsLayer.style.left = '0';
+  connectionsLayer.style.width = '100%';
+  connectionsLayer.style.height = '100%';
+  connectionsLayer.style.pointerEvents = 'none';
+  canvas.appendChild(connectionsLayer);
+
+  // Render nodes
+  currentWorkflow.nodes.forEach(node => {
+    const nodeElement = document.createElement('div');
+    nodeElement.className = `node node-${node.type.toLowerCase()}`;
+    nodeElement.dataset.nodeId = node.id;
+    nodeElement.innerHTML = `
+      <div class="node-header">${node.name}</div>
+      <div class="node-type">${node.type}</div>
+      <div class="connection-point input"></div>
+      <div class="connection-point output"></div>
+    `;
+    
+    nodeElement.style.left = `${node.position.x}px`;
+    nodeElement.style.top = `${node.position.y}px`;
+    nodeElement.style.cursor = 'grab';
+    
+    nodeElement.addEventListener('click', () => openNodeEditor(node));
+    canvas.appendChild(nodeElement);
+  });
+
+  renderConnections(connectionsLayer);
+}
+
+function renderConnections(svg) {
+  svg.innerHTML = '';
+  
+  currentWorkflow.nodes.forEach(sourceNode => {
+    if (sourceNode.nextNodes) {
+      Object.entries(sourceNode.nextNodes).forEach(([condition, targetId]) => {
+        const targetNode = currentWorkflow.nodes.find(n => n.id === targetId);
+        if (targetNode) {
+          drawConnection(svg, sourceNode, targetNode, condition);
+        }
+      });
+    }
+  });
+}
+
+function drawConnection(svg, sourceNode, targetNode, condition) {
+  const sourceElement = document.querySelector(`[data-node-id="${sourceNode.id}"]`);
+  const targetElement = document.querySelector(`[data-node-id="${targetId}"]`);
+  
+  if (!sourceElement || !targetElement) return;
+  
+  const sourceRect = sourceElement.getBoundingClientRect();
+  const targetRect = targetElement.getBoundingClientRect();
+  const canvas = document.getElementById('workflowCanvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  
+  const sourceX = sourceNode.position.x + sourceElement.offsetWidth;
+  const sourceY = sourceNode.position.y + sourceElement.offsetHeight / 2;
+  const targetX = targetNode.position.x;
+  const targetY = targetNode.position.y + targetElement.offsetHeight / 2;
+  
+  // Create path
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const controlPoint1X = sourceX + Math.min(100, (targetX - sourceX) / 2);
+  const controlPoint2X = targetX - Math.min(100, (targetX - sourceX) / 2);
+  
+  const d = `M ${sourceX} ${sourceY} 
+             C ${controlPoint1X} ${sourceY},
+               ${controlPoint2X} ${targetY},
+               ${targetX} ${targetY}`;
+  
+  path.setAttribute('d', d);
+  path.setAttribute('stroke', getConnectionColor(sourceNode.type));
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('fill', 'none');
+  
+  // Add arrow
+  const arrowSize = 10;
+  const angle = Math.atan2(targetY - sourceY, targetX - sourceX);
+  const arrowX = targetX - arrowSize * Math.cos(angle);
+  const arrowY = targetY - arrowSize * Math.sin(angle);
+  
+  const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  arrow.setAttribute('d', `
+    M ${arrowX} ${arrowY}
+    L ${targetX} ${targetY}
+    L ${arrowX - arrowSize * Math.cos(angle - Math.PI/6)} ${arrowY - arrowSize * Math.sin(angle - Math.PI/6)}
+  `);
+  arrow.setAttribute('fill', getConnectionColor(sourceNode.type));
+  
+  // Add condition label if needed
+  if (condition && condition !== 'default') {
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    const midX = (sourceX + targetX) / 2;
+    const midY = (sourceY + targetY) / 2 - 10;
+    
+    text.setAttribute('x', midX.toString());
+    text.setAttribute('y', midY.toString());
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('fill', '#666');
+    text.textContent = condition;
+    
+    svg.appendChild(text);
+  }
+  
+  svg.appendChild(path);
+  svg.appendChild(arrow);
 }
 
 // Workflow list management
@@ -193,155 +428,6 @@ async function pollWorkflowStatus(workflowId, executionId) {
   }, 1000);
 }
 
-// Node management
-function handleDragStart(event) {
-  event.dataTransfer.setData('nodeType', event.target.dataset.type);
-}
-
-function handleDragOver(event) {
-  event.preventDefault();
-}
-
-function handleDrop(event) {
-  event.preventDefault();
-  const nodeType = event.dataTransfer.getData('nodeType');
-  const rect = event.target.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-
-  createNode(nodeType, x, y);
-}
-
-function createNode(type, x, y) {
-  const nodeId = `node_${nodeIdCounter++}`;
-  const node = {
-    id: nodeId,
-    name: `${type} Node`,
-    type: type,
-    parameters: {},
-    nextNodes: {},
-    position: {
-      x: Math.max(0, x),
-      y: Math.max(0, y)
-    }
-  };
-
-  currentWorkflow.nodes.push(node);
-  if (type === 'START') {
-    currentWorkflow.startNodeId = nodeId;
-  }
-
-  renderWorkflow();
-}
-
-function renderWorkflow() {
-  const canvas = document.getElementById('workflowCanvas');
-  canvas.innerHTML = '';
-
-  // First render connections
-  const connections = document.createElement('svg');
-  connections.style.position = 'absolute';
-  connections.style.top = '0';
-  connections.style.left = '0';
-  connections.style.width = '100%';
-  connections.style.height = '100%';
-  connections.style.pointerEvents = 'none';
-  canvas.appendChild(connections);
-
-  // Then render nodes
-  currentWorkflow.nodes.forEach(node => {
-    // Create node element
-    const nodeElement = document.createElement('div');
-    nodeElement.className = `node node-${node.type.toLowerCase()}`;
-    nodeElement.innerHTML = `
-            <div class="node-header">${node.name}</div>
-            <div class="node-type">${node.type}</div>
-        `;
-    nodeElement.style.position = 'absolute';
-    nodeElement.style.left = `${node.position.x}px`;
-    nodeElement.style.top = `${node.position.y}px`;
-
-    // Make node draggable
-    nodeElement.setAttribute('draggable', 'true');
-    nodeElement.addEventListener('dragstart', (e) => handleNodeDragStart(e, node));
-    nodeElement.addEventListener('click', () => openNodeEditor(node));
-
-    canvas.appendChild(nodeElement);
-
-    // Draw connections
-    if (node.nextNodes) {
-      Object.entries(node.nextNodes).forEach(([condition, targetId]) => {
-        const targetNode = currentWorkflow.nodes.find(n => n.id === targetId);
-        if (targetNode) {
-          drawConnection(connections, node, targetNode, condition);
-        }
-      });
-    }
-  });
-}
-
-function handleNodeDragStart(event, node) {
-  event.stopPropagation();
-  event.dataTransfer.setData('nodeId', node.id);
-}
-
-function drawConnection(svg, sourceNode, targetNode, condition) {
-  const sourceX = sourceNode.position.x + 100; // Center of node
-  const sourceY = sourceNode.position.y + 25;
-  const targetX = targetNode.position.x + 100;
-  const targetY = targetNode.position.y + 25;
-
-  // Create path
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  const d = `M ${sourceX} ${sourceY} C ${sourceX + 50} ${sourceY}, ${targetX - 50} ${targetY}, ${targetX} ${targetY}`;
-
-  path.setAttribute('d', d);
-  path.setAttribute('stroke', getConnectionColor(sourceNode.type));
-  path.setAttribute('stroke-width', '2');
-  path.setAttribute('fill', 'none');
-
-  // Add arrow
-  const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  const angle = Math.atan2(targetY - sourceY, targetX - sourceX);
-  const arrowSize = 10;
-
-  const arrowX = targetX - arrowSize * Math.cos(angle);
-  const arrowY = targetY - arrowSize * Math.sin(angle);
-
-  arrow.setAttribute('d', `M ${arrowX} ${arrowY} L ${targetX} ${targetY} L ${arrowX - arrowSize * Math.cos(angle - Math.PI / 6)
-    } ${arrowY - arrowSize * Math.sin(angle - Math.PI / 6)
-    }`);
-  arrow.setAttribute('fill', getConnectionColor(sourceNode.type));
-
-  // Add condition label if needed
-  if (condition && condition !== 'default') {
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    const midX = (sourceX + targetX) / 2;
-    const midY = (sourceY + targetY) / 2 - 10;
-
-    text.setAttribute('x', midX.toString());
-    text.setAttribute('y', midY.toString());
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('fill', '#666');
-    text.textContent = condition;
-
-    svg.appendChild(text);
-  }
-
-  svg.appendChild(path);
-  svg.appendChild(arrow);
-}
-
-function getConnectionColor(nodeType) {
-  switch (nodeType) {
-    case 'START': return '#28a745';
-    case 'CONDITION': return '#ffc107';
-    case 'FUNCTION': return '#17a2b8';
-    case 'END': return '#dc3545';
-    default: return '#6c757d';
-  }
-}
-
 function openNodeEditor(node) {
   currentEditingNode = node;
 
@@ -397,4 +483,14 @@ function saveNodeEdit() {
 
   renderWorkflow();
   nodeEditModal.hide();
+}
+
+function getConnectionColor(nodeType) {
+  switch (nodeType) {
+    case 'START': return '#28a745';
+    case 'CONDITION': return '#ffc107';
+    case 'FUNCTION': return '#17a2b8';
+    case 'END': return '#dc3545';
+    default: return '#6c757d';
+  }
 } 
