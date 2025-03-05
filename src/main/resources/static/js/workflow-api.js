@@ -1,99 +1,109 @@
 /**
  * Workflow API Service
- * Handles all API interactions for the workflow editor
+ * Handles API interactions with the server for workflow operations
  */
 
-// API endpoints
-const API_ENDPOINTS = {
-  WORKFLOWS: '/api/workflows',
-  WORKFLOW: (id) => `/api/workflows/${id}`,
-  START_WORKFLOW: (id) => `/api/workflows/${id}/start`,
-  WORKFLOW_STATUS: (id, executionId) => `/api/workflows/${id}/status/${executionId}`
+const WorkflowAPI = {
+  // Base API URL
+  baseUrl: '/api/workflows',
+  
+  // Fetch a workflow from the server
+  async fetchWorkflow(workflowId) {
+    try {
+      const response = await fetch(`${this.baseUrl}/${workflowId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch workflow: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching workflow:', error);
+      throw error;
+    }
+  },
+  
+  // Save a workflow to the server
+  async saveWorkflow(workflow) {
+    try {
+      const method = workflow.id ? 'PUT' : 'POST';
+      const url = workflow.id ? `${this.baseUrl}/${workflow.id}` : this.baseUrl;
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(workflow)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save workflow: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving workflow:', error);
+      throw error;
+    }
+  },
+  
+  // Delete a workflow from the server
+  async deleteWorkflow(workflowId) {
+    try {
+      const response = await fetch(`${this.baseUrl}/${workflowId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete workflow: ${response.statusText}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting workflow:', error);
+      throw error;
+    }
+  },
+  
+  // Start a workflow execution
+  async startWorkflowExecution(workflowId, input) {
+    try {
+      const response = await fetch(`${this.baseUrl}/${workflowId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(input)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to start workflow execution: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      return result.executionId;
+    } catch (error) {
+      console.error('Error starting workflow execution:', error);
+      throw error;
+    }
+  },
+  
+  // Get workflow execution status
+  async getWorkflowExecutionStatus(workflowId, executionId) {
+    try {
+      const response = await fetch(`${this.baseUrl}/${workflowId}/executions/${executionId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get execution status: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      return result.status;
+    } catch (error) {
+      console.error('Error getting workflow execution status:', error);
+      throw error;
+    }
+  }
 };
 
-/**
- * Loads a workflow from the server
- * @param {string} workflowId - The ID of the workflow to load
- * @returns {Promise<Object>} - The workflow object
- */
-async function fetchWorkflow(workflowId) {
-  const response = await fetch(API_ENDPOINTS.WORKFLOW(workflowId));
-  if (!response.ok) {
-    throw new Error('Workflow not found');
-  }
-  return await response.json();
-}
-
-/**
- * Saves a workflow to the server
- * @param {Object} workflow - The workflow to save
- * @returns {Promise<Object>} - The response from the server
- */
-async function saveWorkflowToServer(workflow) {
-  const response = await fetch(API_ENDPOINTS.WORKFLOWS, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(workflow)
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to save workflow');
-  }
-  
-  return await response.json();
-}
-
-/**
- * Deletes a workflow from the server
- * @param {string} workflowId - The ID of the workflow to delete
- * @returns {Promise<void>}
- */
-async function deleteWorkflowFromServer(workflowId) {
-  const response = await fetch(API_ENDPOINTS.WORKFLOW(workflowId), {
-    method: 'DELETE'
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to delete workflow');
-  }
-}
-
-/**
- * Starts a workflow execution
- * @param {string} workflowId - The ID of the workflow to start
- * @param {Object} input - The input data for the workflow
- * @returns {Promise<string>} - The execution ID
- */
-async function startWorkflowExecution(workflowId, input = {}) {
-  const response = await fetch(API_ENDPOINTS.START_WORKFLOW(workflowId), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(input)
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to start workflow execution');
-  }
-  
-  return await response.text();
-}
-
-/**
- * Gets the status of a workflow execution
- * @param {string} workflowId - The ID of the workflow
- * @param {string} executionId - The ID of the execution
- * @returns {Promise<string>} - The status of the execution
- */
-async function getWorkflowExecutionStatus(workflowId, executionId) {
-  const response = await fetch(API_ENDPOINTS.WORKFLOW_STATUS(workflowId, executionId));
-  
-  if (!response.ok) {
-    throw new Error('Failed to get workflow execution status');
-  }
-  
-  return await response.text();
-} 
+// Export the WorkflowAPI object
+window.WorkflowAPI = WorkflowAPI; 
