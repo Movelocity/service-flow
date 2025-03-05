@@ -6,7 +6,6 @@ import cn.yafex.workflow.util.JsonFileHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,48 +23,56 @@ public class WorkflowController {
         this.jsonFileHandler = jsonFileHandler;
     }
 
-    @PostMapping("/{workflowId}/start")
-    public ResponseEntity<String> startWorkflow(
-            @PathVariable String workflowId,
-            @RequestBody(required = false) Map<String, Object> variables) {
-        String executionId = workflowManager.startWorkflow(workflowId, variables);
-        return ResponseEntity.ok(executionId);
-    }
-
-    @GetMapping("/{workflowId}/status/{executionId}")
-    public ResponseEntity<String> getWorkflowStatus(
-            @PathVariable String workflowId,
-            @PathVariable String executionId) {
-        return ResponseEntity.ok(workflowManager.getWorkflowStatus(executionId).toString());
-    }
-
-    @PostMapping("/{workflowId}/stop/{executionId}")
-    public ResponseEntity<Boolean> stopWorkflow(
-            @PathVariable String workflowId,
-            @PathVariable String executionId) {
-        boolean stopped = workflowManager.stopWorkflow(executionId);
-        return ResponseEntity.ok(stopped);
-    }
-
+    /**
+     * Create a new workflow
+     * @param workflow The workflow to create
+     * @return The created workflow with ID
+     */
     @PostMapping
-    public ResponseEntity<String> saveWorkflow(@RequestBody Workflow workflow) {
+    public ResponseEntity<?> createWorkflow(@RequestBody Workflow workflow) {
         try {
-            // Generate ID for new workflow if not provided
+            // Generate ID for new workflow
             if (workflow.getId() == null || workflow.getId().isEmpty()) {
                 workflow.setId("workflow_" + System.currentTimeMillis());
             }
             jsonFileHandler.saveWorkflow(workflow);
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, String> response = new HashMap<>();
-            response.put("id", workflow.getId());
-            return ResponseEntity.ok(mapper.writeValueAsString(response));
+            return ResponseEntity.ok(workflow);
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body("Failed to save workflow: " + e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to save workflow: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(error);
         }
     }
 
+    /**
+     * Update an existing workflow
+     * @param workflowId The ID of the workflow to update
+     * @param workflow The updated workflow data
+     * @return The updated workflow
+     */
+    @PutMapping("/{workflowId}")
+    public ResponseEntity<?> updateWorkflow(
+            @PathVariable String workflowId,
+            @RequestBody Workflow workflow) {
+        try {
+            // Ensure the ID in the path matches the workflow
+            workflow.setId(workflowId);
+            jsonFileHandler.saveWorkflow(workflow);
+            return ResponseEntity.ok(workflow);
+        } catch (IOException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to update workflow: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(error);
+        }
+    }
+
+    /**
+     * Get a workflow by ID
+     * @param workflowId The ID of the workflow to retrieve
+     * @return The workflow if found
+     */
     @GetMapping("/{workflowId}")
-    public ResponseEntity<Workflow> getWorkflow(@PathVariable String workflowId) {
+    public ResponseEntity<?> getWorkflow(@PathVariable String workflowId) {
         try {
             Workflow workflow = jsonFileHandler.loadWorkflow(workflowId);
             return ResponseEntity.ok(workflow);
@@ -74,14 +81,68 @@ public class WorkflowController {
         }
     }
 
+    /**
+     * List all workflows
+     * @return Array of workflow IDs
+     */
     @GetMapping
-    public ResponseEntity<String[]> listWorkflows() {
+    public ResponseEntity<?> listWorkflows() {
         return ResponseEntity.ok(jsonFileHandler.listWorkflows());
     }
 
+    /**
+     * Delete a workflow
+     * @param workflowId The ID of the workflow to delete
+     * @return Success status
+     */
     @DeleteMapping("/{workflowId}")
-    public ResponseEntity<Boolean> deleteWorkflow(@PathVariable String workflowId) {
+    public ResponseEntity<?> deleteWorkflow(@PathVariable String workflowId) {
         boolean deleted = jsonFileHandler.deleteWorkflow(workflowId);
-        return ResponseEntity.ok(deleted);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("success", deleted);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Start a workflow execution
+     * @param workflowId The ID of the workflow to execute
+     * @param input The input variables for execution
+     * @return The execution ID
+     */
+    @PostMapping("/{workflowId}/execute")
+    public ResponseEntity<?> executeWorkflow(
+            @PathVariable String workflowId,
+            @RequestBody(required = false) Map<String, Object> input) {
+        try {
+            String executionId = workflowManager.startWorkflow(workflowId, input);
+            Map<String, String> response = new HashMap<>();
+            response.put("executionId", executionId);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to start workflow execution: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(error);
+        }
+    }
+
+    /**
+     * Get workflow execution status
+     * @param workflowId The ID of the workflow
+     * @param executionId The ID of the execution
+     * @return The execution status
+     */
+    @GetMapping("/{workflowId}/executions/{executionId}")
+    public ResponseEntity<?> getExecutionStatus(
+            @PathVariable String workflowId,
+            @PathVariable String executionId) {
+        try {
+            Map<String, String> response = new HashMap<>();
+            response.put("status", workflowManager.getWorkflowStatus(executionId).toString());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to get execution status: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(error);
+        }
     }
 } 
