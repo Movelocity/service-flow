@@ -49,7 +49,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
-          <mainClass>cn.yafex.ServiceFlowsApplication</mainClass>
+          <mainClass>cn.yafex.Main</mainClass>
         </configuration>
       </plugin>
       <plugin>
