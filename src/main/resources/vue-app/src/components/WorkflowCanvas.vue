@@ -19,7 +19,8 @@
     <div
       class="canvas-content"
       :style="{
-        transform: `translate(${canvasState.position.x}px, ${canvasState.position.y}px) scale(${canvasState.scale})`
+        transform: `translate(${canvasState.position.x}px, ${canvasState.position.y}px) scale(${canvasState.scale})`,
+        transformOrigin: '0 0'
       }"
     >
       <!-- 连接线 -->
@@ -54,7 +55,8 @@
           top: '0',
           width: '100%',
           height: '100%',
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          overflow: 'visible'
         }"
       >
         <path
@@ -284,22 +286,21 @@ function startConnection(nodeId: string, isOutput: boolean) {
   const sourceNode = getNode(nodeId);
   if (!sourceNode) return;
 
-  const scale = canvasState.value.scale;
   const sourcePos = {
-    x: sourceNode.position.x * scale,
-    y: sourceNode.position.y * scale
+    x: sourceNode.position.x,
+    y: sourceNode.position.y
   };
 
   tempConnection.value = {
     isCreating: true,
     sourceNodeId: nodeId,
     sourcePosition: {
-      x: sourcePos.x + 200 * scale, // nodeWidth * scale
-      y: sourcePos.y + 40 * scale   // (nodeHeight / 2) * scale
+      x: sourcePos.x + 200, // nodeWidth
+      y: sourcePos.y + 40   // nodeHeight / 2
     },
     currentPosition: {
-      x: sourcePos.x + 200 * scale,
-      y: sourcePos.y + 40 * scale
+      x: sourcePos.x + 200,
+      y: sourcePos.y + 40
     }
   };
 
@@ -317,8 +318,8 @@ function startConnection(nodeId: string, isOutput: boolean) {
     );
 
     tempConnection.value.currentPosition = {
-      x: pos.x * scale,
-      y: pos.y * scale
+      x: pos.x,
+      y: pos.y
     };
   }
 

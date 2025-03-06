@@ -2,6 +2,9 @@ import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import type { Node, Connection, Workflow, Position, EditorState } from '../types/workflow';
 import { NodeType } from '../types/workflow';
+import { WorkflowApi } from '../services/workflowApi';
+
+const workflowApi = new WorkflowApi();
 
 interface WorkflowState {
   currentWorkflow: Workflow | null;
@@ -12,6 +15,7 @@ interface WorkflowState {
     past: Workflow[];
     future: Workflow[];
   };
+  isDirty: boolean;
 }
 
 export const useWorkflowStore = defineStore('workflow', {
@@ -30,7 +34,8 @@ export const useWorkflowStore = defineStore('workflow', {
     history: {
       past: [],
       future: []
-    }
+    },
+    isDirty: false
   }),
 
   getters: {
@@ -110,6 +115,7 @@ export const useWorkflowStore = defineStore('workflow', {
       };
       this.history.past = [];
       this.history.future = [];
+      this.isDirty = false;
       this.saveToHistory();
     },
 
@@ -226,6 +232,7 @@ export const useWorkflowStore = defineStore('workflow', {
       
       this.history.past.push(JSON.parse(JSON.stringify(this.currentWorkflow)));
       this.history.future = [];
+      this.isDirty = true;
       
       // 限制历史记录数量
       if (this.history.past.length > 20) {
@@ -242,6 +249,7 @@ export const useWorkflowStore = defineStore('workflow', {
       }
       
       this.currentWorkflow = this.history.past.pop() || null;
+      this.isDirty = this.history.past.length > 0;
     },
 
     redo() {
@@ -253,6 +261,7 @@ export const useWorkflowStore = defineStore('workflow', {
       }
       
       this.currentWorkflow = this.history.future.pop() || null;
+      this.isDirty = true;
     },
 
     // 编辑器状态操作
@@ -263,6 +272,42 @@ export const useWorkflowStore = defineStore('workflow', {
 
     updateCanvasState(updates: Partial<EditorState['canvasState']>) {
       Object.assign(this.editorState.canvasState, updates);
+    },
+
+    async saveWorkflow() {
+      if (!this.currentWorkflow) return null;
+      
+      try {
+        // Create a copy of the workflow for saving
+        const workflowToSave = { ...this.currentWorkflow };
+        
+        // Convert connections back to nextNodes format for nodes that need it
+        workflowToSave.nodes = workflowToSave.nodes.map(node => {
+          const nodeOutputs = this.nodeOutputConnections(node.id);
+          if (nodeOutputs.length > 0) {
+            const nextNodes: Record<string, string> = {};
+            nodeOutputs.forEach(conn => {
+              nextNodes[conn.condition || 'default'] = conn.targetNodeId;
+            });
+            return {
+              ...node,
+              nextNodes
+            };
+          }
+          return node;
+        });
+
+        // Save the workflow
+        const savedWorkflow = await workflowApi.saveWorkflow(workflowToSave);
+        
+        // Reload the workflow to ensure consistency
+        this.loadWorkflow(savedWorkflow);
+        this.isDirty = false;
+        return savedWorkflow;
+      } catch (error) {
+        console.error('Failed to save workflow:', error);
+        throw error;
+      }
     }
   }
 }); 

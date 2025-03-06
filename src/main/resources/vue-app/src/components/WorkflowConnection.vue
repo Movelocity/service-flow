@@ -104,10 +104,9 @@ const startPoint = computed<Position>(() => {
     false // isInput
   );
   
-  // 考虑画布缩放和位置
   return {
-    x: point.x * props.scale,
-    y: point.y * props.scale
+    x: point.x,
+    y: point.y
   };
 });
 
@@ -119,15 +118,23 @@ const endPoint = computed<Position>(() => {
     true  // isInput
   );
   
-  // 考虑画布缩放和位置
   return {
-    x: point.x * props.scale,
-    y: point.y * props.scale
+    x: point.x,
+    y: point.y
   };
 });
 
 const pathData = computed(() => {
-  return generateBezierPath(startPoint.value, endPoint.value);
+  return generateBezierPath(
+    {
+      x: startPoint.value.x,
+      y: startPoint.value.y
+    },
+    {
+      x: endPoint.value.x,
+      y: endPoint.value.y
+    }
+  );
 });
 
 const labelPosition = computed(() => {

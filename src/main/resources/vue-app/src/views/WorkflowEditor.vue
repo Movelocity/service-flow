@@ -87,14 +87,11 @@ const store = useWorkflowStore();
 // 工作流信息
 const workflowName = ref('');
 const workflowDescription = ref('');
-const isDirty = ref(false);
 const isLoading = ref(true);
 const executionStatus = ref<string | null>(null);
 
-// 编辑器状态
-const isEditorPanelOpen = computed(() => store.editorState.isEditorPanelOpen);
-
 // 计算属性
+const isDirty = computed(() => store.isDirty);
 const canUndo = computed(() => store.history.past.length > 0);
 const canRedo = computed(() => store.history.future.length > 0);
 const canTest = computed(() => {
@@ -108,6 +105,9 @@ const canTest = computed(() => {
   return hasStart && hasEnd && workflow.nodes.length >= 2;
 });
 
+// 编辑器状态
+const isEditorPanelOpen = computed(() => store.editorState.isEditorPanelOpen);
+
 // 监听工作流数据变化
 function onWorkflowChange() {
   const workflow = store.currentWorkflow;
@@ -118,12 +118,11 @@ function onWorkflowChange() {
 }
 
 // 监听工作流变化
-watch(() => store.currentWorkflow, (newWorkflow) => {
+watch(() => store.currentWorkflow, (newWorkflow, oldWorkflow) => {
   if (newWorkflow) {
-    // 当工作流发生变化时，设置isDirty为true
-    // 但在初始加载和保存后的重新加载时不设置
-    if (store.history.past.length > 0) {
-      isDirty.value = true;
+    // 只有在非初始加载时才设置isDirty
+    if (oldWorkflow && store.history.past.length > 0) {
+      store.saveToHistory();
     }
   }
 }, { deep: true });
@@ -134,17 +133,13 @@ function updateWorkflowInfo() {
   
   store.currentWorkflow.name = workflowName.value;
   store.currentWorkflow.description = workflowDescription.value;
-  isDirty.value = true;
+  store.saveToHistory();
 }
 
 // 保存工作流
 async function saveWorkflow() {
-  if (!store.currentWorkflow) return;
-  
   try {
-    const savedWorkflow = await workflowApi.saveWorkflow(store.currentWorkflow);
-    store.loadWorkflow(savedWorkflow);
-    isDirty.value = false;
+    await store.saveWorkflow();
   } catch (error) {
     console.error('Failed to save workflow:', error);
     alert('保存工作流失败');
@@ -180,12 +175,10 @@ async function testWorkflow() {
 // 撤销/重做
 function undo() {
   store.undo();
-  isDirty.value = true;
 }
 
 function redo() {
   store.redo();
-  isDirty.value = true;
 }
 
 // 关闭编辑器面板
@@ -195,24 +188,43 @@ function closeEditor() {
 
 // 返回上一页
 function navigateBack() {
-  if (isDirty.value) {
-    if (confirm('有未保存的更改，确定要离开吗？')) {
-      router.back();
-    }
-  } else {
-    router.back();
-  }
+  router.back();
 }
 
 // 离开页面前确认
 onBeforeUnmount(() => {
-  if (isDirty.value) {
-    const result = confirm('有未保存的更改，确定要离开吗？');
-    if (!result) {
-      // 阻止离开
-      throw new Error('Navigation cancelled');
+  // 不需要在这里处理，因为 Vue Router 的导航守卫会处理
+});
+
+// 添加全局 beforeunload 事件处理
+onMounted(() => {
+  const workflowId = route.params.id as string;
+  
+  // 添加页面刷新或关闭时的提示
+  window.addEventListener('beforeunload', (event) => {
+    if (isDirty.value) {
+      event.preventDefault();
+      // 在现代浏览器中，这个消息可能不会显示，而是显示浏览器默认的消息
+      event.returnValue = '有未保存的更改，确定要离开吗？';
     }
+  });
+
+  if (workflowId === 'new') {
+    store.createWorkflow('新工作流', '这是一个新的工作流');
+    onWorkflowChange();
+  } else {
+    loadWorkflow(workflowId);
   }
+});
+
+// 组件卸载时移除事件监听器
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', (event) => {
+    if (isDirty.value) {
+      event.preventDefault();
+      event.returnValue = '有未保存的更改，确定要离开吗？';
+    }
+  });
 });
 
 // 加载工作流
@@ -231,18 +243,6 @@ async function loadWorkflow(id: string) {
     isLoading.value = false;
   }
 }
-
-// 组件挂载时初始化
-onMounted(async () => {
-  const workflowId = route.params.id as string;
-  
-  if (workflowId === 'new') {
-    store.createWorkflow('新工作流', '这是一个新的工作流');
-    onWorkflowChange();
-  } else {
-    await loadWorkflow(workflowId);
-  }
-});
 </script>
 
 <style scoped>
