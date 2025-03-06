@@ -11,7 +11,7 @@
     <svg
       class="workflow-svg"
       :style="{
-        transform: 'scale(' + scale + ') translate(' + position.x + 'px,' + position.y + 'px)'
+        transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`
       }"
     >
       <defs>
@@ -60,8 +60,15 @@
           strokeDasharray: '5,5'
         }"
       />
+    </svg>
 
-      <!-- 节点 -->
+    <!-- 节点容器 -->
+    <div 
+      class="nodes-container"
+      :style="{
+        transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`
+      }"
+    >
       <WorkflowNode
         v-for="node in workflow?.nodes"
         :key="node.id"
@@ -72,7 +79,7 @@
         @end-connection="endConnection"
         @node-click="selectNode"
       />
-    </svg>
+    </div>
   </div>
 </template>
 
@@ -303,9 +310,23 @@ export default defineComponent({
 }
 
 .workflow-svg {
+  position: absolute;
   width: 100%;
   height: 100%;
   transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.nodes-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.nodes-container :deep(.workflow-node) {
+  pointer-events: all;
 }
 
 .temp-connection {
