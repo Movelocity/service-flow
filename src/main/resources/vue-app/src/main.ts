@@ -1,25 +1,29 @@
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
-import './style.css'
+import { createPinia } from 'pinia'
 import App from './App.vue'
-
-// Import routes
 import routes from './router'
 
-// Create router instance
+// Import Bootstrap and Bootstrap Icons
+// import 'bootstrap/dist/css/bootstrap.min.css'
+// import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
+// import 'bootstrap-icons/font/bootstrap-icons.css'
+// import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+
+// Import global styles
+import './style.css'
+
+// Create the router instance
 const router = createRouter({
   history: createWebHistory(),
   routes
 })
 
-// Create Pinia store
+// Create the Pinia store
 const pinia = createPinia()
 
 // Create and mount the app
 const app = createApp(App)
-app.use(pinia)
 app.use(router)
+app.use(pinia)
 app.mount('#app')
