@@ -2,6 +2,27 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import workflowApi from '../api/workflow'
+import WorkflowNode from '../components/WorkflowNode.vue'
+import WorkflowConnection from '../components/WorkflowConnection.vue'
+
+interface Node {
+  id: string
+  name: string
+  type: string
+  parameters: Record<string, any>
+  nextNodes: Record<string, string>
+  position: { x: number; y: number }
+}
+
+interface Workflow {
+  id: string
+  name: string
+  description: string
+  globalVariables: Record<string, any>
+  nodes: Node[]
+  startNodeId: string
+  active: boolean
+}
 
 // 使用useRoute获取当前路由信息
 const route = useRoute()
@@ -20,6 +41,16 @@ const workflow = ref<any>({
   startNodeId: '',
   active: true
 })
+
+// Canvas state
+const canvasScale = ref(1)
+const canvasOffset = ref({ x: 0, y: 0 })
+const isDragging = ref(false)
+const draggedNode = ref<any>(null)
+const dragOffset = ref({ x: 0, y: 0 })
+const isPanning = ref(false)
+const panStart = ref({ x: 0, y: 0 })
+const tempConnection = ref<any>(null)
 
 const loading = ref(true)
 const saving = ref(false)
@@ -195,28 +226,136 @@ const saveNodeChanges = () => {
   selectedNode.value = null
 }
 
-// Handle context menu
+// Convert screen coordinates to canvas coordinates
+const screenToCanvas = (x: number, y: number) => {
+  return {
+    x: (x - canvasOffset.value.x) / canvasScale.value,
+    y: (y - canvasOffset.value.y) / canvasScale.value
+  }
+}
+
+// Node dragging handlers
+const handleNodeDragStart = (node: any, event: MouseEvent) => {
+  isDragging.value = true
+  draggedNode.value = node
+  const nodeElement = event.currentTarget as HTMLElement
+  const rect = nodeElement.getBoundingClientRect()
+  dragOffset.value = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
+  }
+}
+
+const handleMouseMove = (event: MouseEvent) => {
+  if (isPanning.value) {
+    canvasOffset.value = {
+      x: canvasOffset.value.x + (event.clientX - panStart.value.x),
+      y: canvasOffset.value.y + (event.clientY - panStart.value.y)
+    }
+    panStart.value = { x: event.clientX, y: event.clientY }
+    return
+  }
+
+  if (isDragging.value && draggedNode.value) {
+    const canvasPos = screenToCanvas(
+      event.clientX - dragOffset.value.x,
+      event.clientY - dragOffset.value.y
+    )
+    const nodeIndex = workflow.value.nodes.findIndex((n: any) => n.id === draggedNode.value.id)
+    if (nodeIndex !== -1) {
+      workflow.value.nodes[nodeIndex].position = canvasPos
+    }
+  }
+
+  if (tempConnection.value) {
+    const canvasPos = screenToCanvas(event.clientX, event.clientY)
+    tempConnection.value.toPosition = canvasPos
+  }
+}
+
+const handleMouseUp = () => {
+  isDragging.value = false
+  draggedNode.value = null
+  isPanning.value = false
+  tempConnection.value = null
+}
+
+// Canvas panning handlers
+const handleCanvasMouseDown = (event: MouseEvent) => {
+  if (event.button === 1 || (event.button === 0 && event.getModifierState('Space'))) {
+    isPanning.value = true
+    panStart.value = { x: event.clientX, y: event.clientY }
+    event.preventDefault()
+  }
+}
+
+// Canvas zooming handler
+const handleWheel = (event: WheelEvent) => {
+  event.preventDefault()
+  const delta = event.deltaY > 0 ? 0.9 : 1.1
+  const mousePos = screenToCanvas(event.clientX, event.clientY)
+  
+  canvasScale.value *= delta
+  canvasScale.value = Math.min(Math.max(0.1, canvasScale.value), 3)
+  
+  canvasOffset.value = {
+    x: event.clientX - mousePos.x * canvasScale.value,
+    y: event.clientY - mousePos.y * canvasScale.value
+  }
+}
+
+// Connection handlers
+const handleConnectionStart = ({ nodeId, type, event }: { nodeId: string, type: 'input' | 'output', event: MouseEvent }) => {
+  const canvasPos = screenToCanvas(event.clientX, event.clientY)
+  tempConnection.value = {
+    fromNode: nodeId,
+    fromType: type,
+    toPosition: canvasPos
+  }
+}
+
+const handleConnectionEnd = (targetNode: any, targetType: 'input' | 'output') => {
+  if (!tempConnection.value) return
+  
+  const sourceNode = workflow.value.nodes.find((n: any) => n.id === tempConnection.value.fromNode)
+  if (!sourceNode) return
+  
+  // Only allow output -> input connections
+  if (tempConnection.value.fromType === 'output' && targetType === 'input') {
+    sourceNode.nextNodes = sourceNode.nextNodes || {}
+    sourceNode.nextNodes.default = targetNode.id
+  } else if (tempConnection.value.fromType === 'input' && targetType === 'output') {
+    targetNode.nextNodes = targetNode.nextNodes || {}
+    targetNode.nextNodes.default = sourceNode.id
+  }
+  
+  tempConnection.value = null
+}
+
+// Context menu handlers
+const contextMenuPosition = ref({ x: 0, y: 0 })
+const showContextMenu = ref(false)
+
 const handleContextMenu = (event: MouseEvent) => {
   event.preventDefault()
-  const contextMenu = document.getElementById('contextMenu')
-  if (contextMenu) {
-    contextMenu.style.display = 'block'
-    contextMenu.style.left = `${event.clientX}px`
-    contextMenu.style.top = `${event.clientY}px`
-  }
+  const canvasPos = screenToCanvas(event.clientX, event.clientY)
+  contextMenuPosition.value = canvasPos
+  showContextMenu.value = true
 }
 
-// Close context menu
-const closeContextMenu = () => {
-  const contextMenu = document.getElementById('contextMenu')
-  if (contextMenu) {
-    contextMenu.style.display = 'none'
+const handleAddNode = (type: string) => {
+  const nodeId = `node_${Date.now()}`
+  const newNode = {
+    id: nodeId,
+    name: type === 'START' ? '开始' : type === 'END' ? '结束' : type === 'CONDITION' ? '条件' : '功能',
+    type,
+    parameters: {},
+    nextNodes: type === 'END' ? {} : { default: '' },
+    position: contextMenuPosition.value
   }
-}
-
-// Handle canvas click
-const handleCanvasClick = (event: MouseEvent) => {
-  closeContextMenu()
+  
+  workflow.value.nodes.push(newNode)
+  showContextMenu.value = false
 }
 </script>
 
@@ -266,37 +405,62 @@ const handleCanvasClick = (event: MouseEvent) => {
     </div>
 
     <!-- Workflow Canvas -->
-    <div v-else class="workflow-canvas" @contextmenu="handleContextMenu" @click="handleCanvasClick">
-      <div 
-        v-for="node in workflow.nodes" 
+    <div 
+      class="workflow-canvas" 
+      @contextmenu="handleContextMenu"
+      @mousedown="handleCanvasMouseDown"
+      @mousemove="handleMouseMove"
+      @mouseup="handleMouseUp"
+      @mouseleave="handleMouseUp"
+      @wheel.prevent="handleWheel"
+      :style="{
+        transform: `scale(${canvasScale}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`
+      }"
+    >
+      <WorkflowConnection
+        :connections="workflow.nodes.flatMap(node => 
+          Object.entries(node.nextNodes || {}).map(([condition, targetId]) => ({
+            from: node.id,
+            to: targetId,
+            condition
+          }))
+        ).filter(conn => conn.to)"
+        :nodes="new Map(workflow.nodes.map(node => [node.id, node]))"
+        :width="2000"
+        :height="2000"
+        :temp-connection="tempConnection"
+      />
+      
+      <WorkflowNode
+        v-for="node in workflow.nodes"
         :key="node.id"
-        class="node"
-        :class="'node-' + node.type.toLowerCase()"
-        :style="{
-          left: node.position.x + 'px',
-          top: node.position.y + 'px'
-        }"
-        @dblclick="editNode(node)"
-      >
-        <div class="node-header">{{ node.name }}</div>
-        <div class="node-type">{{ node.type }}</div>
-        <div class="connection-point input"></div>
-        <div class="connection-point output"></div>
-      </div>
+        :node="node"
+        @drag-start="handleNodeDragStart(node, $event)"
+        @edit="editNode"
+        @connection-start="handleConnectionStart"
+        @connection-end="handleConnectionEnd"
+      />
     </div>
 
     <!-- Context Menu -->
-    <div class="context-menu" id="contextMenu">
-      <div class="context-menu-item" @click="addNode('START', 100, 100)">
+    <div 
+      v-if="showContextMenu" 
+      class="context-menu"
+      :style="{
+        left: `${contextMenuPosition.x}px`,
+        top: `${contextMenuPosition.y}px`
+      }"
+    >
+      <div class="context-menu-item" @click="handleAddNode('START')">
         <span class="icon-start"></span>开始节点
       </div>
-      <div class="context-menu-item" @click="addNode('FUNCTION', 200, 200)">
+      <div class="context-menu-item" @click="handleAddNode('FUNCTION')">
         <span class="icon-function"></span>功能节点
       </div>
-      <div class="context-menu-item" @click="addNode('CONDITION', 200, 200)">
+      <div class="context-menu-item" @click="handleAddNode('CONDITION')">
         <span class="icon-condition"></span>条件节点
       </div>
-      <div class="context-menu-item" @click="addNode('END', 300, 100)">
+      <div class="context-menu-item" @click="handleAddNode('END')">
         <span class="icon-end"></span>结束节点
       </div>
     </div>
@@ -406,8 +570,9 @@ const handleCanvasClick = (event: MouseEvent) => {
   flex: 1;
   background-color: #f8f9fa;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
   height: calc(100vh - 60px);
+  transform-origin: top left;
 }
 
 .node {
