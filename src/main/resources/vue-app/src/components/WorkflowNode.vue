@@ -60,6 +60,9 @@ const emit = defineEmits<{
 
 const store = useWorkflowStore();
 
+// 添加拖拽状态标记
+let isDragging = false;
+
 const nodeStyle = computed(() => ({
   transform: `translate(${props.node.position.x}px, ${props.node.position.y}px)`
 }));
@@ -69,13 +72,25 @@ function onNodeMouseDown(event: MouseEvent) {
   // 防止触发画布的拖拽
   event.stopPropagation();
   
-  const startX = event.clientX - props.node.position.x;
-  const startY = event.clientY - props.node.position.y;
+  const canvasState = store.editorState.canvasState;
+  const scale = canvasState.scale;
+  
+  // 计算鼠标相对于节点的初始位置（考虑缩放）
+  const startX = (event.clientX - canvasState.position.x) / scale - props.node.position.x;
+  const startY = (event.clientY - canvasState.position.y) / scale - props.node.position.y;
+  
+  // 设置拖拽标记
+  isDragging = false;
   
   function onMouseMove(e: MouseEvent) {
-    const newX = e.clientX - startX;
-    const newY = e.clientY - startY;
+    // 设置拖拽标记
+    isDragging = true;
     
+    // 计算新位置（考虑缩放）
+    const newX = (e.clientX - canvasState.position.x) / scale - startX;
+    const newY = (e.clientY - canvasState.position.y) / scale - startY;
+    
+    // 更新节点位置
     store.updateNode(props.node.id, {
       position: { x: newX, y: newY }
     });
@@ -92,7 +107,10 @@ function onNodeMouseDown(event: MouseEvent) {
 
 // 节点选择
 function onNodeClick() {
-  store.setSelectedNode(props.node.id);
+  // 只有在没有拖拽时才选中节点
+  if (!isDragging) {
+    store.setSelectedNode(props.node.id);
+  }
 }
 
 // 连接点事件处理

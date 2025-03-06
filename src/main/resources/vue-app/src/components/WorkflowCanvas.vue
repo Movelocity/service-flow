@@ -284,16 +284,22 @@ function startConnection(nodeId: string, isOutput: boolean) {
   const sourceNode = getNode(nodeId);
   if (!sourceNode) return;
 
+  const scale = canvasState.value.scale;
+  const sourcePos = {
+    x: sourceNode.position.x * scale,
+    y: sourceNode.position.y * scale
+  };
+
   tempConnection.value = {
     isCreating: true,
     sourceNodeId: nodeId,
     sourcePosition: {
-      x: sourceNode.position.x + 200, // nodeWidth
-      y: sourceNode.position.y + 40   // nodeHeight / 2
+      x: sourcePos.x + 200 * scale, // nodeWidth * scale
+      y: sourcePos.y + 40 * scale   // (nodeHeight / 2) * scale
     },
     currentPosition: {
-      x: sourceNode.position.x + 200,
-      y: sourceNode.position.y + 40
+      x: sourcePos.x + 200 * scale,
+      y: sourcePos.y + 40 * scale
     }
   };
 
@@ -301,7 +307,7 @@ function startConnection(nodeId: string, isOutput: boolean) {
     const rect = canvasRef.value?.getBoundingClientRect();
     if (!rect) return;
 
-    tempConnection.value.currentPosition = reverseTransform(
+    const pos = reverseTransform(
       {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
@@ -309,6 +315,11 @@ function startConnection(nodeId: string, isOutput: boolean) {
       canvasState.value.scale,
       canvasState.value.position
     );
+
+    tempConnection.value.currentPosition = {
+      x: pos.x * scale,
+      y: pos.y * scale
+    };
   }
 
   function onMouseUp() {

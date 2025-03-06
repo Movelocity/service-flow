@@ -97,21 +97,33 @@ function getConnectionColor(nodeType: NodeType): string {
 }
 
 const startPoint = computed<Position>(() => {
-  return calculateConnectionPoint(
+  const point = calculateConnectionPoint(
     props.sourceNode.position,
     200, // nodeWidth
     80,  // nodeHeight
     false // isInput
   );
+  
+  // 考虑画布缩放和位置
+  return {
+    x: point.x * props.scale,
+    y: point.y * props.scale
+  };
 });
 
 const endPoint = computed<Position>(() => {
-  return calculateConnectionPoint(
+  const point = calculateConnectionPoint(
     props.targetNode.position,
     200, // nodeWidth
     80,  // nodeHeight
     true  // isInput
   );
+  
+  // 考虑画布缩放和位置
+  return {
+    x: point.x * props.scale,
+    y: point.y * props.scale
+  };
 });
 
 const pathData = computed(() => {
