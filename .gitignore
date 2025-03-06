@@ -4,3 +4,4 @@ target/
 logs/
 saved_workflows/
 workflow_logs/
+static-previous
