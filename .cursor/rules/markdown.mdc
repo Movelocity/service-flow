@@ -1,0 +1,7 @@
+---
+description: Markdown Guideline
+globs: 
+alwaysApply: false
+---
+
+- json 代码块使用 ```jsonc 以确保其中的注释能正常渲染
