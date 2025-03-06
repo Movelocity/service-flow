@@ -1,0 +1,228 @@
+:root {
+  /* 颜色变量 */
+  --node-bg: #ffffff;
+  --node-border: #6c757d;
+  --node-selected: #007bff;
+  --node-start: #28a745;
+  --node-end: #dc3545;
+  --node-condition: #ffc107;
+  --node-function: #17a2b8;
+  --connection-line: #6c757d;
+  --connection-point: #6c757d;
+  --connection-point-hover: #007bff;
+  --grid-color: rgba(0, 0, 0, 0.1);
+  
+  /* 尺寸变量 */
+  --node-width: 200px;
+  --node-min-height: 80px;
+  --connection-point-size: 10px;
+  --grid-size: 20px;
+}
+
+/* 工作流画布 */
+.workflow-canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+}
+
+/* 节点基本样式 */
+.workflow-node {
+  position: absolute;
+  width: var(--node-width);
+  min-height: var(--node-min-height);
+  background: var(--node-bg);
+  border: 2px solid var(--node-border);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: move;
+  user-select: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.workflow-node:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.workflow-node.selected {
+  border-color: var(--node-selected);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* 节点类型样式 */
+.workflow-node.start { border-color: var(--node-start); }
+.workflow-node.end { border-color: var(--node-end); }
+.workflow-node.condition { border-color: var(--node-condition); }
+.workflow-node.function { border-color: var(--node-function); }
+
+/* 节点标题 */
+.node-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* 连接点 */
+.connection-point {
+  position: absolute;
+  width: var(--connection-point-size);
+  height: var(--connection-point-size);
+  background: var(--connection-point);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.connection-point:hover {
+  transform: scale(1.2);
+  background-color: var(--connection-point-hover);
+}
+
+.connection-point.input {
+  left: calc(var(--connection-point-size) / -2);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.connection-point.output {
+  right: calc(var(--connection-point-size) / -2);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* 连接线 */
+.connection-line {
+  position: absolute;
+  pointer-events: none;
+  stroke: var(--connection-line);
+  stroke-width: 2;
+  fill: none;
+}
+
+.connection-line.selected {
+  stroke: var(--node-selected);
+  stroke-width: 3;
+}
+
+/* 编辑面板 */
+.editor-panel {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 300px;
+  height: calc(100vh - 60px);
+  background: white;
+  border-left: 1px solid #dee2e6;
+  padding: 20px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.editor-panel.visible {
+  transform: translateX(0);
+}
+
+/* 工具栏 */
+.editor-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: white;
+  border-bottom: 1px solid #dee2e6;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--node-selected);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* 表单控件 */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  border-color: var(--node-selected);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* 工具提示 */
+.tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1100;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-enter-active {
+  animation: fadeIn 0.2s;
+}
+
+.fade-leave-active {
+  animation: fadeIn 0.2s reverse;
+} 

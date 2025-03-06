@@ -1,24 +1,24 @@
-import type { RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
+import WorkflowEditor from '../views/WorkflowEditor.vue';
 
-// Define routes
-const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    name: 'Home',
-    component: () => import('../views/Home.vue')
-  },
-  // 新建工作流路由 - 放在前面以优先匹配
-  {
-    path: '/workflow/editor/new',
-    name: 'NewWorkflow',
-    component: () => import('../views/WorkflowView.vue')
-  },
-  // 编辑工作流路由
-  {
-    path: '/workflow/editor/:id',
-    name: 'WorkflowEditor',
-    component: () => import('../views/WorkflowView.vue')
-  }
-]
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/',
+      redirect: '/workflows'
+    },
+    {
+      path: '/workflows',
+      name: 'workflows',
+      component: () => import('../views/WorkflowList.vue')
+    },
+    {
+      path: '/workflows/:id',
+      name: 'workflow-editor',
+      component: WorkflowEditor
+    }
+  ]
+});
 
-export default routes 
+export default router; 

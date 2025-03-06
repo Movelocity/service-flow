@@ -1,0 +1,284 @@
+<template>
+  <div :class="['editor-panel', { visible: isVisible }]">
+    <div class="editor-header">
+      <h3 class="editor-title">{{ title }}</h3>
+      <button class="close-button" @click="onClose">×</button>
+    </div>
+
+    <template v-if="selectedNode && nodeData">
+      <div class="form-group">
+        <label class="form-label" for="nodeName">节点名称</label>
+        <input
+          id="nodeName"
+          v-model="nodeData.name"
+          type="text"
+          class="form-control"
+          @change="updateNode"
+        >
+      </div>
+
+      <!-- 条件节点特有的配置 -->
+      <template v-if="selectedNode.type === 'CONDITION'">
+        <div class="form-group">
+          <label class="form-label" for="condition">条件表达式</label>
+          <textarea
+            id="condition"
+            v-model="nodeData.parameters.condition"
+            class="form-control"
+            rows="3"
+            placeholder="请输入条件表达式"
+            @change="updateNode"
+          />
+          <small class="form-text text-muted">
+            支持JavaScript表达式，例如：value > 100
+          </small>
+        </div>
+      </template>
+
+      <!-- 函数节点特有的配置 -->
+      <template v-if="selectedNode.type === 'FUNCTION'">
+        <div class="form-group">
+          <label class="form-label" for="function">函数名称</label>
+          <input
+            id="function"
+            v-model="nodeData.parameters.function"
+            type="text"
+            class="form-control"
+            placeholder="请输入函数名称"
+            @change="updateNode"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="parameters">函数参数</label>
+          <textarea
+            id="parameters"
+            v-model="parametersJson"
+            class="form-control"
+            rows="5"
+            placeholder="请输入JSON格式的参数"
+            @change="updateParameters"
+          />
+          <small class="form-text text-muted">
+            使用JSON格式定义参数，例如：{"param1": "value1"}
+          </small>
+        </div>
+      </template>
+
+      <!-- 连接信息 -->
+      <div class="form-group">
+        <label class="form-label">连接</label>
+        <div class="connections-list">
+          <template v-if="nodeConnections.length">
+            <div
+              v-for="conn in nodeConnections"
+              :key="conn.id"
+              class="connection-item"
+            >
+              <span class="connection-info">
+                {{ getConnectionLabel(conn) }}
+              </span>
+              <button
+                class="btn btn-sm btn-danger"
+                @click="deleteConnection(conn.id)"
+              >
+                删除
+              </button>
+            </div>
+          </template>
+          <div v-else class="no-connections">
+            暂无连接
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-actions">
+        <button
+          class="btn btn-danger"
+          @click="deleteNode"
+        >
+          删除节点
+        </button>
+      </div>
+    </template>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
+import type { Node } from '../types/workflow';
+import { useWorkflowStore } from '../stores/workflow';
+
+const props = defineProps<{
+  isVisible: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+}>();
+
+const store = useWorkflowStore();
+
+const selectedNode = computed(() => store.selectedNode);
+
+const title = computed(() => {
+  if (!selectedNode.value) return '节点编辑';
+  return `编辑${selectedNode.value.type}节点`;
+});
+
+// 节点数据的本地副本
+const nodeData = ref<Node | null>(null);
+
+// 监听选中节点的变化
+watch(selectedNode, (newNode) => {
+  if (newNode) {
+    nodeData.value = JSON.parse(JSON.stringify(newNode));
+  } else {
+    nodeData.value = null;
+  }
+}, { immediate: true });
+
+// 函数参数的JSON字符串表示
+const parametersJson = computed({
+  get() {
+    if (!nodeData.value?.parameters) return '';
+    const params = { ...nodeData.value.parameters };
+    delete params.function; // 排除function字段
+    return JSON.stringify(params, null, 2);
+  },
+  set(value: string) {
+    try {
+      const params = JSON.parse(value);
+      if (nodeData.value) {
+        nodeData.value.parameters = {
+          ...params,
+          function: nodeData.value.parameters.function
+        };
+      }
+    } catch (e) {
+      console.error('Invalid JSON:', e);
+    }
+  }
+});
+
+// 获取节点的连接
+const nodeConnections = computed(() => {
+  if (!selectedNode.value) return [];
+  return store.nodeConnections(selectedNode.value.id);
+});
+
+// 更新节点
+function updateNode() {
+  if (nodeData.value && selectedNode.value) {
+    store.updateNode(selectedNode.value.id, nodeData.value);
+  }
+}
+
+// 更新参数
+function updateParameters() {
+  updateNode();
+}
+
+// 删除连接
+function deleteConnection(connectionId: string) {
+  store.deleteConnection(connectionId);
+}
+
+// 删除节点
+function deleteNode() {
+  if (selectedNode.value) {
+    store.deleteNode(selectedNode.value.id);
+    onClose();
+  }
+}
+
+// 获取连接的描述文本
+function getConnectionLabel(connection: { sourceNodeId: string; targetNodeId: string; condition?: string }) {
+  const isSource = connection.sourceNodeId === selectedNode.value?.id;
+  const otherNodeId = isSource ? connection.targetNodeId : connection.sourceNodeId;
+  const otherNode = store.currentWorkflow?.nodes.find(n => n.id === otherNodeId);
+  
+  return `${isSource ? '输出到' : '输入自'} ${otherNode?.name || otherNodeId}${
+    connection.condition ? ` (条件: ${connection.condition})` : ''
+  }`;
+}
+
+// 关闭面板
+function onClose() {
+  store.setSelectedNode(null);
+  emit('close');
+}
+</script>
+
+<style scoped>
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.editor-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  color: #6c757d;
+}
+
+.close-button:hover {
+  color: #343a40;
+}
+
+.form-text {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.connections-list {
+  margin-top: 0.5rem;
+}
+
+.connection-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.connection-info {
+  font-size: 0.875rem;
+}
+
+.no-connections {
+  color: #6c757d;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.editor-actions {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #dee2e6;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+</style> 
