@@ -52,6 +52,7 @@ export interface Node {
   name: string;
   position: Position;
   parameters: Record<string, any>;
+  nextNodes?: Record<string, string>;
 }
 
 /**

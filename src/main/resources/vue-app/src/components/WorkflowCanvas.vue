@@ -173,7 +173,7 @@ const tempConnectionColor = computed(() => {
 function onCanvasMouseDown(e: MouseEvent) {
   if (e.button === 0) { // 左键
     // 清除选中状态
-    store.selectNode(null);
+    store.setSelectedNode(null);
     store.selectConnection(null);
 
     // 开始画布拖动

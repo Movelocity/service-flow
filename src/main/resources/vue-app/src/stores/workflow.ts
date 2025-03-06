@@ -82,9 +82,31 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     loadWorkflow(workflow: Workflow) {
+      // Convert nextNodes to connections if they exist
+      const connections = [...(workflow.connections || [])];
+      workflow.nodes.forEach(node => {
+        if (node.nextNodes) {
+          Object.entries(node.nextNodes).forEach(([condition, targetNodeId]) => {
+            if (!connections.some(conn => 
+              conn.sourceNodeId === node.id && 
+              conn.targetNodeId === targetNodeId
+            )) {
+              connections.push({
+                id: `conn_${Date.now()}_${node.id}_${targetNodeId}`,
+                sourceNodeId: node.id,
+                targetNodeId: targetNodeId,
+                condition: condition === 'default' ? undefined : condition
+              });
+            }
+          });
+          // Remove the nextNodes as they are now converted to connections
+          delete node.nextNodes;
+        }
+      });
+
       this.currentWorkflow = {
         ...workflow,
-        connections: workflow.connections || []
+        connections
       };
       this.history.past = [];
       this.history.future = [];

@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useWorkflowStore } from '../stores/workflow';
 import { workflowApi } from '../services/workflowApi';
@@ -116,6 +116,17 @@ function onWorkflowChange() {
     workflowDescription.value = workflow.description;
   }
 }
+
+// 监听工作流变化
+watch(() => store.currentWorkflow, (newWorkflow) => {
+  if (newWorkflow) {
+    // 当工作流发生变化时，设置isDirty为true
+    // 但在初始加载和保存后的重新加载时不设置
+    if (store.history.past.length > 0) {
+      isDirty.value = true;
+    }
+  }
+}, { deep: true });
 
 // 更新工作流信息
 function updateWorkflowInfo() {
