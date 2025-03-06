@@ -4,12 +4,6 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import routes from './router'
 
-// Import Bootstrap and Bootstrap Icons
-// import 'bootstrap/dist/css/bootstrap.min.css'
-// import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
-// import 'bootstrap-icons/font/bootstrap-icons.css'
-// import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-
 // Import our organized styles
 import './style/index.css'
 
