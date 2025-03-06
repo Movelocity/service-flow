@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import workflowApi from '../services/workflowApi'
+import workflowApi from '../api/workflow'
 
 interface Workflow {
   id: string

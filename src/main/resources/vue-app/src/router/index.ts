@@ -9,8 +9,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/workflow/editor/:id',
-    name: 'WorkflowEditor',
-    component: () => import('../views/WorkflowEditor.vue'),
+    name: 'WorkflowView',
+    component: () => import('../views/WorkflowView.vue'),
     props: (route) => ({
       id: route.params.id,
       isNew: route.query.new === 'true'
