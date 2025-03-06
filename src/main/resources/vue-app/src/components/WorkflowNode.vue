@@ -127,7 +127,7 @@ function onOutputPointMouseDown(e: MouseEvent) {
   emit('startConnection', props.node.id, true, e);
 }
 
-function onOutputPointMouseUp(e: MouseEvent) {
+function onOutputPointMouseUp(_e: MouseEvent) {
   emit('endConnection', props.node.id, true);
 }
 
@@ -135,7 +135,7 @@ function onInputPointMouseDown(e: MouseEvent) {
   emit('startConnection', props.node.id, false, e);
 }
 
-function onInputPointMouseUp(e: MouseEvent) {
+function onInputPointMouseUp(_e: MouseEvent) {
   emit('endConnection', props.node.id, false);
 }
 </script>

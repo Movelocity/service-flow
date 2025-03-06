@@ -61,7 +61,7 @@ export const useWorkflowStore = defineStore('workflow', {
       if (!state.currentWorkflow?.nodes) return [];
       return state.currentWorkflow.nodes
         .filter(node => Object.entries(node.nextNodes)
-          .some(([condition, targetId]) => targetId === nodeId))
+          .some(([_condition, targetId]) => targetId === nodeId))
         .map(node => {
           const condition = Object.entries(node.nextNodes)
             .find(([_, targetId]) => targetId === nodeId)?.[0] || 'default';

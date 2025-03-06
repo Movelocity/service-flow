@@ -7,6 +7,7 @@
     @mousemove="onMouseMove"
     @mouseup="endPan"
     @mouseleave="endPan"
+    @contextmenu.prevent="showContextMenu"
   >
     <svg
       class="workflow-svg"
@@ -38,16 +39,14 @@
       />
 
       <!-- 连接线 -->
-      <template v-for="node in workflow?.nodes" :key="node.id">
-        <template v-for="[condition, targetId] in Object.entries(node.nextNodes)" :key="node.id + '-' + targetId">
-          <WorkflowConnection
-            :source-node="node"
-            :target-node="getNode(targetId)"
-            :condition="condition"
-            :is-selected="isConnectionSelected(node.id, condition)"
-          />
-        </template>
-      </template>
+      <WorkflowConnection
+        v-for="conn in connections"
+        :key="conn.sourceId + '-' + conn.condition"
+        :source-node="getNode(conn.sourceId)"
+        :target-node="getNode(conn.targetId)"
+        :condition="conn.condition"
+        :is-selected="isConnectionSelected(conn.sourceId, conn.condition)"
+      />
 
       <!-- 临时连接线 -->
       <path
@@ -80,11 +79,30 @@
         @node-click="selectNode"
       />
     </div>
+
+    <!-- 右键菜单 -->
+    <div
+      v-show="showMenu"
+      class="context-menu"
+      :style="{
+        left: menuPosition.x + 'px',
+        top: menuPosition.y + 'px'
+      }"
+    >
+      <div
+        v-for="type in availableNodeTypes"
+        :key="type"
+        class="menu-item"
+        @click="addNode(type)"
+      >
+        添加{{ nodeTypeLabels[type] }}节点
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, onMounted, ref } from 'vue';
+import { computed, defineComponent, onMounted, ref, onUnmounted } from 'vue';
 import type { Node, Position } from '../types/workflow';
 import { NodeType } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
@@ -116,6 +134,27 @@ export default defineComponent({
       sourcePosition: { x: 0, y: 0 },
       currentPosition: { x: 0, y: 0 }
     });
+
+    // 右键菜单状态
+    const showMenu = ref(false);
+    const menuPosition = ref({ x: 0, y: 0 });
+    const clickPosition = ref({ x: 0, y: 0 });
+
+    // 可用的节点类型
+    const availableNodeTypes = [
+      NodeType.START,
+      NodeType.FUNCTION,
+      NodeType.CONDITION,
+      NodeType.END
+    ];
+
+    // 节点类型标签
+    const nodeTypeLabels = {
+      [NodeType.START]: '开始',
+      [NodeType.FUNCTION]: '函数',
+      [NodeType.CONDITION]: '条件',
+      [NodeType.END]: '结束'
+    };
 
     // 获取节点
     function getNode(id: string): Node {
@@ -274,6 +313,60 @@ export default defineComponent({
       );
     });
 
+    // 添加点击外部关闭菜单的处理
+    function closeMenu() {
+      showMenu.value = false;
+    }
+
+    // 显示右键菜单
+    function showContextMenu(event: MouseEvent) {
+      // 获取点击位置相对于画布的坐标
+      const rect = canvasContainer.value?.getBoundingClientRect();
+      if (!rect) return;
+
+      // 保存实际点击位置（考虑缩放和平移）
+      clickPosition.value = {
+        x: (event.clientX - rect.left - position.value.x * scale.value) / scale.value,
+        y: (event.clientY - rect.top - position.value.y * scale.value) / scale.value
+      };
+
+      // 设置菜单显示位置（使用实际屏幕坐标）
+      menuPosition.value = {
+        x: event.clientX,
+        y: event.clientY
+      };
+
+      showMenu.value = true;
+
+      // 添加一次性点击事件监听器来关闭菜单
+      setTimeout(() => {
+        window.addEventListener('click', closeMenu, { once: true });
+      }, 0);
+    }
+
+    // 添加节点
+    function addNode(type: NodeType) {
+      store.addNode(type, clickPosition.value);
+      showMenu.value = false;
+    }
+
+    // 在组件卸载时清理事件监听器
+    onUnmounted(() => {
+      window.removeEventListener('click', closeMenu);
+    });
+
+    // 扁平化连接列表
+    const connections = computed(() => {
+      if (!workflow.value?.nodes) return [];
+      return workflow.value.nodes.flatMap(node => 
+        Object.entries(node.nextNodes).map(([condition, targetId]) => ({
+          sourceId: node.id,
+          targetId,
+          condition
+        }))
+      );
+    });
+
     onMounted(() => {
       if (canvasContainer.value) {
         const rect = canvasContainer.value.getBoundingClientRect();
@@ -304,7 +397,14 @@ export default defineComponent({
       onMouseMove,
       endPan,
       startConnection,
-      endConnection
+      endConnection,
+      showMenu,
+      menuPosition,
+      availableNodeTypes,
+      nodeTypeLabels,
+      showContextMenu,
+      addNode,
+      connections
     };
   }
 });
@@ -342,5 +442,29 @@ export default defineComponent({
 .temp-connection {
   fill: none;
   pointer-events: none;
+}
+
+.context-menu {
+  position: fixed;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 160px;
+  z-index: 1000;
+}
+
+.menu-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  user-select: none;
+  color: #333;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f5f5f5;
 }
 </style> 
