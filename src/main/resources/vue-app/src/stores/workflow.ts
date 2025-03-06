@@ -110,9 +110,7 @@ export const useWorkflowStore = defineStore('workflow', {
     selectNode(nodeId: string | null) {
       this.editorState.selectedNodeId = nodeId;
       this.editorState.selectedCondition = null;
-      if (nodeId) {
-        this.editorState.isEditorPanelOpen = true;
-      }
+      this.editorState.isEditorPanelOpen = !!nodeId;
     },
 
     addNode(type: NodeType, position: Position, name: string = '') {
@@ -257,13 +255,27 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     // 编辑器状态操作
-    setSelectedNode(nodeId: string | null) {
-      this.editorState.selectedNodeId = nodeId;
-      this.editorState.isEditorPanelOpen = !!nodeId;
-    },
-
-    updateCanvasState(updates: Partial<EditorState['canvasState']>) {
-      Object.assign(this.editorState.canvasState, updates);
+    updateCanvasState(updates: Partial<EditorState['canvasState']>, mousePosition?: { x: number, y: number }) {
+      if (updates.scale && mousePosition && this.editorState.canvasState.scale) {
+        // 计算缩放前的鼠标世界坐标
+        const oldScale = this.editorState.canvasState.scale;
+        const oldPos = this.editorState.canvasState.position;
+        const worldX = (mousePosition.x - oldPos.x) / oldScale;
+        const worldY = (mousePosition.y - oldPos.y) / oldScale;
+        
+        // 计算新的画布位置，以保持鼠标位置下的点不变
+        const newScale = updates.scale;
+        const newX = mousePosition.x - worldX * newScale;
+        const newY = mousePosition.y - worldY * newScale;
+        
+        this.editorState.canvasState = {
+          ...this.editorState.canvasState,
+          ...updates,
+          position: { x: newX, y: newY }
+        };
+      } else {
+        Object.assign(this.editorState.canvasState, updates);
+      }
     },
 
     async saveWorkflow() {

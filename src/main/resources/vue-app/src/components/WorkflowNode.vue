@@ -83,17 +83,23 @@ function onNodeMouseDown(event: MouseEvent) {
   isDragging = false;
   
   function onMouseMove(e: MouseEvent) {
-    // 设置拖拽标记
-    isDragging = true;
+    // 只有在移动超过一定距离时才认为是拖拽
+    if (!isDragging) {
+      const dx = e.clientX - event.clientX;
+      const dy = e.clientY - event.clientY;
+      if (Math.sqrt(dx * dx + dy * dy) > 3) {
+        isDragging = true;
+      }
+    }
     
-    // 计算新位置（考虑缩放）
-    const newX = (e.clientX - canvasState.position.x) / scale - startX;
-    const newY = (e.clientY - canvasState.position.y) / scale - startY;
-    
-    // 更新节点位置
-    store.updateNode(props.node.id, {
-      position: { x: newX, y: newY }
-    });
+    if (isDragging) {
+      // 计算新位置（考虑缩放）
+      const newX = (e.clientX - canvasState.position.x) / scale - startX;
+      const newY = (e.clientY - canvasState.position.y) / scale - startY;
+      
+      // 更新节点位置
+      store.updateNodePosition(props.node.id, { x: newX, y: newY });
+    }
   }
   
   function onMouseUp() {
@@ -105,11 +111,14 @@ function onNodeMouseDown(event: MouseEvent) {
   document.addEventListener('mouseup', onMouseUp);
 }
 
-// 节点选择
-function onNodeClick() {
-  // 只有在没有拖拽时才选中节点
+// 单独处理点击事件
+function onNodeClick(event: MouseEvent) {
+  // 阻止事件冒泡
+  event.stopPropagation();
+  
+  // 如果没有拖拽，则选中节点
   if (!isDragging) {
-    store.setSelectedNode(props.node.id);
+    store.selectNode(props.node.id);
   }
 }
 

@@ -159,12 +159,22 @@ export default defineComponent({
     // 画布缩放
     function onWheel(event: WheelEvent) {
       event.preventDefault();
-      const delta = event.deltaY > 0 ? -0.1 : 0.1;
-      const newScale = Math.max(0.5, Math.min(2, scale.value + delta));
       
+      // 获取鼠标相对于画布的位置
+      const rect = canvasContainer.value?.getBoundingClientRect();
+      if (!rect) return;
+      
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      // 计算新的缩放比例
+      const delta = event.deltaY > 0 ? 0.9 : 1.1;
+      const newScale = Math.max(0.5, Math.min(2, scale.value * delta));
+
+      // 使用 store 的 updateCanvasState 方法，传入鼠标位置
       store.updateCanvasState({
         scale: newScale
-      });
+      }, { x: mouseX, y: mouseY });
     }
 
     // 画布平移

@@ -184,7 +184,7 @@ function redo() {
 
 // 关闭编辑器面板
 function closeEditor() {
-  store.setSelectedNode(null);
+  store.selectNode(null);
 }
 
 // 返回上一页

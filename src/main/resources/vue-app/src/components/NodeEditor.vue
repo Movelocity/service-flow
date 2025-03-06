@@ -164,7 +164,23 @@ const parametersJson = computed({
 // 获取节点的连接
 const nodeConnections = computed(() => {
   if (!selectedNode.value) return [];
-  return store.nodeConnections(selectedNode.value.id);
+  const inputs = store.nodeInputConnections(selectedNode.value.id);
+  const outputs = store.nodeOutputConnections(selectedNode.value.id);
+  
+  return [
+    ...inputs.map(conn => ({
+      id: `${conn.sourceId}-${conn.condition}`,
+      sourceNodeId: conn.sourceId,
+      targetNodeId: selectedNode.value!.id,
+      condition: conn.condition
+    })),
+    ...outputs.map(conn => ({
+      id: `${selectedNode.value!.id}-${conn.condition}`,
+      sourceNodeId: selectedNode.value!.id,
+      targetNodeId: conn.targetId,
+      condition: conn.condition
+    }))
+  ];
 });
 
 // 更新节点
@@ -181,7 +197,14 @@ function updateParameters() {
 
 // 删除连接
 function deleteConnection(connectionId: string) {
-  store.deleteConnection(connectionId);
+  const [sourceId, condition] = connectionId.split('-');
+  if (sourceId === selectedNode.value?.id) {
+    // 如果当前节点是源节点，直接删除其nextNodes中的连接
+    store.deleteConnection(sourceId, condition);
+  } else {
+    // 如果当前节点是目标节点，找到源节点并删除连接
+    store.deleteConnection(sourceId, condition);
+  }
 }
 
 // 删除节点
@@ -205,7 +228,7 @@ function getConnectionLabel(connection: { sourceNodeId: string; targetNodeId: st
 
 // 关闭面板
 function onClose() {
-  store.setSelectedNode(null);
+  store.selectNode(null);
   emit('close');
 }
 </script>
