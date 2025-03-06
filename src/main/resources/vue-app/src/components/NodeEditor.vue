@@ -109,7 +109,7 @@ import { ref, computed, watch } from 'vue';
 import type { Node } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
 
-const props = defineProps<{
+defineProps<{
   isVisible: boolean;
 }>();
 

@@ -33,7 +33,7 @@ public class WorkflowController {
         try {
             // Generate ID for new workflow
             if (workflow.getId() == null || workflow.getId().isEmpty()) {
-                workflow.setId("workflow_" + System.currentTimeMillis());
+                workflow.setId("flow_" + System.currentTimeMillis());
             }
             jsonFileHandler.saveWorkflow(workflow);
             return ResponseEntity.ok(workflow);
