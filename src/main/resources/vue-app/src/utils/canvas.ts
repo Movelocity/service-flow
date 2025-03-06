@@ -21,8 +21,20 @@ export function calculateControlPoints(start: Position, end: Position): [Positio
  * 生成贝塞尔曲线路径
  */
 export function generateBezierPath(start: Position, end: Position): string {
-  const [cp1, cp2] = calculateControlPoints(start, end);
-  return `M ${start.x} ${start.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${end.x} ${end.y}`;
+  const dx = Math.abs(end.x - start.x);
+  const controlPointOffset = Math.min(80, dx / 2);
+  
+  const controlPoint1: Position = {
+    x: start.x + controlPointOffset,
+    y: start.y
+  };
+  
+  const controlPoint2: Position = {
+    x: end.x - controlPointOffset,
+    y: end.y
+  };
+  
+  return `M ${start.x} ${start.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${end.x} ${end.y}`;
 }
 
 /**
@@ -78,9 +90,9 @@ export function snapToGrid(position: Position, gridSize: number = 20): Position 
 /**
  * 计算两个节点之间的距离
  */
-export function calculateDistance(pos1: Position, pos2: Position): number {
-  const dx = pos2.x - pos1.x;
-  const dy = pos2.y - pos1.y;
+export function calculateDistance(point1: Position, point2: Position): number {
+  const dx = point2.x - point1.x;
+  const dy = point2.y - point1.y;
   return Math.sqrt(dx * dx + dy * dy);
 }
 
@@ -130,4 +142,30 @@ export function wouldCreateCycle(
   
   // 从源节点开始检查
   return dfs(sourceId);
+}
+
+/**
+ * 判断点是否在线段附近
+ */
+export function isPointNearLine(
+  point: Position,
+  lineStart: Position,
+  lineEnd: Position,
+  threshold = 5
+): boolean {
+  const lineLength = calculateDistance(lineStart, lineEnd);
+  if (lineLength === 0) return false;
+
+  const t = ((point.x - lineStart.x) * (lineEnd.x - lineStart.x) +
+            (point.y - lineStart.y) * (lineEnd.y - lineStart.y)) / (lineLength * lineLength);
+
+  if (t < 0) return calculateDistance(point, lineStart) <= threshold;
+  if (t > 1) return calculateDistance(point, lineEnd) <= threshold;
+
+  const projection: Position = {
+    x: lineStart.x + t * (lineEnd.x - lineStart.x),
+    y: lineStart.y + t * (lineEnd.y - lineStart.y)
+  };
+
+  return calculateDistance(point, projection) <= threshold;
 } 

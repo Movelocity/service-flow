@@ -3,51 +3,104 @@
     class="connection-container"
     :style="{
       position: 'absolute',
-      left: containerPosition.x + 'px',
-      top: containerPosition.y + 'px',
-      width: containerSize.width + 'px',
-      height: containerSize.height + 'px',
-      overflow: 'visible'
+      left: '0',
+      top: '0',
+      width: '100%',
+      height: '100%',
+      overflow: 'visible',
+      pointerEvents: 'none'
     }"
   >
     <path
       :class="['connection-line', { selected: isSelected }]"
       :d="pathData"
+      :style="{
+        stroke: getConnectionColor(sourceNode.type),
+        strokeWidth: isSelected ? '3' : '2'
+      }"
       @click.stop="onConnectionClick"
+      @mouseover="isHovered = true"
+      @mouseleave="isHovered = false"
+      style="pointer-events: all;"
     />
+
+    <marker
+      :id="'arrow-' + connection.id"
+      viewBox="0 0 10 10"
+      refX="5"
+      refY="5"
+      markerWidth="6"
+      markerHeight="6"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 0 L 10 5 L 0 10 z"
+        :fill="getConnectionColor(sourceNode.type)"
+      />
+    </marker>
+
     <text
       v-if="connection.condition"
       :x="labelPosition.x"
       :y="labelPosition.y"
-      class="connection-label"
+      :class="['connection-label', { selected: isSelected }]"
       @click.stop="onConnectionClick"
+      style="pointer-events: all;"
     >
       {{ connection.condition }}
     </text>
+
+    <g
+      v-if="isHovered || isSelected"
+      :transform="'translate(' + deleteButtonPosition.x + ',' + deleteButtonPosition.y + ')'"
+      class="delete-button"
+      @click.stop="onDeleteClick"
+    >
+      <circle r="8" fill="white" stroke="#dc3545" />
+      <text x="0" y="0" dy=".3em" fill="#dc3545">×</text>
+    </g>
   </svg>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { Connection, Node, Position } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
 import { generateBezierPath, calculateConnectionPoint } from '../utils/canvas';
+import { NodeType } from '../types/workflow';
 
 const props = defineProps<{
   connection: Connection;
   sourceNode: Node;
   targetNode: Node;
   isSelected: boolean;
+  scale: number;
+  canvasPosition: Position;
 }>();
 
 const store = useWorkflowStore();
+const isHovered = ref(false);
 
-// 计算连接线的起点和终点
+function getConnectionColor(nodeType: NodeType): string {
+  switch (nodeType) {
+    case NodeType.START:
+      return '#28a745';
+    case NodeType.CONDITION:
+      return '#ffc107';
+    case NodeType.FUNCTION:
+      return '#17a2b8';
+    case NodeType.END:
+      return '#dc3545';
+    default:
+      return '#6c757d';
+  }
+}
+
 const startPoint = computed<Position>(() => {
   return calculateConnectionPoint(
     props.sourceNode.position,
-    200, // nodeWidth from CSS variables
-    80,  // nodeHeight from CSS variables
+    200, // nodeWidth
+    80,  // nodeHeight
     false // isInput
   );
 });
@@ -61,12 +114,10 @@ const endPoint = computed<Position>(() => {
   );
 });
 
-// 生成SVG路径
 const pathData = computed(() => {
   return generateBezierPath(startPoint.value, endPoint.value);
 });
 
-// 计算连接标签的位置（在曲线中点）
 const labelPosition = computed(() => {
   return {
     x: (startPoint.value.x + endPoint.value.x) / 2,
@@ -74,21 +125,19 @@ const labelPosition = computed(() => {
   };
 });
 
-// 计算SVG容器的位置和大小
-const containerPosition = computed(() => ({
-  x: Math.min(startPoint.value.x, endPoint.value.x),
-  y: Math.min(startPoint.value.y, endPoint.value.y)
-}));
+const deleteButtonPosition = computed(() => {
+  return {
+    x: (startPoint.value.x + endPoint.value.x) / 2,
+    y: (startPoint.value.y + endPoint.value.y) / 2 + 10
+  };
+});
 
-const containerSize = computed(() => ({
-  width: Math.abs(endPoint.value.x - startPoint.value.x),
-  height: Math.abs(endPoint.value.y - startPoint.value.y)
-}));
-
-// 点击事件处理
 function onConnectionClick() {
-  // TODO: 实现连接的选择和编辑功能
-  console.log('Connection clicked:', props.connection);
+  store.selectConnection(props.connection.id);
+}
+
+function onDeleteClick() {
+  store.deleteConnection(props.connection.id);
 }
 </script>
 
@@ -99,20 +148,57 @@ function onConnectionClick() {
 }
 
 .connection-line {
-  pointer-events: all;
+  fill: none;
+  stroke-linecap: round;
+  pointer-events: stroke;
   cursor: pointer;
+  transition: stroke-width 0.2s;
+}
+
+.connection-line:hover {
+  stroke-width: 3;
+}
+
+.connection-line.selected {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 3px rgba(0, 123, 255, 0.5));
 }
 
 .connection-label {
-  pointer-events: all;
   font-size: 12px;
   fill: #495057;
   text-anchor: middle;
   cursor: pointer;
   user-select: none;
+  pointer-events: all;
 }
 
 .connection-label:hover {
-  fill: var(--node-selected);
+  fill: #0056b3;
+}
+
+.connection-label.selected {
+  fill: #0056b3;
+  font-weight: bold;
+}
+
+.delete-button {
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.delete-button text {
+  font-size: 16px;
+  text-anchor: middle;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.delete-button:hover circle {
+  fill: #dc3545;
+}
+
+.delete-button:hover text {
+  fill: white;
 }
 </style> 
