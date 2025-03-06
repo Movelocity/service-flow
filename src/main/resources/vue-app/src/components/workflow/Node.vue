@@ -10,10 +10,12 @@
     <div 
       class="connection-point input"
       @mousedown.stop="startConnection('input', $event)"
+      @mouseup.stop="$emit('connectionEnd', node, 'input')"
     ></div>
     <div 
       class="connection-point output"
       @mousedown.stop="startConnection('output', $event)"
+      @mouseup.stop="$emit('connectionEnd', node, 'output')"
     ></div>
   </div>
 </template>
@@ -34,6 +36,7 @@ const emit = defineEmits<{
   (e: 'dragStart', event: MouseEvent): void
   (e: 'edit', node: any): void
   (e: 'connectionStart', data: { nodeId: string, type: 'input' | 'output', event: MouseEvent }): void
+  (e: 'connectionEnd', node: any, type: 'input' | 'output'): void
 }>()
 
 const nodeStyle = computed(() => ({
@@ -74,7 +77,8 @@ const startConnection = (type: 'input' | 'output', event: MouseEvent) => {
   background: #6c757d;
   border-radius: 50%;
   position: absolute;
-  cursor: pointer;
+  cursor: crosshair;
+  z-index: 1;
 }
 
 .connection-point.input {

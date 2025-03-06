@@ -60,12 +60,15 @@ const getConnectionPath = (connection: Connection): string => {
   const start = getNodeConnectionPoint(connection.from, 'output')
   const end = getNodeConnectionPoint(connection.to, 'input')
   
+  const dx = Math.abs(end.x - start.x)
+  const controlOffset = Math.min(50, dx / 2)
+  
   const controlPoint1 = {
-    x: start.x + 50,
+    x: start.x + controlOffset,
     y: start.y
   }
   const controlPoint2 = {
-    x: end.x - 50,
+    x: end.x - controlOffset,
     y: end.y
   }
   
@@ -81,12 +84,15 @@ const getTempConnectionPath = () => {
   )
   const end = props.tempConnection.toPosition
   
+  const dx = Math.abs(end.x - start.x)
+  const controlOffset = Math.min(50, dx / 2)
+  
   const controlPoint1 = {
-    x: start.x + (props.tempConnection.fromType === 'output' ? 50 : -50),
+    x: start.x + (props.tempConnection.fromType === 'output' ? controlOffset : -controlOffset),
     y: start.y
   }
   const controlPoint2 = {
-    x: end.x - (props.tempConnection.fromType === 'output' ? -50 : 50),
+    x: end.x - (props.tempConnection.fromType === 'output' ? -controlOffset : controlOffset),
     y: end.y
   }
   

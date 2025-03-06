@@ -2,8 +2,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import workflowApi from '../api/workflow'
-import WorkflowNode from '../components/WorkflowNode.vue'
-import WorkflowConnection from '../components/WorkflowConnection.vue'
+import Node from '../components/workflow/Node.vue'
+import Connection from '../components/workflow/Connection.vue'
 
 interface Node {
   id: string
@@ -234,15 +234,24 @@ const screenToCanvas = (x: number, y: number) => {
   }
 }
 
+// Convert canvas coordinates to screen coordinates
+const canvasToScreen = (x: number, y: number) => {
+  return {
+    x: x * canvasScale.value + canvasOffset.value.x,
+    y: y * canvasScale.value + canvasOffset.value.y
+  }
+}
+
 // Node dragging handlers
 const handleNodeDragStart = (node: any, event: MouseEvent) => {
   isDragging.value = true
   draggedNode.value = node
-  const nodeElement = event.currentTarget as HTMLElement
-  const rect = nodeElement.getBoundingClientRect()
+  
+  // Calculate offset in canvas coordinates
+  const nodeScreenPos = canvasToScreen(node.position.x, node.position.y)
   dragOffset.value = {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top
+    x: event.clientX - nodeScreenPos.x,
+    y: event.clientY - nodeScreenPos.y
   }
 }
 
@@ -261,6 +270,7 @@ const handleMouseMove = (event: MouseEvent) => {
       event.clientX - dragOffset.value.x,
       event.clientY - dragOffset.value.y
     )
+    
     const nodeIndex = workflow.value.nodes.findIndex((n: any) => n.id === draggedNode.value.id)
     if (nodeIndex !== -1) {
       workflow.value.nodes[nodeIndex].position = canvasPos
@@ -417,7 +427,7 @@ const handleAddNode = (type: string) => {
         transform: `scale(${canvasScale}) translate(${canvasOffset.x}px, ${canvasOffset.y}px)`
       }"
     >
-      <WorkflowConnection
+      <Connection
         :connections="workflow.nodes.flatMap(node => 
           Object.entries(node.nextNodes || {}).map(([condition, targetId]) => ({
             from: node.id,
@@ -431,7 +441,7 @@ const handleAddNode = (type: string) => {
         :temp-connection="tempConnection"
       />
       
-      <WorkflowNode
+      <Node
         v-for="node in workflow.nodes"
         :key="node.id"
         :node="node"
