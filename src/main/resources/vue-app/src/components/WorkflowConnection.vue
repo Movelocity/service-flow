@@ -1,31 +1,21 @@
 <template>
-  <svg
+  <g
     class="connection-container"
-    :style="{
-      position: 'absolute',
-      left: '0',
-      top: '0',
-      width: '100%',
-      height: '100%',
-      overflow: 'visible',
-      pointerEvents: 'none'
-    }"
+    :class="{ selected: isSelected }"
   >
     <path
       :class="['connection-line', { selected: isSelected }]"
-      :d="pathData"
+      :d="path"
       :style="{
         stroke: getConnectionColor(sourceNode.type),
         strokeWidth: isSelected ? '3' : '2'
       }"
       @click.stop="onConnectionClick"
-      @mouseover="isHovered = true"
-      @mouseleave="isHovered = false"
-      style="pointer-events: all;"
     />
 
+    <!-- 箭头标记 -->
     <marker
-      :id="'arrow-' + connection.id"
+      :id="'arrow-' + sourceNode.id + '-' + condition"
       viewBox="0 0 10 10"
       refX="5"
       refY="5"
@@ -39,138 +29,149 @@
       />
     </marker>
 
-    <text
-      v-if="connection.condition"
-      :x="labelPosition.x"
-      :y="labelPosition.y"
-      :class="['connection-label', { selected: isSelected }]"
-      @click.stop="onConnectionClick"
-      style="pointer-events: all;"
-    >
-      {{ connection.condition }}
-    </text>
-
+    <!-- 条件标签 -->
     <g
-      v-if="isHovered || isSelected"
-      :transform="'translate(' + deleteButtonPosition.x + ',' + deleteButtonPosition.y + ')'"
-      class="delete-button"
-      @click.stop="onDeleteClick"
+      v-if="condition !== 'default'"
+      :transform="'translate(' + labelPosition.x + ',' + labelPosition.y + ')'"
     >
-      <circle r="8" fill="white" stroke="#dc3545" />
-      <text x="0" y="0" dy=".3em" fill="#dc3545">×</text>
+      <rect
+        :class="['connection-label', { selected: isSelected }]"
+        @click.stop="onConnectionClick"
+        x="-20"
+        y="-10"
+        width="40"
+        height="20"
+        rx="4"
+      />
+      <text
+        text-anchor="middle"
+        dominant-baseline="middle"
+      >
+        {{ condition }}
+      </text>
     </g>
-  </svg>
+  </g>
 </template>
 
-<script setup lang="ts">
-import { computed, ref } from 'vue';
-import type { Connection, Node, Position } from '../types/workflow';
-import { useWorkflowStore } from '../stores/workflow';
-import { generateBezierPath, calculateConnectionPoint } from '../utils/canvas';
+<script lang="ts">
+import { computed, defineComponent, type PropType } from 'vue';
+import type { Node } from '../types/workflow';
 import { NodeType } from '../types/workflow';
+import { generateBezierPath, calculateConnectionPoint } from '../utils/canvas';
+import { useWorkflowStore } from '../stores/workflow';
 
-const props = defineProps<{
-  connection: Connection;
-  sourceNode: Node;
-  targetNode: Node;
-  isSelected: boolean;
-  scale: number;
-  canvasPosition: Position;
-}>();
+export default defineComponent({
+  name: 'WorkflowConnection',
 
-const store = useWorkflowStore();
-const isHovered = ref(false);
-
-function getConnectionColor(nodeType: NodeType): string {
-  switch (nodeType) {
-    case NodeType.START:
-      return 'var(--node-start)';
-    case NodeType.CONDITION:
-      return 'var(--node-condition)';
-    case NodeType.FUNCTION:
-      return 'var(--node-function)';
-    case NodeType.END:
-      return 'var(--node-end)';
-    default:
-      return 'var(--node-border)';
-  }
-}
-
-const startPoint = computed<Position>(() => {
-  const point = calculateConnectionPoint(
-    props.sourceNode.position,
-    200, // nodeWidth
-    80,  // nodeHeight
-    false // isInput
-  );
-  
-  return {
-    x: point.x,
-    y: point.y
-  };
-});
-
-const endPoint = computed<Position>(() => {
-  const point = calculateConnectionPoint(
-    props.targetNode.position,
-    200, // nodeWidth
-    80,  // nodeHeight
-    true  // isInput
-  );
-  
-  return {
-    x: point.x,
-    y: point.y
-  };
-});
-
-const pathData = computed(() => {
-  return generateBezierPath(
-    {
-      x: startPoint.value.x,
-      y: startPoint.value.y
+  props: {
+    sourceNode: {
+      type: Object as PropType<Node>,
+      required: true
     },
-    {
-      x: endPoint.value.x,
-      y: endPoint.value.y
+    targetNode: {
+      type: Object as PropType<Node>,
+      required: true
+    },
+    condition: {
+      type: String,
+      required: true
+    },
+    isSelected: {
+      type: Boolean,
+      default: false
     }
-  );
+  },
+
+  setup(props) {
+    const store = useWorkflowStore();
+
+    // 计算连接路径
+    const path = computed(() => {
+      const sourcePoint = calculateConnectionPoint(
+        props.sourceNode.position,
+        100, // 节点宽度
+        60,  // 节点高度
+        false // 输出点
+      );
+
+      const targetPoint = calculateConnectionPoint(
+        props.targetNode.position,
+        100, // 节点宽度
+        60,  // 节点高度
+        true  // 输入点
+      );
+
+      return generateBezierPath(sourcePoint, targetPoint);
+    });
+
+    // 计算标签位置
+    const labelPosition = computed(() => {
+      const sourcePoint = calculateConnectionPoint(
+        props.sourceNode.position,
+        100,
+        60,
+        false
+      );
+
+      const targetPoint = calculateConnectionPoint(
+        props.targetNode.position,
+        100,
+        60,
+        true
+      );
+
+      return {
+        x: (sourcePoint.x + targetPoint.x) / 2,
+        y: (sourcePoint.y + targetPoint.y) / 2
+      };
+    });
+
+    // 获取连接颜色
+    function getConnectionColor(nodeType: NodeType): string {
+      switch (nodeType) {
+        case NodeType.START:
+          return '#4CAF50';
+        case NodeType.FUNCTION:
+          return '#2196F3';
+        case NodeType.CONDITION:
+          return '#FF9800';
+        case NodeType.END:
+          return '#F44336';
+        default:
+          return '#757575';
+      }
+    }
+
+    // 点击连接线
+    function onConnectionClick() {
+      store.selectConnection(props.sourceNode.id, props.condition);
+    }
+
+    // 删除连接
+    function deleteConnection() {
+      store.deleteConnection(props.sourceNode.id, props.condition);
+    }
+
+    return {
+      path,
+      labelPosition,
+      getConnectionColor,
+      onConnectionClick,
+      deleteConnection
+    };
+  }
 });
-
-const labelPosition = computed(() => {
-  return {
-    x: (startPoint.value.x + endPoint.value.x) / 2,
-    y: (startPoint.value.y + endPoint.value.y) / 2 - 10
-  };
-});
-
-const deleteButtonPosition = computed(() => {
-  return {
-    x: (startPoint.value.x + endPoint.value.x) / 2,
-    y: (startPoint.value.y + endPoint.value.y) / 2 + 10
-  };
-});
-
-function onConnectionClick() {
-  store.selectConnection(props.connection.id);
-}
-
-function onDeleteClick() {
-  store.deleteConnection(props.connection.id);
-}
 </script>
 
 <style scoped>
 .connection-container {
-  pointer-events: none;
-  z-index: 1;
+  pointer-events: all;
+  cursor: pointer;
 }
 
 .connection-line {
   fill: none;
-  stroke-linecap: round;
-  pointer-events: stroke;
-  cursor: pointer;
+  stroke-width: 2;
   transition: stroke-width 0.2s;
 }
 
@@ -180,40 +181,21 @@ function onDeleteClick() {
 
 .connection-line.selected {
   stroke-width: 3;
-  filter: drop-shadow(0 0 3px rgba(0, 123, 255, 0.5));
 }
 
 .connection-label {
-  font-size: 12px;
-  fill: var(--text-color);
-  text-anchor: middle;
-  cursor: pointer;
-  user-select: none;
-  pointer-events: all;
+  fill: white;
+  stroke: #666;
+  stroke-width: 1;
+  transition: stroke-width 0.2s;
 }
 
 .connection-label:hover {
-  fill: #0056b3;
+  stroke-width: 2;
 }
 
 .connection-label.selected {
-  font-weight: bold;
-}
-
-.delete-button {
-  cursor: pointer;
-  pointer-events: all;
-}
-
-.delete-button circle {
-  fill: var(--card-bg);
-  stroke: var(--node-end);
-}
-
-.delete-button text {
-  font-size: 16px;
-  text-anchor: middle;
-  fill: var(--node-end);
-  user-select: none;
+  stroke-width: 2;
+  stroke: #1976D2;
 }
 </style> 

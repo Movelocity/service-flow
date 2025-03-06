@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
-import type { Node, Connection, Workflow, Position, EditorState } from '../types/workflow';
+import type { Node, Workflow, Position, EditorState } from '../types/workflow';
 import { NodeType } from '../types/workflow';
 import { WorkflowApi } from '../services/workflowApi';
 
@@ -8,9 +8,7 @@ const workflowApi = new WorkflowApi();
 
 interface WorkflowState {
   currentWorkflow: Workflow | null;
-  editorState: EditorState & {
-    selectedConnectionId: string | null;
-  };
+  editorState: EditorState;
   history: {
     past: Workflow[];
     future: Workflow[];
@@ -18,19 +16,21 @@ interface WorkflowState {
   isDirty: boolean;
 }
 
+const defaultEditorState: EditorState = {
+  selectedNodeId: null,
+  selectedCondition: null,
+  isEditorPanelOpen: false,
+  canvasState: {
+    scale: 1,
+    position: { x: 0, y: 0 },
+    isDragging: false
+  }
+};
+
 export const useWorkflowStore = defineStore('workflow', {
   state: (): WorkflowState => ({
     currentWorkflow: null,
-    editorState: {
-      selectedNodeId: null,
-      selectedConnectionId: null,
-      isEditorPanelOpen: false,
-      canvasState: {
-        scale: 1,
-        position: { x: 0, y: 0 },
-        isDragging: false
-      }
-    },
+    editorState: { ...defaultEditorState },
     history: {
       past: [],
       future: []
@@ -44,32 +44,38 @@ export const useWorkflowStore = defineStore('workflow', {
       return state.currentWorkflow.nodes.find(node => node.id === state.editorState.selectedNodeId) || null;
     },
 
-    selectedConnection: (state): Connection | null => {
-      if (!state.currentWorkflow || !state.editorState.selectedConnectionId) return null;
-      return state.currentWorkflow.connections.find(conn => conn.id === state.editorState.selectedConnectionId) || null;
+    // selectedConnection: (state): Connection | null => {
+    //   if (!state.currentWorkflow || !state.editorState.selectedConnectionId) return null;
+    //   return state.currentWorkflow.connections.find(conn => conn.id === state.editorState.selectedConnectionId) || null;
+    // },
+
+    // nodeConnections: (state) => (nodeId: string): Connection[] => {
+    //   if (!state.currentWorkflow?.connections) return [];
+    //   return state.currentWorkflow.connections.filter(
+    //     conn => conn.sourceNodeId === nodeId || conn.targetNodeId === nodeId
+    //   );
+    // },
+
+    // 获取节点的所有输入连接
+    nodeInputConnections: (state) => (nodeId: string): Array<{ sourceId: string; condition: string }> => {
+      if (!state.currentWorkflow?.nodes) return [];
+      return state.currentWorkflow.nodes
+        .filter(node => Object.entries(node.nextNodes)
+          .some(([condition, targetId]) => targetId === nodeId))
+        .map(node => {
+          const condition = Object.entries(node.nextNodes)
+            .find(([_, targetId]) => targetId === nodeId)?.[0] || 'default';
+          return { sourceId: node.id, condition };
+        });
     },
 
-    nodeConnections: (state) => (nodeId: string): Connection[] => {
-      if (!state.currentWorkflow?.connections) return [];
-      return state.currentWorkflow.connections.filter(
-        conn => conn.sourceNodeId === nodeId || conn.targetNodeId === nodeId
-      );
-    },
-
-    // 获取节点的输入连接
-    nodeInputConnections: (state) => (nodeId: string): Connection[] => {
-      if (!state.currentWorkflow?.connections) return [];
-      return state.currentWorkflow.connections.filter(
-        conn => conn.targetNodeId === nodeId
-      );
-    },
-
-    // 获取节点的输出连接
-    nodeOutputConnections: (state) => (nodeId: string): Connection[] => {
-      if (!state.currentWorkflow?.connections) return [];
-      return state.currentWorkflow.connections.filter(
-        conn => conn.sourceNodeId === nodeId
-      );
+    // 获取节点的所有输出连接
+    nodeOutputConnections: (state) => (nodeId: string): Array<{ targetId: string; condition: string }> => {
+      if (!state.currentWorkflow?.nodes) return [];
+      const node = state.currentWorkflow.nodes.find(n => n.id === nodeId);
+      if (!node) return [];
+      return Object.entries(node.nextNodes)
+        .map(([condition, targetId]) => ({ targetId, condition }));
     }
   },
 
@@ -81,38 +87,19 @@ export const useWorkflowStore = defineStore('workflow', {
         name,
         description,
         nodes: [],
-        connections: []
+        // connections: []
       };
       this.saveToHistory();
     },
 
-    loadWorkflow(workflow: Workflow) {
-      // Convert nextNodes to connections if they exist
-      const connections = [...(workflow.connections || [])];
-      workflow.nodes.forEach(node => {
-        if (node.nextNodes) {
-          Object.entries(node.nextNodes).forEach(([condition, targetNodeId]) => {
-            if (!connections.some(conn => 
-              conn.sourceNodeId === node.id && 
-              conn.targetNodeId === targetNodeId
-            )) {
-              connections.push({
-                id: `conn_${Date.now()}_${node.id}_${targetNodeId}`,
-                sourceNodeId: node.id,
-                targetNodeId: targetNodeId,
-                condition: condition === 'default' ? undefined : condition
-              });
-            }
-          });
-          // Remove the nextNodes as they are now converted to connections
-          delete node.nextNodes;
-        }
-      });
+    async loadWorkflow(id: string) {
+      const workflow = await workflowApi.getWorkflow(id);
+      this.updateWorkflow(workflow);
+    },
 
-      this.currentWorkflow = {
-        ...workflow,
-        connections
-      };
+    updateWorkflow(workflow: Workflow) {
+      this.currentWorkflow = workflow;
+      this.editorState = { ...defaultEditorState };
       this.history.past = [];
       this.history.future = [];
       this.isDirty = false;
@@ -122,8 +109,9 @@ export const useWorkflowStore = defineStore('workflow', {
     // 节点操作
     selectNode(nodeId: string | null) {
       this.editorState.selectedNodeId = nodeId;
+      this.editorState.selectedCondition = null;
       if (nodeId) {
-        this.editorState.selectedConnectionId = null;
+        this.editorState.isEditorPanelOpen = true;
       }
     },
 
@@ -137,7 +125,8 @@ export const useWorkflowStore = defineStore('workflow', {
         type,
         name: name || `${type} Node`,
         position,
-        parameters: {}
+        parameters: {},
+        nextNodes: {}
       };
 
       this.currentWorkflow!.nodes.push(node);
@@ -159,72 +148,75 @@ export const useWorkflowStore = defineStore('workflow', {
     deleteNode(nodeId: string) {
       if (!this.currentWorkflow) return;
       
-      this.currentWorkflow.nodes = this.currentWorkflow.nodes.filter(n => n.id !== nodeId);
-      this.currentWorkflow.connections = this.currentWorkflow.connections.filter(
-        c => c.sourceNodeId !== nodeId && c.targetNodeId !== nodeId
+      // 删除所有指向该节点的连接
+      this.currentWorkflow.nodes.forEach(node => {
+        const updatedNextNodes = { ...node.nextNodes };
+        Object.entries(node.nextNodes).forEach(([condition, targetId]) => {
+          if (targetId === nodeId) {
+            delete updatedNextNodes[condition];
+          }
+        });
+        node.nextNodes = updatedNextNodes;
+      });
+
+      // 删除节点
+      this.currentWorkflow.nodes = this.currentWorkflow.nodes.filter(
+        node => node.id !== nodeId
       );
-      
+
       if (this.editorState.selectedNodeId === nodeId) {
         this.editorState.selectedNodeId = null;
-        this.editorState.isEditorPanelOpen = false;
+        this.editorState.selectedCondition = null;
       }
       
       this.saveToHistory();
     },
 
     // 连接操作
-    selectConnection(connectionId: string | null) {
-      this.editorState.selectedConnectionId = connectionId;
-      if (connectionId) {
-        this.editorState.selectedNodeId = null;
-      }
+    selectConnection(sourceNodeId: string, condition: string) {
+      this.editorState.selectedNodeId = sourceNodeId;
+      this.editorState.selectedCondition = condition;
     },
 
-    addConnection(sourceNodeId: string, targetNodeId: string, condition?: string) {
+    addConnection(sourceNodeId: string, targetNodeId: string, condition: string = 'default') {
       if (!this.currentWorkflow) return;
       
-      // 防止自我连接和重复连接
-      if (sourceNodeId === targetNodeId) return;
-      if (this.currentWorkflow.connections.some(
-        c => c.sourceNodeId === sourceNodeId && c.targetNodeId === targetNodeId
-      )) return;
+      const sourceNode = this.currentWorkflow.nodes.find(n => n.id === sourceNodeId);
+      if (!sourceNode) return;
 
-      const newConnection: Connection = {
-        id: `conn_${Date.now()}`,
-        sourceNodeId,
-        targetNodeId,
-        condition
+      // 检查是否已存在相同条件的连接
+      if (sourceNode.nextNodes[condition]) return;
+
+      // 添加连接
+      sourceNode.nextNodes = {
+        ...sourceNode.nextNodes,
+        [condition]: targetNodeId
       };
-
-      this.currentWorkflow.connections.push(newConnection);
-      this.selectConnection(newConnection.id);
-      this.saveToHistory();
-      return newConnection;
     },
 
-    deleteConnection(connectionId: string) {
-      if (!this.currentWorkflow) return;
-      
-      const index = this.currentWorkflow.connections.findIndex(conn => conn.id === connectionId);
-      if (index !== -1) {
-        this.currentWorkflow.connections.splice(index, 1);
-      }
-
-      if (this.editorState.selectedConnectionId === connectionId) {
-        this.editorState.selectedConnectionId = null;
-      }
-      
-      this.saveToHistory();
-    },
-
-    updateConnection(connectionId: string, updates: Partial<Connection>) {
+    deleteConnection(sourceNodeId: string, condition: string) {
       if (!this.currentWorkflow) return;
 
-      const connection = this.currentWorkflow.connections.find(conn => conn.id === connectionId);
-      if (connection) {
-        Object.assign(connection, updates);
+      const sourceNode = this.currentWorkflow.nodes.find(n => n.id === sourceNodeId);
+      if (!sourceNode) return;
+
+      const { [condition]: _, ...remainingNextNodes } = sourceNode.nextNodes;
+      sourceNode.nextNodes = remainingNextNodes;
+
+      if (this.editorState.selectedNodeId === sourceNodeId && 
+          this.editorState.selectedCondition === condition) {
+        this.editorState.selectedCondition = null;
       }
     },
+
+    // updateConnection(connectionId: string, updates: Partial<Connection>) {
+    //   if (!this.currentWorkflow) return;
+
+    //   const connection = this.currentWorkflow.connections.find(conn => conn.id === connectionId);
+    //   if (connection) {
+    //     Object.assign(connection, updates);
+    //   }
+    // },
 
     // 历史记录操作
     saveToHistory() {
@@ -281,32 +273,32 @@ export const useWorkflowStore = defineStore('workflow', {
         // Create a copy of the workflow for saving
         const workflowToSave = { ...this.currentWorkflow };
         
-        // Convert connections back to nextNodes format for nodes that need it
-        workflowToSave.nodes = workflowToSave.nodes.map(node => {
-          const nodeOutputs = this.nodeOutputConnections(node.id);
-          if (nodeOutputs.length > 0) {
-            const nextNodes: Record<string, string> = {};
-            nodeOutputs.forEach(conn => {
-              nextNodes[conn.condition || 'default'] = conn.targetNodeId;
-            });
-            return {
-              ...node,
-              nextNodes
-            };
-          }
-          return node;
-        });
-
         // Save the workflow
         const savedWorkflow = await workflowApi.saveWorkflow(workflowToSave);
         
         // Reload the workflow to ensure consistency
-        this.loadWorkflow(savedWorkflow);
+        this.updateWorkflow(savedWorkflow);
         this.isDirty = false;
         return savedWorkflow;
       } catch (error) {
         console.error('Failed to save workflow:', error);
         throw error;
+      }
+    },
+
+    updateNodePosition(nodeId: string, position: Position) {
+      if (!this.currentWorkflow) return;
+      const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
+      if (node) {
+        node.position = position;
+      }
+    },
+
+    updateNodeParameters(nodeId: string, parameters: Record<string, any>) {
+      if (!this.currentWorkflow) return;
+      const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
+      if (node) {
+        node.parameters = parameters;
       }
     }
   }

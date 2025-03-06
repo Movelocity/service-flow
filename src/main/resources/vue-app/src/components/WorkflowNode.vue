@@ -54,7 +54,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'startConnection', nodeId: string, isOutput: boolean): void;
+  (e: 'startConnection', nodeId: string, isOutput: boolean, event: MouseEvent): void;
   (e: 'endConnection', nodeId: string, isOutput: boolean): void;
 }>();
 
@@ -114,19 +114,19 @@ function onNodeClick() {
 }
 
 // 连接点事件处理
-function onOutputPointMouseDown() {
-  emit('startConnection', props.node.id, true);
+function onOutputPointMouseDown(e: MouseEvent) {
+  emit('startConnection', props.node.id, true, e);
 }
 
-function onOutputPointMouseUp() {
+function onOutputPointMouseUp(e: MouseEvent) {
   emit('endConnection', props.node.id, true);
 }
 
-function onInputPointMouseDown() {
-  emit('startConnection', props.node.id, false);
+function onInputPointMouseDown(e: MouseEvent) {
+  emit('startConnection', props.node.id, false, e);
 }
 
-function onInputPointMouseUp() {
+function onInputPointMouseUp(e: MouseEvent) {
   emit('endConnection', props.node.id, false);
 }
 </script>

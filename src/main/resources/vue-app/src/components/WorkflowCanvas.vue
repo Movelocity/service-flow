@@ -1,38 +1,64 @@
 <template>
   <div
-    ref="canvasRef"
+    ref="canvasContainer"
     class="workflow-canvas"
-    @mousedown="onCanvasMouseDown"
-    @wheel="onCanvasWheel"
-    @contextmenu.prevent="onContextMenu"
+    @wheel="onWheel"
+    @mousedown="startPan"
+    @mousemove="onMouseMove"
+    @mouseup="endPan"
+    @mouseleave="endPan"
   >
-    <!-- 网格背景 -->
-    <div
-      class="canvas-grid"
+    <svg
+      class="workflow-svg"
       :style="{
-        transform: `translate(${canvasState.position.x}px, ${canvasState.position.y}px) scale(${canvasState.scale})`,
-        backgroundSize: `${gridSize * canvasState.scale}px ${gridSize * canvasState.scale}px`
-      }"
-    />
-
-    <!-- 节点和连接的容器 -->
-    <div
-      class="canvas-content"
-      :style="{
-        transform: `translate(${canvasState.position.x}px, ${canvasState.position.y}px) scale(${canvasState.scale})`,
-        transformOrigin: '0 0'
+        transform: 'scale(' + scale + ') translate(' + position.x + 'px,' + position.y + 'px)'
       }"
     >
+      <defs>
+        <pattern
+          id="grid"
+          width="40"
+          height="40"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M 40 0 L 0 0 0 40"
+            fill="none"
+            stroke="#e0e0e0"
+            stroke-width="1"
+          />
+        </pattern>
+      </defs>
+
+      <!-- 网格背景 -->
+      <rect
+        width="100%"
+        height="100%"
+        fill="url(#grid)"
+      />
+
       <!-- 连接线 -->
-      <WorkflowConnection
-        v-for="conn in workflow?.connections"
-        :key="conn.id"
-        :connection="conn"
-        :source-node="getNode(conn.sourceNodeId)!"
-        :target-node="getNode(conn.targetNodeId)!"
-        :is-selected="conn.id === selectedConnectionId"
-        :scale="canvasState.scale"
-        :canvas-position="canvasState.position"
+      <template v-for="node in workflow?.nodes" :key="node.id">
+        <template v-for="[condition, targetId] in Object.entries(node.nextNodes)" :key="node.id + '-' + targetId">
+          <WorkflowConnection
+            :source-node="node"
+            :target-node="getNode(targetId)"
+            :condition="condition"
+            :is-selected="isConnectionSelected(node.id, condition)"
+          />
+        </template>
+      </template>
+
+      <!-- 临时连接线 -->
+      <path
+        v-if="tempConnection.isCreating"
+        class="temp-connection"
+        :d="tempConnectionPath"
+        :style="{
+          stroke: tempConnectionColor,
+          strokeWidth: '2',
+          strokeDasharray: '5,5'
+        }"
       />
 
       <!-- 节点 -->
@@ -41,326 +67,229 @@
         :key="node.id"
         :node="node"
         :is-selected="node.id === selectedNodeId"
+        @node-move="updateNodePosition"
         @start-connection="startConnection"
         @end-connection="endConnection"
+        @node-click="selectNode"
       />
-
-      <!-- 正在创建的连接线 -->
-      <svg
-        v-if="tempConnection.isCreating"
-        class="temp-connection"
-        :style="{
-          position: 'absolute',
-          left: '0',
-          top: '0',
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          overflow: 'visible'
-        }"
-      >
-        <path
-          class="connection-line"
-          :d="tempConnectionPath"
-          :style="{
-            stroke: tempConnectionColor,
-            strokeWidth: '2',
-            fill: 'none'
-          }"
-        />
-      </svg>
-    </div>
-
-    <!-- 右键菜单 -->
-    <div
-      v-if="contextMenu.isVisible"
-      class="context-menu"
-      :style="{
-        left: contextMenu.position.x + 'px',
-        top: contextMenu.position.y + 'px'
-      }"
-    >
-      <div
-        v-for="nodeType in availableNodeTypes"
-        :key="nodeType"
-        class="context-menu-item"
-        @click="addNode(nodeType)"
-      >
-        添加{{ getNodeTypeName(nodeType) }}节点
-      </div>
-    </div>
+    </svg>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useWorkflowStore } from '../stores/workflow';
-import type { Node } from '../types/workflow';
+<script lang="ts">
+import { computed, defineComponent, onMounted, ref } from 'vue';
+import type { Node, Position } from '../types/workflow';
 import { NodeType } from '../types/workflow';
+import { useWorkflowStore } from '../stores/workflow';
 import WorkflowNode from './WorkflowNode.vue';
 import WorkflowConnection from './WorkflowConnection.vue';
-import { generateBezierPath, reverseTransform } from '../utils/canvas';
+import { generateBezierPath } from '../utils/canvas';
 
-const store = useWorkflowStore();
-const canvasRef = ref<HTMLDivElement>();
-const gridSize = 20;
+export default defineComponent({
+  name: 'WorkflowCanvas',
 
-// 从 store 获取状态
-const workflow = computed(() => store.currentWorkflow);
-const canvasState = computed(() => store.editorState.canvasState);
-const selectedNodeId = computed(() => store.editorState.selectedNodeId);
-const selectedConnectionId = computed(() => store.editorState.selectedConnectionId);
+  components: {
+    WorkflowNode,
+    WorkflowConnection
+  },
 
-// 临时连接状态
-const tempConnection = ref({
-  isCreating: false,
-  sourceNodeId: '',
-  sourcePosition: { x: 0, y: 0 },
-  currentPosition: { x: 0, y: 0 }
-});
+  setup() {
+    const store = useWorkflowStore();
+    const canvasContainer = ref<HTMLElement | null>(null);
 
-// 右键菜单状态
-const contextMenu = ref({
-  isVisible: false,
-  position: { x: 0, y: 0 }
-});
+    const workflow = computed(() => store.currentWorkflow);
+    const selectedNodeId = computed(() => store.editorState.selectedNodeId);
+    const selectedCondition = computed(() => store.editorState.selectedCondition);
+    const scale = computed(() => store.editorState.canvasState.scale);
+    const position = computed(() => store.editorState.canvasState.position);
 
-// 可用的节点类型
-const availableNodeTypes = [
-  NodeType.START,
-  NodeType.FUNCTION,
-  NodeType.CONDITION,
-  NodeType.END
-];
+    const tempConnection = ref({
+      isCreating: false,
+      sourceNodeId: '',
+      sourcePosition: { x: 0, y: 0 },
+      currentPosition: { x: 0, y: 0 }
+    });
 
-// 获取节点类型名称
-function getNodeTypeName(type: NodeType): string {
-  switch (type) {
-    case NodeType.START:
-      return '开始';
-    case NodeType.FUNCTION:
-      return '功能';
-    case NodeType.CONDITION:
-      return '条件';
-    case NodeType.END:
-      return '结束';
-  }
-}
+    // 获取节点
+    function getNode(id: string): Node {
+      return workflow.value?.nodes.find(n => n.id === id) as Node;
+    }
 
-// 获取节点
-function getNode(id: string): Node | undefined {
-  return workflow.value?.nodes.find(node => node.id === id);
-}
+    // 检查连接是否被选中
+    function isConnectionSelected(sourceNodeId: string, condition: string): boolean {
+      return selectedNodeId.value === sourceNodeId && selectedCondition.value === condition;
+    }
 
-// 获取临时连接线的颜色
-const tempConnectionColor = computed(() => {
-  const sourceNode = getNode(tempConnection.value.sourceNodeId);
-  if (!sourceNode) return '#6c757d';
+    // 获取临时连接线颜色
+    const tempConnectionColor = computed(() => {
+      const sourceNode = getNode(tempConnection.value.sourceNodeId);
+      if (!sourceNode) return '#757575';
 
-  switch (sourceNode.type) {
-    case NodeType.START:
-      return '#28a745';
-    case NodeType.CONDITION:
-      return '#ffc107';
-    case NodeType.FUNCTION:
-      return '#17a2b8';
-    case NodeType.END:
-      return '#dc3545';
-    default:
-      return '#6c757d';
-  }
-});
+      switch (sourceNode.type) {
+        case NodeType.START:
+          return '#4CAF50';
+        case NodeType.FUNCTION:
+          return '#2196F3';
+        case NodeType.CONDITION:
+          return '#FF9800';
+        case NodeType.END:
+          return '#F44336';
+        default:
+          return '#757575';
+      }
+    });
 
-// 画布事件处理
-function onCanvasMouseDown(e: MouseEvent) {
-  if (e.button === 0) { // 左键
-    // 清除选中状态
-    store.setSelectedNode(null);
-    store.selectConnection(null);
+    // 选择节点
+    function selectNode(nodeId: string) {
+      store.selectNode(nodeId);
+    }
 
-    // 开始画布拖动
-    if (!tempConnection.value.isCreating) {
-      store.updateCanvasState({ isDragging: true });
-      const startX = e.clientX - canvasState.value.position.x;
-      const startY = e.clientY - canvasState.value.position.y;
+    // 更新节点位置
+    function updateNodePosition(nodeId: string, position: Position) {
+      store.updateNodePosition(nodeId, position);
+    }
 
-      function onMouseMove(e: MouseEvent) {
+    // 画布缩放
+    function onWheel(event: WheelEvent) {
+      event.preventDefault();
+      const delta = event.deltaY > 0 ? -0.1 : 0.1;
+      const newScale = Math.max(0.5, Math.min(2, scale.value + delta));
+      
+      store.updateCanvasState({
+        scale: newScale
+      });
+    }
+
+    // 画布平移
+    let isPanning = false;
+    let lastPosition = { x: 0, y: 0 };
+
+    function startPan(event: MouseEvent) {
+      if (event.target === canvasContainer.value) {
+        isPanning = true;
+        lastPosition = { x: event.clientX, y: event.clientY };
+      }
+    }
+
+    function onMouseMove(event: MouseEvent) {
+      if (isPanning) {
+        const dx = (event.clientX - lastPosition.x) / scale.value;
+        const dy = (event.clientY - lastPosition.y) / scale.value;
+        
         store.updateCanvasState({
           position: {
-            x: e.clientX - startX,
-            y: e.clientY - startY
+            x: position.value.x + dx,
+            y: position.value.y + dy
+          }
+        });
+
+        lastPosition = { x: event.clientX, y: event.clientY };
+      }
+
+      if (tempConnection.value.isCreating) {
+        const rect = canvasContainer.value?.getBoundingClientRect();
+        if (rect) {
+          tempConnection.value.currentPosition = {
+            x: (event.clientX - rect.left) / scale.value - position.value.x,
+            y: (event.clientY - rect.top) / scale.value - position.value.y
+          };
+        }
+      }
+    }
+
+    function endPan() {
+      isPanning = false;
+    }
+
+    // 连接线操作
+    function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent) {
+      if (!isOutput) return;
+
+      const sourceNode = getNode(nodeId);
+      if (!sourceNode) return;
+
+      const rect = canvasContainer.value?.getBoundingClientRect();
+      if (!rect) return;
+
+      tempConnection.value = {
+        isCreating: true,
+        sourceNodeId: nodeId,
+        sourcePosition: {
+          x: sourceNode.position.x + 100, // 节点宽度
+          y: sourceNode.position.y + 30   // 节点高度的一半
+        },
+        currentPosition: {
+          x: (event.clientX - rect.left) / scale.value - position.value.x,
+          y: (event.clientY - rect.top) / scale.value - position.value.y
+        }
+      };
+    }
+
+    function endConnection(nodeId: string, isOutput: boolean) {
+      if (isOutput || !tempConnection.value.isCreating) return;
+
+      if (tempConnection.value.sourceNodeId !== nodeId) {
+        const sourceNode = getNode(tempConnection.value.sourceNodeId);
+        if (!sourceNode) return;
+
+        // 根据节点类型决定连接条件
+        if (sourceNode.type === NodeType.CONDITION) {
+          if (!Object.keys(sourceNode.nextNodes).includes('true')) {
+            store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'true');
+          } else if (!Object.keys(sourceNode.nextNodes).includes('false')) {
+            store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'false');
+          }
+        } else {
+          store.addConnection(tempConnection.value.sourceNodeId, nodeId);
+        }
+      }
+
+      tempConnection.value.isCreating = false;
+    }
+
+    // 计算临时连接线路径
+    const tempConnectionPath = computed(() => {
+      if (!tempConnection.value.isCreating) return '';
+
+      return generateBezierPath(
+        tempConnection.value.sourcePosition,
+        tempConnection.value.currentPosition
+      );
+    });
+
+    onMounted(() => {
+      if (canvasContainer.value) {
+        const rect = canvasContainer.value.getBoundingClientRect();
+        store.updateCanvasState({
+          position: {
+            x: rect.width / 2,
+            y: rect.height / 2
           }
         });
       }
-
-      function onMouseUp() {
-        store.updateCanvasState({ isDragging: false });
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      }
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    }
-  }
-}
-
-// 画布缩放
-function onCanvasWheel(e: WheelEvent) {
-  e.preventDefault();
-  const delta = e.deltaY > 0 ? 0.9 : 1.1;
-  const newScale = Math.max(0.1, Math.min(2, canvasState.value.scale * delta));
-
-  // 计算以鼠标位置为中心的缩放
-  const rect = canvasRef.value?.getBoundingClientRect();
-  if (rect) {
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    const oldX = (mouseX - canvasState.value.position.x) / canvasState.value.scale;
-    const oldY = (mouseY - canvasState.value.position.y) / canvasState.value.scale;
-
-    const newX = mouseX - oldX * newScale;
-    const newY = mouseY - oldY * newScale;
-
-    store.updateCanvasState({
-      scale: newScale,
-      position: { x: newX, y: newY }
     });
-  }
-}
 
-// 右键菜单
-function onContextMenu(e: MouseEvent) {
-  e.preventDefault();
-  const rect = canvasRef.value?.getBoundingClientRect();
-  if (!rect) return;
-
-  // const position = reverseTransform(
-  //   {
-  //     x: e.clientX - rect.left,
-  //     y: e.clientY - rect.top
-  //   },
-  //   canvasState.value.scale,
-  //   canvasState.value.position
-  // );
-
-  contextMenu.value = {
-    isVisible: true,
-    position: { x: e.clientX, y: e.clientY }
-  };
-
-  function hideMenu() {
-    contextMenu.value.isVisible = false;
-    document.removeEventListener('click', hideMenu);
-  }
-
-  document.addEventListener('click', hideMenu);
-}
-
-// 添加节点
-function addNode(type: NodeType) {
-  if (!workflow.value) return;
-
-  const rect = canvasRef.value?.getBoundingClientRect();
-  if (!rect) return;
-
-  const position = reverseTransform(
-    {
-      x: contextMenu.value.position.x - rect.left,
-      y: contextMenu.value.position.y - rect.top
-    },
-    canvasState.value.scale,
-    canvasState.value.position
-  );
-
-  store.addNode(type, position, getNodeTypeName(type));
-
-  contextMenu.value.isVisible = false;
-}
-
-// 连接相关
-function startConnection(nodeId: string, isOutput: boolean) {
-  if (!isOutput) return;
-
-  const sourceNode = getNode(nodeId);
-  if (!sourceNode) return;
-
-  const sourcePos = {
-    x: sourceNode.position.x,
-    y: sourceNode.position.y
-  };
-
-  tempConnection.value = {
-    isCreating: true,
-    sourceNodeId: nodeId,
-    sourcePosition: {
-      x: sourcePos.x + 200, // nodeWidth
-      y: sourcePos.y + 40   // nodeHeight / 2
-    },
-    currentPosition: {
-      x: sourcePos.x + 200,
-      y: sourcePos.y + 40
-    }
-  };
-
-  function onMouseMove(e: MouseEvent) {
-    const rect = canvasRef.value?.getBoundingClientRect();
-    if (!rect) return;
-
-    const pos = reverseTransform(
-      {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      },
-      canvasState.value.scale,
-      canvasState.value.position
-    );
-
-    tempConnection.value.currentPosition = {
-      x: pos.x,
-      y: pos.y
+    return {
+      canvasContainer,
+      workflow,
+      selectedNodeId,
+      scale,
+      position,
+      tempConnection,
+      tempConnectionPath,
+      tempConnectionColor,
+      getNode,
+      isConnectionSelected,
+      selectNode,
+      updateNodePosition,
+      onWheel,
+      startPan,
+      onMouseMove,
+      endPan,
+      startConnection,
+      endConnection
     };
   }
-
-  function onMouseUp() {
-    tempConnection.value.isCreating = false;
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-  }
-
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-}
-
-function endConnection(nodeId: string, isOutput: boolean) {
-  if (isOutput || !tempConnection.value.isCreating) return;
-
-  if (tempConnection.value.sourceNodeId !== nodeId) {
-    const sourceNode = getNode(tempConnection.value.sourceNodeId);
-    if (sourceNode?.type === NodeType.CONDITION) {
-      // 对于条件节点，添加 true/false 分支
-      if (!store.nodeConnections(tempConnection.value.sourceNodeId).some(conn => conn.condition === 'true')) {
-        store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'true');
-      } else if (!store.nodeConnections(tempConnection.value.sourceNodeId).some(conn => conn.condition === 'false')) {
-        store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'false');
-      }
-    } else {
-      store.addConnection(tempConnection.value.sourceNodeId, nodeId);
-    }
-  }
-
-  tempConnection.value.isCreating = false;
-}
-
-// 临时连接线路径
-const tempConnectionPath = computed(() => {
-  if (!tempConnection.value.isCreating) return '';
-
-  return generateBezierPath(
-    tempConnection.value.sourcePosition,
-    tempConnection.value.currentPosition
-  );
 });
 </script>
 
@@ -368,56 +297,19 @@ const tempConnectionPath = computed(() => {
 .workflow-canvas {
   width: 100%;
   height: 100%;
-  position: relative;
+  background: var(--background-color);
   overflow: hidden;
-  background-color: var(--background-color);
+  position: relative;
 }
 
-.canvas-grid {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  transform-origin: 0 0;
-}
-
-.canvas-content {
-  position: absolute;
+.workflow-svg {
   width: 100%;
   height: 100%;
   transform-origin: 0 0;
-}
-
-.context-menu {
-  position: absolute;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 4px 0;
-  box-shadow: var(--card-shadow);
-  z-index: 1000;
-}
-
-.context-menu-item {
-  padding: 8px 16px;
-  cursor: pointer;
-  user-select: none;
-  color: var(--text-color);
-}
-
-.context-menu-item:hover {
-  background-color: var(--node-border);
-  color: #fff;
 }
 
 .temp-connection {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
+  fill: none;
   pointer-events: none;
 }
 </style> 

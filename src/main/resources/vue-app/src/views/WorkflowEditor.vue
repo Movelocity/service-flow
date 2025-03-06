@@ -232,10 +232,12 @@ onBeforeUnmount(() => {
 async function loadWorkflow(id: string) {
   try {
     isLoading.value = true;
-    const workflow = await workflowApi.getWorkflow(id);
-    store.loadWorkflow(workflow);
-    workflowName.value = workflow.name;
-    workflowDescription.value = workflow.description;
+    await store.loadWorkflow(id);
+    const workflow = store.currentWorkflow;
+    if (workflow) {
+      workflowName.value = workflow.name;
+      workflowDescription.value = workflow.description;
+    }
   } catch (error) {
     console.error('Failed to load workflow:', error);
     alert('加载工作流失败');

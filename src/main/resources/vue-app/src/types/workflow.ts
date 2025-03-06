@@ -52,17 +52,9 @@ export interface Node {
   name: string;
   position: Position;
   parameters: Record<string, any>;
-  nextNodes?: Record<string, string>;
-}
-
-/**
- * 连接接口
- */
-export interface Connection {
-  id: string;
-  sourceNodeId: string;
-  targetNodeId: string;
-  condition?: string; // 用于条件节点的分支条件
+  nextNodes: {
+    [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
+  };
 }
 
 /**
@@ -73,7 +65,6 @@ export interface Workflow {
   name: string;
   description: string;
   nodes: Node[];
-  connections: Connection[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -92,6 +83,7 @@ export interface CanvasState {
  */
 export interface EditorState {
   selectedNodeId: string | null;
+  selectedCondition: string | null; // 用于标识选中的连接条件
   isEditorPanelOpen: boolean;
   canvasState: CanvasState;
 }
@@ -100,26 +92,11 @@ export interface EditorState {
  * 将API工作流格式转换为Vue应用工作流格式
  */
 export function convertApiToAppWorkflow(apiWorkflow: ApiWorkflow): Workflow {
-  const nodes = apiWorkflow.nodes.map(({ nextNodes, ...node }) => node);
-  const connections: Connection[] = [];
-
-  apiWorkflow.nodes.forEach(node => {
-    Object.entries(node.nextNodes).forEach(([condition, targetNodeId]) => {
-      connections.push({
-        id: `${node.id}-${targetNodeId}`,
-        sourceNodeId: node.id,
-        targetNodeId,
-        condition: condition === 'default' ? undefined : condition
-      });
-    });
-  });
-
   return {
     id: apiWorkflow.id,
     name: apiWorkflow.name,
     description: apiWorkflow.description,
-    nodes,
-    connections
+    nodes: apiWorkflow.nodes
   };
 }
 
@@ -127,25 +104,11 @@ export function convertApiToAppWorkflow(apiWorkflow: ApiWorkflow): Workflow {
  * 将Vue应用工作流格式转换为API工作流格式
  */
 export function convertAppToApiWorkflow(workflow: Workflow): ApiWorkflow {
-  const nodes: ApiNode[] = workflow.nodes.map(node => ({
-    ...node,
-    nextNodes: {}
-  }));
-
-  // 构建nextNodes映射
-  workflow.connections.forEach(connection => {
-    const sourceNode = nodes.find(n => n.id === connection.sourceNodeId);
-    if (sourceNode) {
-      const condition = connection.condition || 'default';
-      sourceNode.nextNodes[condition] = connection.targetNodeId;
-    }
-  });
-
   return {
     id: workflow.id,
     name: workflow.name,
     description: workflow.description,
-    nodes,
+    nodes: workflow.nodes,
     startNodeId: workflow.nodes.find(n => n.type === NodeType.START)?.id || '',
     active: true
   };
