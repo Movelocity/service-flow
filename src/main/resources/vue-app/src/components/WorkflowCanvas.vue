@@ -370,7 +370,7 @@ const tempConnectionPath = computed(() => {
   height: 100%;
   position: relative;
   overflow: hidden;
-  background-color: #f8f9fa;
+  background-color: var(--background-color);
 }
 
 .canvas-grid {
@@ -392,11 +392,11 @@ const tempConnectionPath = computed(() => {
 
 .context-menu {
   position: absolute;
-  background: white;
-  border: 1px solid #dee2e6;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 4px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow);
   z-index: 1000;
 }
 
@@ -404,10 +404,12 @@ const tempConnectionPath = computed(() => {
   padding: 8px 16px;
   cursor: pointer;
   user-select: none;
+  color: var(--text-color);
 }
 
 .context-menu-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--node-border);
+  color: #fff;
 }
 
 .temp-connection {
@@ -417,9 +419,5 @@ const tempConnectionPath = computed(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-:root {
-  --grid-color: rgba(0, 0, 0, 0.1);
 }
 </style> 

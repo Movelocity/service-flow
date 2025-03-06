@@ -50,9 +50,9 @@
   position: relative;
   overflow: hidden;
   background-color: var(--background-color);
-  background-image: 
+  /* background-image: 
     linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); */
   background-size: var(--grid-size) var(--grid-size);
 }
 

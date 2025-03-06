@@ -140,6 +140,7 @@ function updateWorkflowInfo() {
 async function saveWorkflow() {
   try {
     await store.saveWorkflow();
+    store.isDirty = false;
   } catch (error) {
     console.error('Failed to save workflow:', error);
     alert('保存工作流失败');
@@ -250,13 +251,14 @@ async function loadWorkflow(id: string) {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--background-color);
 }
 
 .editor-toolbar {
   height: 60px;
   padding: 0 20px;
-  background: white;
-  border-bottom: 1px solid #dee2e6;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -280,6 +282,16 @@ async function loadWorkflow(id: string) {
 
 .workflow-info .form-control {
   width: auto;
+  background-color: var(--node-bg);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.workflow-info .form-control:focus {
+  background-color: var(--node-bg);
+  border-color: var(--node-selected);
+  color: var(--text-color);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .editor-main {
@@ -308,7 +320,8 @@ async function loadWorkflow(id: string) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--background-color);
+  opacity: 0.9;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -319,7 +332,7 @@ async function loadWorkflow(id: string) {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
+  border: 4px solid var(--border-color);
   border-top: 4px solid var(--node-selected);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -327,16 +340,17 @@ async function loadWorkflow(id: string) {
 
 .loading-text {
   margin-top: 1rem;
-  color: #6c757d;
+  color: var(--text-color);
 }
 
 .execution-status {
   display: inline-block;
   padding: 0.25rem 0.5rem;
-  background: #f8f9fa;
+  background: var(--node-bg);
+  border: 1px solid var(--border-color);
   border-radius: 0.25rem;
   font-size: 0.875rem;
-  color: #6c757d;
+  color: var(--text-color);
 }
 
 @keyframes spin {

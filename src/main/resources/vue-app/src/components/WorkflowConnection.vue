@@ -84,15 +84,15 @@ const isHovered = ref(false);
 function getConnectionColor(nodeType: NodeType): string {
   switch (nodeType) {
     case NodeType.START:
-      return '#28a745';
+      return 'var(--node-start)';
     case NodeType.CONDITION:
-      return '#ffc107';
+      return 'var(--node-condition)';
     case NodeType.FUNCTION:
-      return '#17a2b8';
+      return 'var(--node-function)';
     case NodeType.END:
-      return '#dc3545';
+      return 'var(--node-end)';
     default:
-      return '#6c757d';
+      return 'var(--node-border)';
   }
 }
 
@@ -185,7 +185,7 @@ function onDeleteClick() {
 
 .connection-label {
   font-size: 12px;
-  fill: #495057;
+  fill: var(--text-color);
   text-anchor: middle;
   cursor: pointer;
   user-select: none;
@@ -197,7 +197,6 @@ function onDeleteClick() {
 }
 
 .connection-label.selected {
-  fill: #0056b3;
   font-weight: bold;
 }
 
@@ -206,18 +205,15 @@ function onDeleteClick() {
   pointer-events: all;
 }
 
+.delete-button circle {
+  fill: var(--card-bg);
+  stroke: var(--node-end);
+}
+
 .delete-button text {
   font-size: 16px;
   text-anchor: middle;
-  font-weight: bold;
-  pointer-events: none;
-}
-
-.delete-button:hover circle {
-  fill: #dc3545;
-}
-
-.delete-button:hover text {
-  fill: white;
+  fill: var(--node-end);
+  user-select: none;
 }
 </style> 

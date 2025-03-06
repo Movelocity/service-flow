@@ -211,18 +211,39 @@ function onClose() {
 </script>
 
 <style scoped>
+.editor-panel {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 300px;
+  height: calc(100vh - 60px);
+  background: var(--card-bg);
+  border-left: 1px solid var(--border-color);
+  padding: 20px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+  color: var(--text-color);
+}
+
+.editor-panel.visible {
+  transform: translateX(0);
+}
+
 .editor-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .editor-title {
   margin: 0;
   font-size: 1.25rem;
+  color: var(--text-color);
 }
 
 .close-button {
@@ -232,16 +253,36 @@ function onClose() {
   line-height: 1;
   padding: 0;
   cursor: pointer;
-  color: #6c757d;
+  color: var(--text-color);
+  opacity: 0.7;
 }
 
 .close-button:hover {
-  color: #343a40;
+  opacity: 1;
 }
 
 .form-text {
   font-size: 0.875rem;
   margin-top: 0.25rem;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+.form-control {
+  background-color: var(--node-bg);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.form-control:focus {
+  background-color: var(--node-bg);
+  border-color: var(--node-selected);
+  color: var(--text-color);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-label {
+  color: var(--text-color);
 }
 
 .connections-list {
@@ -252,29 +293,30 @@ function onClose() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
-  background: #f8f9fa;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: var(--node-bg);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  margin-bottom: 0.5rem;
 }
 
 .connection-info {
-  font-size: 0.875rem;
+  color: var(--text-color);
 }
 
 .no-connections {
-  color: #6c757d;
-  font-size: 0.875rem;
-  padding: 0.5rem;
-  background: #f8f9fa;
-  border-radius: 4px;
+  padding: 8px;
+  color: var(--text-color);
+  opacity: 0.7;
   text-align: center;
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
 }
 
 .editor-actions {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--border-color);
 }
 
 .btn-sm {

@@ -132,23 +132,108 @@ function onInputPointMouseUp() {
 </script>
 
 <style scoped>
+.workflow-node {
+  position: absolute;
+  width: 200px;
+  min-height: 80px;
+  background: var(--node-bg);
+  border: 2px solid var(--node-border);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: move;
+  user-select: none;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  color: var(--text-color);
+}
+
+.workflow-node:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.workflow-node.selected {
+  border-color: var(--node-selected);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.workflow-node.start {
+  border-color: var(--node-start);
+}
+
+.workflow-node.end {
+  border-color: var(--node-end);
+}
+
+.workflow-node.condition {
+  border-color: var(--node-condition);
+}
+
+.workflow-node.function {
+  border-color: var(--node-function);
+}
+
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: bold;
+}
+
 .node-type {
   font-size: 0.8em;
-  color: #6c757d;
-  margin-left: 8px;
+  opacity: 0.7;
 }
 
 .node-content {
   font-size: 0.9em;
-  color: #495057;
 }
 
-.condition-expression,
+.condition-expression {
+  color: var(--text-color);
+  opacity: 0.8;
+  font-style: italic;
+}
+
 .function-info {
-  margin-top: 8px;
-  padding: 4px 8px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  word-break: break-word;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.connection-point {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--connection-point);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.connection-point:hover {
+  transform: scale(1.2);
+  background-color: var(--connection-point-hover);
+}
+
+.connection-point.input {
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.connection-point.output {
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.connection-point.output:hover {
+  transform: translateY(-50%) scale(1.2);
+}
+
+.connection-point.input:hover {
+  transform: translateY(-50%) scale(1.2);
 }
 </style> 
