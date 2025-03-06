@@ -10,8 +10,8 @@ import routes from './router'
 // import 'bootstrap-icons/font/bootstrap-icons.css'
 // import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
-// Import global styles
-import './style.css'
+// Import our organized styles
+import './style/index.css'
 
 // Create the router instance
 const router = createRouter({
