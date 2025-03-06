@@ -3,7 +3,10 @@
 </template>
 
 <script setup lang="ts">
-// App component is just a router view container
+import { useTheme } from './hooks/useTheme';
+
+// 初始化主题
+useTheme();
 </script>
 
 <style>
@@ -19,7 +22,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
 }
 
 #app {
@@ -75,14 +80,15 @@ body {
 }
 
 .btn-secondary {
-  color: #fff;
-  background-color: #6c757d;
-  border-color: #6c757d;
+  color: var(--text-color);
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
-  border-color: #5a6268;
+  background-color: var(--node-border);
+  border-color: var(--node-border);
+  color: #fff;
 }
 
 .btn-danger {
@@ -97,14 +103,15 @@ body {
 }
 
 .btn-outline-secondary {
-  color: #6c757d;
-  border-color: #6c757d;
+  color: var(--text-color);
+  border-color: var(--border-color);
   background-color: transparent;
 }
 
 .btn-outline-secondary:hover {
   color: #fff;
-  background-color: #6c757d;
+  background-color: var(--node-border);
+  border-color: var(--node-border);
 }
 
 .btn-outline-danger {

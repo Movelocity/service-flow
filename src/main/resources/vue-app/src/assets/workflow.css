@@ -1,5 +1,5 @@
 :root {
-  /* 颜色变量 */
+  /* Light theme variables */
   --node-bg: #ffffff;
   --node-border: #6c757d;
   --node-selected: #007bff;
@@ -11,6 +11,11 @@
   --connection-point: #6c757d;
   --connection-point-hover: #007bff;
   --grid-color: rgba(0, 0, 0, 0.1);
+  --background-color: #f8f9fa;
+  --text-color: #212529;
+  --border-color: #dee2e6;
+  --card-bg: #ffffff;
+  --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   
   /* 尺寸变量 */
   --node-width: 200px;
@@ -19,13 +24,32 @@
   --grid-size: 20px;
 }
 
+[data-theme="dark"] {
+  --node-bg: #2d3436;
+  --node-border: #636e72;
+  --node-selected: #0984e3;
+  --node-start: #00b894;
+  --node-end: #d63031;
+  --node-condition: #fdcb6e;
+  --node-function: #00cec9;
+  --connection-line: #636e72;
+  --connection-point: #636e72;
+  --connection-point-hover: #0984e3;
+  --grid-color: rgba(255, 255, 255, 0.1);
+  --background-color: #1e272e;
+  --text-color: #dfe6e9;
+  --border-color: #485460;
+  --card-bg: #2d3436;
+  --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 /* 工作流画布 */
 .workflow-canvas {
   width: 100%;
   height: 100%;
   position: relative;
   overflow: hidden;
-  background-color: #f8f9fa;
+  background-color: var(--background-color);
   background-image: 
     linear-gradient(var(--grid-color) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);

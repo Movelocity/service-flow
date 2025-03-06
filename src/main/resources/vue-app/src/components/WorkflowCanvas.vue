@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useWorkflowStore } from '../stores/workflow';
-import type { Node, Position } from '../types/workflow';
+import type { Node } from '../types/workflow';
 import { NodeType } from '../types/workflow';
 import WorkflowNode from './WorkflowNode.vue';
 import WorkflowConnection from './WorkflowConnection.vue';
@@ -236,14 +236,14 @@ function onContextMenu(e: MouseEvent) {
   const rect = canvasRef.value?.getBoundingClientRect();
   if (!rect) return;
 
-  const position = reverseTransform(
-    {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    },
-    canvasState.value.scale,
-    canvasState.value.position
-  );
+  // const position = reverseTransform(
+  //   {
+  //     x: e.clientX - rect.left,
+  //     y: e.clientY - rect.top
+  //   },
+  //   canvasState.value.scale,
+  //   canvasState.value.position
+  // );
 
   contextMenu.value = {
     isVisible: true,

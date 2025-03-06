@@ -1,10 +1,17 @@
 <template>
   <div class="workflow-list">
     <div class="list-header">
-      <h1>工作流列表</h1>
-      <button class="btn btn-primary" @click="createWorkflow">
-        新建工作流
-      </button>
+      <div class="header-left">
+        <h1>工作流列表</h1>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-secondary theme-toggle" @click="toggleTheme">
+          {{ theme === 'dark' ? '🌞' : '🌙' }}
+        </button>
+        <button class="btn btn-primary" @click="createWorkflow">
+          新建工作流
+        </button>
+      </div>
     </div>
 
     <div class="list-content">
@@ -58,13 +65,17 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Workflow } from '../types/workflow';
 import { workflowApi } from '../services/workflowApi';
+import { useTheme } from '../hooks/useTheme';
 
 const router = useRouter();
 const isLoading = ref(true);
 const workflows = ref<Workflow[]>([]);
 
+// 使用主题 hook
+const { theme, toggleTheme } = useTheme();
+
 // 加载工作流列表
-async function loadWorkflows() {
+onMounted(async () => {
   try {
     workflows.value = await workflowApi.listWorkflows();
   } catch (error) {
@@ -72,7 +83,7 @@ async function loadWorkflows() {
   } finally {
     isLoading.value = false;
   }
-}
+});
 
 // 创建新工作流
 function createWorkflow() {
@@ -108,37 +119,32 @@ function formatDate(date: Date | undefined): string {
   if (!date) return '未知';
   return new Date(date).toLocaleString();
 }
-
-// 组件挂载时加载数据
-onMounted(() => {
-  loadWorkflows();
-});
 </script>
 
 <style scoped>
 .workflow-list {
   padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
-.list-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
+.header-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
-.loading,
-.empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #6c757d;
+.theme-toggle {
+  font-size: 1.2em;
+  padding: 6px 12px;
 }
 
 .workflow-grid {
@@ -148,49 +154,52 @@ onMounted(() => {
 }
 
 .workflow-card {
-  background: white;
-  border: 1px solid #dee2e6;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 16px;
+  padding: 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: var(--card-shadow);
 }
 
 .workflow-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .workflow-name {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-size: 1.2em;
+  color: var(--text-color);
 }
 
 .workflow-description {
-  color: #6c757d;
-  margin-bottom: 16px;
-  min-height: 40px;
+  color: var(--text-color);
+  opacity: 0.8;
+  margin-bottom: 15px;
 }
 
 .workflow-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
-  color: #6c757d;
+  font-size: 0.9em;
+  color: var(--text-color);
+  opacity: 0.6;
 }
 
-.nodes-count {
-  background: #f8f9fa;
-  padding: 2px 8px;
-  border-radius: 12px;
+.loading, .empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-color);
+  opacity: 0.6;
 }
 
 /* 响应式调整 */
