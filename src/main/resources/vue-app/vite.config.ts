@@ -5,6 +5,11 @@ import { resolve } from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src')
+    }
+  },
   base: '',
   build: {
     // 输出到Spring Boot的static目录
@@ -15,5 +20,13 @@ export default defineConfig({
     sourcemap: true,
     // 清空输出目录前排除已有文件
     emptyOutDir: false,
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
   }
 })
