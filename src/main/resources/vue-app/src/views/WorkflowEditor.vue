@@ -63,11 +63,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useWorkflowStore } from '../stores/workflow';
-import { workflowApi } from '../services/workflowApi';
-import WorkflowCanvas from '../components/WorkflowCanvas.vue';
-import NodeEditor from '../components/NodeEditor.vue';
-import ThemeButton from '../components/ThemeButton.vue';
+import { useWorkflowStore } from '@/stores/workflow';
+import { workflowApi } from '@/services/workflowApi';
+import WorkflowCanvas from '@/components/workflow/WorkflowCanvas.vue';
+import NodeEditor from '@/components/NodeEditor.vue';
+import ThemeButton from '@/components/ThemeButton.vue';
 const router = useRouter();
 const route = useRoute();
 const store = useWorkflowStore();

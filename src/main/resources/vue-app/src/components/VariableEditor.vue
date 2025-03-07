@@ -63,8 +63,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { VariableDefinition } from '../types/workflow';
-import { VariableType } from '../types/workflow';
+import type { VariableDefinition } from '@/types/workflow';
+import { VariableType } from '@/types/workflow';
 
 // Props
 const props = defineProps<{

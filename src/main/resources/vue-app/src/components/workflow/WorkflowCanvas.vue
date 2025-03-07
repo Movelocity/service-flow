@@ -109,14 +109,14 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import type { Node, Position } from '../types/workflow';
-import { NodeType } from '../types/workflow';
-import { useWorkflowStore } from '../stores/workflow';
+import type { Node, Position } from '@/types/workflow';
+import { NodeType } from '@/types/workflow';
+import { useWorkflowStore } from '@/stores/workflow';
 import NodeElem from './NodeElem.vue';
 import NodeConnection from './NodeConnection.vue';
-import ToolSelectorDialog from './ToolSelectorDialog.vue';
-import { generateBezierPath } from '../utils/canvas';
-import type { Tool } from '../services/toolApi';
+import ToolSelectorDialog from '../ToolSelectorDialog.vue';
+import { generateBezierPath } from '@/utils/canvas';
+import type { Tool } from '@/services/toolApi';
 
 const store = useWorkflowStore();
 const canvasContainer = ref<HTMLElement | null>(null);

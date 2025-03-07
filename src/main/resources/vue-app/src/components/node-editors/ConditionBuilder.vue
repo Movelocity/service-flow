@@ -57,9 +57,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { VariableType } from '../types/workflow';
-import VariableSelector from './VariableSelector.vue';
-import { useWorkflowStore } from '../stores/workflow';
+import { VariableType } from '@/types/workflow';
+import VariableSelector from '@/components/node-editors/VariableSelector.vue';
+import { useWorkflowStore } from '@/stores/workflow';
 
 const props = defineProps<{
   modelValue?: string;  // 条件表达式

@@ -55,10 +55,10 @@
 
 <script lang="ts">
 import { computed, defineComponent, type PropType } from 'vue';
-import type { Node } from '../types/workflow';
-import { NodeType } from '../types/workflow';
-import { generateBezierPath, calculateConnectionPoint } from '../utils/canvas';
-import { useWorkflowStore } from '../stores/workflow';
+import type { Node } from '@/types/workflow';
+import { NodeType } from '@/types/workflow';
+import { generateBezierPath, calculateConnectionPoint } from '@/utils/canvas';
+import { useWorkflowStore } from '@/stores/workflow';
 
 export default defineComponent({
   name: 'WorkflowConnection',

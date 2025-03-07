@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { Search } from '@element-plus/icons-vue';
-import { toolApi } from '../services/toolApi';
+import { toolApi } from '@/services/toolApi';
 const props = defineProps<{
   modelValue: boolean
 }>();

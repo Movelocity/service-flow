@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTheme } from './hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 
 // 初始化主题
 useTheme();

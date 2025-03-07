@@ -61,9 +61,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import type { Workflow } from '../types/workflow';
-import { workflowApi } from '../services/workflowApi';
-import ThemeButton from '../components/ThemeButton.vue';
+import type { Workflow } from '@/types/workflow';
+import { workflowApi } from '@/services/workflowApi';
+import ThemeButton from '@/components/ThemeButton.vue';
 
 const router = useRouter();
 const isLoading = ref(true);

@@ -17,55 +17,26 @@
 
       <!-- 开始节点的全局变量定义 -->
       <template v-if="selectedNode.type === 'START'">
-        <div class="form-group">
-          <div class="variable-row">
-            <label class="form-label">工作流参数</label>
-            <div>
-              <el-button
-                type="primary"
-                size="small"
-                @click="addVariable"
-              >
-                +
-              </el-button>
-            </div>
-          </div>
-
-          <div class="variables-list">
-            <div v-for="(variable, index) in nodeData.parameters.globalVariables || []" :key="index" class="variable-row">
-              <!-- 编辑变量 -->
-              <span>{{ variable.name }}</span>
-              <div>
-                <span>{{ variable.type }}</span>
-                <el-button type="primary" link @click="editVariable(index)"> 编辑 </el-button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StartNodeEditor
+          v-model="nodeData"
+          @update:modelValue="updateNode"
+        />
       </template>
 
       <!-- 条件节点特有的配置 -->
       <template v-if="selectedNode.type === 'CONDITION'">
-        <div class="form-group">
-          <label class="form-label">条件配置</label>
-          <ConditionBuilder
-            v-model="nodeData.parameters.condition"
-            @change="updateNode"
-          />
-          <small class="form-text text-muted">
-            选择变量并设置条件，支持字符串、数字和布尔值类型的比较
-          </small>
-        </div>
+        <ConditionNodeEditor
+          v-model="nodeData"
+          @update:modelValue="updateNode"
+        />
       </template>
 
       <!-- 函数节点特有的配置 -->
       <template v-if="selectedNode.type === 'FUNCTION'">
-        <div class="form-group">
-          <ToolParamsEditor
-            v-model="nodeData.parameters"
-            @change="updateNode"
-          />
-        </div>
+        <FunctionNodeEditor
+          v-model="nodeData"
+          @update:modelValue="updateNode"
+        />
       </template>
 
       <!-- 连接信息 -->
@@ -114,14 +85,15 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { Node } from '../types/workflow';
-import { useWorkflowStore } from '../stores/workflow';
+import type { Node } from '@/types/workflow';
+import { useWorkflowStore } from '@/stores/workflow';
 import { Delete } from '@element-plus/icons-vue';
-import NodeIcon from './NodeIcon.vue';
-import { VariableType } from '../types/workflow';
-import ConditionBuilder from './ConditionBuilder.vue';
-import ToolParamsEditor from './ToolParamsEditor.vue';
-import VariableEditor from './VariableEditor.vue';
+import NodeIcon from '@/components/NodeIcon.vue';
+import VariableEditor from '@/components/VariableEditor.vue';
+import StartNodeEditor from '@/components/node-editors/StartNodeEditor.vue';
+import ConditionNodeEditor from '@/components/node-editors/ConditionNodeEditor.vue';
+import FunctionNodeEditor from '@/components/node-editors/FunctionNodeEditor.vue';
+
 defineProps<{
   isVisible: boolean;
 }>();
@@ -136,8 +108,6 @@ const selectedNode = computed(() => store.selectedNode);
 
 // 节点数据的本地副本
 const nodeData = ref<Node | null>(null);
-
-
 
 // 在 script setup 部分添加以下代码
 const variableDialogVisible = ref(false);
@@ -156,7 +126,6 @@ watch(selectedNode, (newNode) => {
     nodeData.value = null;
   }
 }, { immediate: true });
-
 
 // 获取节点的连接
 const nodeConnections = computed(() => {
@@ -222,27 +191,6 @@ function getConnectionLabel(connection: { sourceNodeId: string; targetNodeId: st
 function onClose() {
   store.selectNode(null);
   emit('close');
-}
-
-// 添加全局变量
-function addVariable() {
-  editingVariableIndex.value = -1;
-  editingVariable.value = {
-    name: '',
-    type: VariableType.STRING,
-    description: '',
-    required: false,
-    defaultValue: ''
-  };
-  variableDialogVisible.value = true;
-}
-
-function editVariable(index: number) {
-  editingVariableIndex.value = index;
-  editingVariable.value = JSON.parse(
-    JSON.stringify(nodeData.value!.parameters.globalVariables[index])
-  );
-  variableDialogVisible.value = true;
 }
 
 function saveVariable() {

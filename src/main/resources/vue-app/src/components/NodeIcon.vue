@@ -12,7 +12,7 @@ import {
   Filter, 
   CircleClose 
 } from '@element-plus/icons-vue';
-import { NodeType } from '../types/workflow';
+import { NodeType } from '@/types/workflow';
 
 const props = defineProps<{
   type: NodeType;

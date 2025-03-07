@@ -42,8 +42,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { VariableDefinition, WorkflowVariable } from '../types/workflow';
-import { useWorkflowStore } from '../stores/workflow';
+import type { WorkflowVariable } from '@/types/workflow';
+import { useWorkflowStore } from '@/stores/workflow';
 
 const props = defineProps<{
   modelValue?: string;  // 格式: "parent:name"

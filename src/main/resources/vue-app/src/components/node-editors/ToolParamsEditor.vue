@@ -140,7 +140,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { ToolDefinition } from '../types/workflow';
 import VariableSelector from './VariableSelector.vue';
 
 const props = defineProps<{

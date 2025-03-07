@@ -47,9 +47,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Node } from '../types/workflow';
-import { useWorkflowStore } from '../stores/workflow';
-import NodeIcon from './NodeIcon.vue';
+import type { Node } from '@/types/workflow';
+import { useWorkflowStore } from '@/stores/workflow';
+import NodeIcon from '@/components/NodeIcon.vue';
 
 const props = defineProps<{
   node: Node;
