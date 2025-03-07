@@ -2,7 +2,8 @@
   <div class="form-group">
     <label class="form-label">条件配置</label>
     <ConditionBuilder
-      v-model="modelValue.parameters.condition"
+      v-if="selectedNode"
+      v-model="selectedNode.parameters.condition"
       @change="updateCondition"
     />
     <small class="form-text text-muted">
@@ -12,19 +13,17 @@
 </template>
 
 <script setup lang="ts">
-import type { Node } from '@/types/workflow';
+import { computed } from 'vue';
+import { useWorkflowStore } from '@/stores/workflow';
 import ConditionBuilder from '@/components/node-editors/ConditionBuilder.vue';
 
-const props = defineProps<{
-  modelValue: Node;
-}>();
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: Node): void;
-}>();
+const store = useWorkflowStore();
+const selectedNode = computed(() => store.selectedNode);
 
 function updateCondition() {
-  emit('update:modelValue', { ...props.modelValue });
+  if (selectedNode.value) {
+    store.updateNode(selectedNode.value.id, selectedNode.value);
+  }
 }
 </script>
 

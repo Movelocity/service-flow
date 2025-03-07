@@ -47,6 +47,7 @@ export class WorkflowApi {
    * Create or update a workflow
    */
   async saveWorkflow(workflow: Workflow): Promise<Workflow> {
+    console.log('saveWorkflow', workflow);
     const method = workflow.id ? 'PUT' : 'POST';
     const url = workflow.id ? `${this.baseUrl}/${workflow.id}` : this.baseUrl;
 

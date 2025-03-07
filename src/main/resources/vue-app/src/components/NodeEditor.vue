@@ -1,15 +1,15 @@
 <template>
   <!-- 节点编辑器面板 -->
   <div :class="['editor-panel', { visible: isVisible }]">
-    <template v-if="selectedNode && nodeData">
+    <template v-if="selectedNode">
       <div class="editor-header">
         <div class="editor-title-container">
-          <NodeIcon v-if="nodeData" :type="nodeData.type" :size="24" />
+          <NodeIcon v-if="selectedNode" :type="selectedNode.type" :size="24" />
           <input
-            v-model="nodeData.name"
+            v-model="selectedNode.name"
             type="text"
             class="editor-title"
-            @change="updateNode"
+            @change="updateNodeName"
           >
         </div>
         <button class="close-button" @click="onClose">×</button>
@@ -17,26 +17,17 @@
 
       <!-- 开始节点的全局变量定义 -->
       <template v-if="selectedNode.type === 'START'">
-        <StartNodeEditor
-          v-model="nodeData"
-          @update:modelValue="updateNode"
-        />
+        <StartNodeEditor />
       </template>
 
       <!-- 条件节点特有的配置 -->
       <template v-if="selectedNode.type === 'CONDITION'">
-        <ConditionNodeEditor
-          v-model="nodeData"
-          @update:modelValue="updateNode"
-        />
+        <ConditionNodeEditor />
       </template>
 
       <!-- 函数节点特有的配置 -->
       <template v-if="selectedNode.type === 'FUNCTION'">
-        <FunctionNodeEditor
-          v-model="nodeData"
-          @update:modelValue="updateNode"
-        />
+        <FunctionNodeEditor />
       </template>
 
       <!-- 连接信息 -->
@@ -76,20 +67,13 @@
     </template>
   </div>
 
-  <VariableEditor
-    v-model="editingVariable"
-    v-model:visible="variableDialogVisible"
-    @save="saveVariable"
-  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import type { Node } from '@/types/workflow';
+import { ref, computed } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
 import { Delete } from '@element-plus/icons-vue';
 import NodeIcon from '@/components/NodeIcon.vue';
-import VariableEditor from '@/components/VariableEditor.vue';
 import StartNodeEditor from '@/components/node-editors/StartNodeEditor.vue';
 import ConditionNodeEditor from '@/components/node-editors/ConditionNodeEditor.vue';
 import FunctionNodeEditor from '@/components/node-editors/FunctionNodeEditor.vue';
@@ -103,29 +87,11 @@ const emit = defineEmits<{
 }>();
 
 const store = useWorkflowStore();
-
 const selectedNode = computed(() => store.selectedNode);
 
-// 节点数据的本地副本
-const nodeData = ref<Node | null>(null);
-
 // 在 script setup 部分添加以下代码
-const variableDialogVisible = ref(false);
 const editingVariableIndex = ref(-1);
 const editingVariable = ref<any>(null);
-
-// 监听选中节点的变化
-watch(selectedNode, (newNode) => {
-  if (newNode) {
-    // 确保开始节点有 globalVariables 数组
-    if (newNode.type === 'START' && !newNode.parameters.globalVariables) {
-      newNode.parameters.globalVariables = [];
-    }
-    nodeData.value = JSON.parse(JSON.stringify(newNode));
-  } else {
-    nodeData.value = null;
-  }
-}, { immediate: true });
 
 // 获取节点的连接
 const nodeConnections = computed(() => {
@@ -149,10 +115,10 @@ const nodeConnections = computed(() => {
   ];
 });
 
-// 更新节点
-function updateNode() {
-  if (nodeData.value && selectedNode.value) {
-    store.updateNode(selectedNode.value.id, nodeData.value);
+// 更新节点名称
+function updateNodeName() {
+  if (selectedNode.value) {
+    store.updateNode(selectedNode.value.id, selectedNode.value);
   }
 }
 
@@ -193,21 +159,21 @@ function onClose() {
   emit('close');
 }
 
-function saveVariable() {
-  if (!nodeData.value || !editingVariable.value) return;
+// function saveVariable() {
+//   if (!selectedNode.value || !editingVariable.value) return;
   
-  if (!nodeData.value.parameters.globalVariables) {
-    nodeData.value.parameters.globalVariables = [];
-  }
+//   if (!selectedNode.value.parameters.globalVariables) {
+//     selectedNode.value.parameters.globalVariables = [];
+//   }
 
-  if (editingVariableIndex.value === -1) {
-    nodeData.value.parameters.globalVariables.push(editingVariable.value);
-  } else {
-    nodeData.value.parameters.globalVariables[editingVariableIndex.value] = editingVariable.value;
-  }
+//   if (editingVariableIndex.value === -1) {
+//     selectedNode.value.parameters.globalVariables.push(editingVariable.value);
+//   } else {
+//     selectedNode.value.parameters.globalVariables[editingVariableIndex.value] = editingVariable.value;
+//   }
 
-  updateNode();
-}
+//   updateNodeName();
+// }
 
 </script>
 

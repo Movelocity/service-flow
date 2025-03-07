@@ -37,7 +37,6 @@
         <button
           class="btn btn-primary btn-sm me-2"
           @click="saveWorkflow"
-          :disabled="!isDirty"
         >
           保存
         </button>
@@ -124,6 +123,7 @@ function updateWorkflowInfo() {
 
 // 保存工作流
 async function saveWorkflow() {
+  console.log('saveWorkflow');
   try {
     await store.saveWorkflow();
     store.isDirty = false;

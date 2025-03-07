@@ -14,7 +14,7 @@
     </div>
 
     <div class="variables-list">
-      <div v-for="(variable, index) in modelValue.parameters.globalVariables || []" :key="index" class="variable-row">
+      <div v-for="(variable, index) in node.parameters.inputs || []" :key="index" class="variable-row">
         <span>{{ variable.name }}</span>
         <div>
           <span>{{ variable.type }}</span>
@@ -32,18 +32,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { Node } from '@/types/workflow';
 import { VariableType } from '@/types/workflow';
-import VariableEditor from '@/components/VariableEditor.vue';
+import VariableEditor from '@/components/VariableModal.vue';
+import { useWorkflowStore } from '@/stores/workflow';
 
-const props = defineProps<{
-  modelValue: Node;
-}>();
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: Node): void;
-}>();
+const store = useWorkflowStore();
+const node = computed(() => store.currentWorkflow?.nodes.find(n => n.id === store.editorState.selectedNodeId) as Node);
 
 const variableDialogVisible = ref(false);
 const editingVariableIndex = ref(-1);
@@ -65,26 +61,37 @@ function addVariable() {
 function editVariable(index: number) {
   editingVariableIndex.value = index;
   editingVariable.value = JSON.parse(
-    JSON.stringify(props.modelValue.parameters.globalVariables[index])
+    JSON.stringify(node.value.parameters.inputs[index])
   );
   variableDialogVisible.value = true;
 }
 
 function saveVariable() {
-  if (!editingVariable.value) return;
+  if (!editingVariable.value || !node.value) return;
   
-  const updatedNode = { ...props.modelValue };
-  if (!updatedNode.parameters.globalVariables) {
-    updatedNode.parameters.globalVariables = [];
+  const updatedNode = { ...node.value };
+  if (!updatedNode.parameters.inputs) {
+    updatedNode.parameters.inputs = [];
+  }
+  if (!updatedNode.outputs) {
+    updatedNode.outputs = [];
   }
 
   if (editingVariableIndex.value === -1) {
-    updatedNode.parameters.globalVariables.push(editingVariable.value);
+    updatedNode.parameters.inputs.push(editingVariable.value);
+    // Also add as output variable
+    updatedNode.outputs.push({
+      ...editingVariable.value
+    });
   } else {
-    updatedNode.parameters.globalVariables[editingVariableIndex.value] = editingVariable.value;
+    updatedNode.parameters.inputs[editingVariableIndex.value] = editingVariable.value;
+    // Update corresponding output variable
+    updatedNode.outputs[editingVariableIndex.value] = {
+      ...editingVariable.value
+    };
   }
 
-  emit('update:modelValue', updatedNode);
+  store.updateNode(node.value.id, updatedNode);
 }
 </script>
 

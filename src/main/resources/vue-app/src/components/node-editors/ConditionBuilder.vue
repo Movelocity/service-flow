@@ -86,7 +86,7 @@ const selectedVariable = computed(() => {
     return store.currentWorkflow?.globalVariables?.find(v => v.name === name);
   } else {
     const node = store.currentWorkflow?.nodes.find(n => n.id === parent);
-    return node?.outputVariables?.find(v => v.name === name);
+    return node?.outputs?.find(v => v.name === name);
   }
 });
 

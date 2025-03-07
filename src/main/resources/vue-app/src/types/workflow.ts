@@ -109,8 +109,8 @@ export interface Node {
   nextNodes: {
     [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
   };
-  inputVariables?: VariableDefinition[];  // 节点接收的输入变量定义
-  outputVariables?: VariableDefinition[]; // 节点产生的输出变量定义
+  inputs?: VariableDefinition[];  // 节点接收的输入变量定义
+  outputs?: VariableDefinition[]; // 节点产生的输出变量定义
   toolDefinition?: ToolDefinition;        // 函数节点的工具定义
 }
 

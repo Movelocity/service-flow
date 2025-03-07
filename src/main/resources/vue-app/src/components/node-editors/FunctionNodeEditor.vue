@@ -1,25 +1,24 @@
 <template>
   <div class="form-group">
-    <ToolParamsEditor
-      v-model="modelValue.parameters"
+    <!-- <ToolParamsEditor
+      v-if="selectedNode"
+      v-model="selectedNode.parameters"
       @change="updateParams"
-    />
+    /> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Node } from '@/types/workflow';
-import ToolParamsEditor from '@/components/node-editors/ToolParamsEditor.vue';
+// import { computed } from 'vue';
+// import { useWorkflowStore } from '@/stores/workflow';
+// import ToolParamsEditor from '@/components/node-editors/ToolParamsEditor.vue';
 
-const props = defineProps<{
-  modelValue: Node;
-}>();
+// const store = useWorkflowStore();
+// const selectedNode = computed(() => store.selectedNode);
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: Node): void;
-}>();
-
-function updateParams() {
-  emit('update:modelValue', { ...props.modelValue });
-}
+// function updateParams() {
+//   if (selectedNode.value) {
+//     store.updateNode(selectedNode.value.id, selectedNode.value);
+//   }
+// }
 </script> 

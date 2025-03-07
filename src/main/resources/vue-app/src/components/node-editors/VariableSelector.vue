@@ -83,9 +83,9 @@ const contextVariables = computed(() => {
     // 收集所有前置节点的输出变量
     for (const nodeId of predecessors) {
       const node = store.currentWorkflow.nodes.find(n => n.id === nodeId);
-      if (node?.outputVariables) {
+      if (node?.outputs) {
         variables.push(
-          ...node.outputVariables.map(v => ({
+          ...node.outputs.map(v => ({
             parent: node.id,
             name: v.name,
             type: v.type,
