@@ -1,0 +1,11 @@
+---
+description: Vue Guideline
+globs: 
+alwaysApply: false
+---
+- 前端项目位于 C:/projects/java/service-flows/src/main/resources/vue-app
+- 项目使用 vue3, element-plus, pinia 
+- 使用 <script setup lang="ts"> 而不是 <script>
+- 新样式需要颜色时，从 vue-app/src/assets/index.css 查找固有色
+- 组件化，单一组件功能应该尽量少
+

@@ -39,7 +39,7 @@
       />
 
       <!-- 连接线 -->
-      <WorkflowConnection
+      <NodeConnection
         v-for="conn in connections"
         :key="conn.sourceId + '-' + conn.condition"
         :source-node="getNode(conn.sourceId)"
@@ -68,7 +68,7 @@
         transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`
       }"
     >
-      <WorkflowNode
+      <NodeElem
         v-for="node in workflow?.nodes"
         :key="node.id"
         :node="node"
@@ -112,8 +112,8 @@ import { computed, defineComponent, onMounted, ref, onUnmounted } from 'vue';
 import type { Node, Position } from '../types/workflow';
 import { NodeType } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
-import WorkflowNode from './WorkflowNode.vue';
-import WorkflowConnection from './WorkflowConnection.vue';
+import NodeElem from './NodeElem.vue';
+import NodeConnection from './NodeConnection.vue';
 import ToolSelectorDialog from './ToolSelectorDialog.vue';
 import { generateBezierPath } from '../utils/canvas';
 import type { Tool } from '../services/toolApi';
@@ -122,8 +122,8 @@ export default defineComponent({
   name: 'WorkflowCanvas',
 
   components: {
-    WorkflowNode,
-    WorkflowConnection,
+    NodeElem,
+    NodeConnection,
     ToolSelectorDialog
   },
 

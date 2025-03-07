@@ -78,12 +78,11 @@
               <span class="connection-info">
                 {{ getConnectionLabel(conn) }}
               </span>
-              <button
-                class="btn btn-sm btn-danger"
-                @click="deleteConnection(conn.id)"
-              >
-                删除
-              </button>
+              <el-icon 
+                class="btn-delete"
+                @click="deleteConnection(conn.id)">
+                <Delete />
+              </el-icon>
             </div>
           </template>
           <div v-else class="no-connections">
@@ -91,8 +90,8 @@
           </div>
         </div>
       </div>
-
-      <div class="editor-actions">
+      <!-- 在模板中直接使用枚举值可能会导致问题，所以将 NodeType.START 写为字符串 'START'-->
+      <div class="editor-actions" v-if="selectedNode?.type !== 'START'">
         <button
           class="btn btn-danger"
           @click="deleteNode"
@@ -108,6 +107,7 @@
 import { ref, computed, watch } from 'vue';
 import type { Node } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
+import { Delete } from '@element-plus/icons-vue';
 
 defineProps<{
   isVisible: boolean;
@@ -120,7 +120,6 @@ const emit = defineEmits<{
 const store = useWorkflowStore();
 
 const selectedNode = computed(() => store.selectedNode);
-
 const title = computed(() => {
   if (!selectedNode.value) return '节点编辑';
   return `编辑${selectedNode.value.type}节点`;
@@ -345,5 +344,10 @@ function onClose() {
 .btn-sm {
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
+}
+
+.btn-delete {
+  cursor: pointer;
+  color: var(--text-color);
 }
 </style> 

@@ -149,15 +149,11 @@ function onInputPointMouseUp(_e: MouseEvent) {
   border: 2px solid var(--node-border);
   border-radius: 6px;
   padding: 10px;
-  cursor: move;
+  cursor: grab;
   user-select: none;
-  box-shadow: var(--card-shadow);
+  /* box-shadow: var(--card-shadow); */
   transition: border-color 0.2s, box-shadow 0.2s;
   color: var(--text-color);
-}
-
-.workflow-node:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .workflow-node.selected {
@@ -179,6 +175,13 @@ function onInputPointMouseUp(_e: MouseEvent) {
 
 .workflow-node.function {
   border-color: var(--node-function);
+}
+
+.workflow-node:hover {
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.2);
+}
+.dark .workflow-node:hover {
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.2);
 }
 
 .node-header {

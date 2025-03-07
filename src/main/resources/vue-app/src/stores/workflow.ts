@@ -91,6 +91,19 @@ export const useWorkflowStore = defineStore('workflow', {
       this.history.past = [];
       this.history.future = [];
       this.isDirty = false;
+      this.ensureStartNode();
+    },
+
+    // 确保工作流有一个开始节点
+    ensureStartNode() {
+      if (!this.currentWorkflow) return;
+      
+      const hasStartNode = this.currentWorkflow.nodes.some(node => node.type === NodeType.START);
+      if (!hasStartNode) {
+        // 在画布左上角创建开始节点
+        this.addNode(NodeType.START, { x: 100, y: 100 }, '开始');
+        this.isDirty = true;
+      }
     },
 
     // 节点操作

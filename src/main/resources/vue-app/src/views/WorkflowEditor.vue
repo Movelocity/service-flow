@@ -280,16 +280,16 @@ async function loadWorkflow(id: string) {
   overflow: hidden;
 }
 
+.toolbar-right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   .workflow-info {
     flex-direction: column;
-    gap: 5px;
-  }
-  
-  .toolbar-right {
-    display: flex;
-    flex-wrap: wrap;
     gap: 5px;
   }
 }
