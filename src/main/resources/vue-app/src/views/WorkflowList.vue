@@ -5,9 +5,7 @@
         <h1>工作流列表</h1>
       </div>
       <div class="header-right">
-        <button class="btn btn-secondary theme-toggle" @click="toggleTheme">
-          {{ theme === 'dark' ? '🌞' : '🌙' }}
-        </button>
+        <ThemeButton />
         <button class="btn btn-primary" @click="createWorkflow">
           新建工作流
         </button>
@@ -65,14 +63,11 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Workflow } from '../types/workflow';
 import { workflowApi } from '../services/workflowApi';
-import { useTheme } from '../hooks/useTheme';
+import ThemeButton from '../components/ThemeButton.vue';
 
 const router = useRouter();
 const isLoading = ref(true);
 const workflows = ref<Workflow[]>([]);
-
-// 使用主题 hook
-const { theme, toggleTheme } = useTheme();
 
 // 加载工作流列表
 onMounted(async () => {
@@ -140,11 +135,6 @@ function formatDate(date: Date | undefined): string {
   display: flex;
   gap: 10px;
   align-items: center;
-}
-
-.theme-toggle {
-  font-size: 1.2em;
-  padding: 6px 12px;
 }
 
 .workflow-grid {

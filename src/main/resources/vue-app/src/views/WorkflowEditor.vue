@@ -30,6 +30,7 @@
         </div>
       </div>
       <div class="toolbar-right">
+        <ThemeButton />
         <span v-if="executionStatus" class="execution-status me-2">
           执行状态: {{ executionStatus }}
         </span>
@@ -45,22 +46,9 @@
           @click="testWorkflow"
           :disabled="!canTest || executionStatus === '执行中...'"
         >
-          测试
+          运行
         </button>
-        <button
-          class="btn btn-outline-secondary btn-sm me-2"
-          @click="undo"
-          :disabled="!canUndo"
-        >
-          撤销
-        </button>
-        <button
-          class="btn btn-outline-secondary btn-sm"
-          @click="redo"
-          :disabled="!canRedo"
-        >
-          重做
-        </button>
+
       </div>
     </div>
 
@@ -73,13 +61,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useWorkflowStore } from '../stores/workflow';
 import { workflowApi } from '../services/workflowApi';
 import WorkflowCanvas from '../components/WorkflowCanvas.vue';
 import NodeEditor from '../components/NodeEditor.vue';
-
+import ThemeButton from '../components/ThemeButton.vue';
 const router = useRouter();
 const route = useRoute();
 const store = useWorkflowStore();
@@ -92,8 +80,6 @@ const executionStatus = ref<string | null>(null);
 
 // 计算属性
 const isDirty = computed(() => store.isDirty);
-const canUndo = computed(() => store.history.past.length > 0);
-const canRedo = computed(() => store.history.future.length > 0);
 const canTest = computed(() => {
   const workflow = store.currentWorkflow;
   if (!workflow) return false;
@@ -118,14 +104,14 @@ function onWorkflowChange() {
 }
 
 // 监听工作流变化
-watch(() => store.currentWorkflow, (newWorkflow, oldWorkflow) => {
-  if (newWorkflow) {
-    // 只有在非初始加载时才设置isDirty
-    if (oldWorkflow && store.history.past.length > 0) {
-      store.saveToHistory();
-    }
-  }
-}, { deep: true });
+// watch(() => store.currentWorkflow, (newWorkflow, oldWorkflow) => {
+//   if (newWorkflow) {
+//     // 只有在非初始加载时才设置isDirty
+//     if (oldWorkflow && store.history.past.length > 0) {
+//       store.saveToHistory();
+//     }
+//   }
+// }, { deep: true });
 
 // 更新工作流信息
 function updateWorkflowInfo() {
@@ -133,7 +119,7 @@ function updateWorkflowInfo() {
   
   store.currentWorkflow.name = workflowName.value;
   store.currentWorkflow.description = workflowDescription.value;
-  store.saveToHistory();
+  // store.saveToHistory();
 }
 
 // 保存工作流
@@ -171,15 +157,6 @@ async function testWorkflow() {
     alert('测试工作流失败');
     executionStatus.value = null;
   }
-}
-
-// 撤销/重做
-function undo() {
-  store.undo();
-}
-
-function redo() {
-  store.redo();
 }
 
 // 关闭编辑器面板

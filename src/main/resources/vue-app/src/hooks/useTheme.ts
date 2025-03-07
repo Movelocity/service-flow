@@ -15,7 +15,7 @@ export function useTheme() {
 
   // 应用主题
   const applyTheme = (newTheme: Theme) => {
-    document.documentElement.setAttribute('data-theme', newTheme);
+    document.documentElement.setAttribute('class', newTheme);
     theme.value = newTheme;
     localStorage.setItem('theme', newTheme);
   };

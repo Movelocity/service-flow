@@ -44,22 +44,10 @@ export const useWorkflowStore = defineStore('workflow', {
       return state.currentWorkflow.nodes.find(node => node.id === state.editorState.selectedNodeId) || null;
     },
 
-    // selectedConnection: (state): Connection | null => {
-    //   if (!state.currentWorkflow || !state.editorState.selectedConnectionId) return null;
-    //   return state.currentWorkflow.connections.find(conn => conn.id === state.editorState.selectedConnectionId) || null;
-    // },
-
-    // nodeConnections: (state) => (nodeId: string): Connection[] => {
-    //   if (!state.currentWorkflow?.connections) return [];
-    //   return state.currentWorkflow.connections.filter(
-    //     conn => conn.sourceNodeId === nodeId || conn.targetNodeId === nodeId
-    //   );
-    // },
-
     // 获取节点的所有输入连接
     nodeInputConnections: (state) => (nodeId: string): Array<{ sourceId: string; condition: string }> => {
       if (!state.currentWorkflow?.nodes) return [];
-      return state.currentWorkflow.nodes
+      const inboundNodes = state.currentWorkflow.nodes
         .filter(node => Object.entries(node.nextNodes)
           .some(([_condition, targetId]) => targetId === nodeId))
         .map(node => {
@@ -67,6 +55,7 @@ export const useWorkflowStore = defineStore('workflow', {
             .find(([_, targetId]) => targetId === nodeId)?.[0] || 'default';
           return { sourceId: node.id, condition };
         });
+      return inboundNodes;
     },
 
     // 获取节点的所有输出连接
@@ -74,8 +63,9 @@ export const useWorkflowStore = defineStore('workflow', {
       if (!state.currentWorkflow?.nodes) return [];
       const node = state.currentWorkflow.nodes.find(n => n.id === nodeId);
       if (!node) return [];
-      return Object.entries(node.nextNodes)
+      const outboundNodes = Object.entries(node.nextNodes)
         .map(([condition, targetId]) => ({ targetId, condition }));
+      return outboundNodes;
     }
   },
 
@@ -86,10 +76,8 @@ export const useWorkflowStore = defineStore('workflow', {
         id: uuidv4(),
         name,
         description,
-        nodes: [],
-        // connections: []
+        nodes: []
       };
-      this.saveToHistory();
     },
 
     async loadWorkflow(id: string) {
@@ -103,7 +91,6 @@ export const useWorkflowStore = defineStore('workflow', {
       this.history.past = [];
       this.history.future = [];
       this.isDirty = false;
-      this.saveToHistory();
     },
 
     // 节点操作
@@ -129,7 +116,6 @@ export const useWorkflowStore = defineStore('workflow', {
 
       this.currentWorkflow!.nodes.push(node);
       this.selectNode(node.id);
-      this.saveToHistory();
       return node;
     },
 
@@ -146,7 +132,6 @@ export const useWorkflowStore = defineStore('workflow', {
       if (!node) return;
 
       Object.assign(node, updates);
-      this.saveToHistory();
     },
 
     deleteNode(nodeId: string) {
@@ -172,8 +157,6 @@ export const useWorkflowStore = defineStore('workflow', {
         this.editorState.selectedNodeId = null;
         this.editorState.selectedCondition = null;
       }
-      
-      this.saveToHistory();
     },
 
     // 连接操作
@@ -211,53 +194,6 @@ export const useWorkflowStore = defineStore('workflow', {
           this.editorState.selectedCondition === condition) {
         this.editorState.selectedCondition = null;
       }
-    },
-
-    // updateConnection(connectionId: string, updates: Partial<Connection>) {
-    //   if (!this.currentWorkflow) return;
-
-    //   const connection = this.currentWorkflow.connections.find(conn => conn.id === connectionId);
-    //   if (connection) {
-    //     Object.assign(connection, updates);
-    //   }
-    // },
-
-    // 历史记录操作
-    saveToHistory() {
-      if (!this.currentWorkflow) return;
-      
-      this.history.past.push(JSON.parse(JSON.stringify(this.currentWorkflow)));
-      this.history.future = [];
-      this.isDirty = true;
-      
-      // 限制历史记录数量
-      if (this.history.past.length > 20) {
-        this.history.past.shift();
-      }
-    },
-
-    undo() {
-      if (this.history.past.length === 0) return;
-      
-      const current = this.currentWorkflow;
-      if (current) {
-        this.history.future.push(JSON.parse(JSON.stringify(current)));
-      }
-      
-      this.currentWorkflow = this.history.past.pop() || null;
-      this.isDirty = this.history.past.length > 0;
-    },
-
-    redo() {
-      if (this.history.future.length === 0) return;
-      
-      const current = this.currentWorkflow;
-      if (current) {
-        this.history.past.push(JSON.parse(JSON.stringify(current)));
-      }
-      
-      this.currentWorkflow = this.history.future.pop() || null;
-      this.isDirty = true;
     },
 
     // 编辑器状态操作
