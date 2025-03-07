@@ -1,20 +1,19 @@
 <template>
   <div :class="['editor-panel', { visible: isVisible }]">
-    <div class="editor-header">
-      <h3 class="editor-title">{{ title }}</h3>
-      <button class="close-button" @click="onClose">×</button>
-    </div>
+    
 
     <template v-if="selectedNode && nodeData">
-      <div class="form-group">
-        <label class="form-label" for="nodeName">节点名称</label>
-        <input
-          id="nodeName"
-          v-model="nodeData.name"
-          type="text"
-          class="form-control"
-          @change="updateNode"
-        >
+      <div class="editor-header">
+        <div class="editor-title-container">
+          <NodeIcon v-if="nodeData" :type="nodeData.type" :size="24" />
+          <input
+            v-model="nodeData.name"
+            type="text"
+            class="editor-title"
+            @change="updateNode"
+          >
+        </div>
+        <button class="close-button" @click="onClose">×</button>
       </div>
 
       <!-- 条件节点特有的配置 -->
@@ -108,7 +107,7 @@ import { ref, computed, watch } from 'vue';
 import type { Node } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
 import { Delete } from '@element-plus/icons-vue';
-
+import NodeIcon from './NodeIcon.vue';
 defineProps<{
   isVisible: boolean;
 }>();
@@ -120,10 +119,6 @@ const emit = defineEmits<{
 const store = useWorkflowStore();
 
 const selectedNode = computed(() => store.selectedNode);
-const title = computed(() => {
-  if (!selectedNode.value) return '节点编辑';
-  return `编辑${selectedNode.value.type}节点`;
-});
 
 // 节点数据的本地副本
 const nodeData = ref<Node | null>(null);
@@ -235,11 +230,13 @@ function onClose() {
 <style scoped>
 .editor-panel {
   position: fixed;
-  top: 60px;
+  top: 70px;
   right: 0;
   width: 300px;
-  height: calc(100vh - 60px);
+  border-radius: 1rem 0 0 1rem;
+  height: calc(100vh - 70px);
   background: var(--card-bg);
+  box-shadow: 0 0 2px var(--card-shadow);
   border-left: 1px solid var(--border-color);
   padding: 20px;
   transform: translateX(100%);
@@ -262,16 +259,26 @@ function onClose() {
   border-bottom: 1px solid var(--border-color);
 }
 
+.editor-title-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .editor-title {
   margin: 0;
   font-size: 1.25rem;
   color: var(--text-color);
+  border: none;
+  background: none;
+  max-width: 200px;
+  outline: none;
 }
 
 .close-button {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 2rem;
   line-height: 1;
   padding: 0;
   cursor: pointer;

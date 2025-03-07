@@ -10,8 +10,10 @@
     @click.stop="onNodeClick"
   >
     <div class="node-header">
-      {{ node.name }}
-      <small class="node-type">{{ node.type }}</small>
+      <div class="node-title">
+        <NodeIcon :type="node.type" :size="24" />
+        <span class="node-name">{{ node.name }}</span>
+      </div>
     </div>
     
     <div class="node-content">
@@ -47,6 +49,7 @@
 import { computed } from 'vue';
 import type { Node } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
+import NodeIcon from './NodeIcon.vue';
 
 const props = defineProps<{
   node: Node;
@@ -146,42 +149,22 @@ function onInputPointMouseUp(_e: MouseEvent) {
   width: 200px;
   min-height: 80px;
   background: var(--node-bg);
-  border: 2px solid var(--node-border);
+  box-shadow: 0 0 4px var(--card-shadow);
   border-radius: 6px;
   padding: 10px;
   cursor: grab;
   user-select: none;
-  /* box-shadow: var(--card-shadow); */
   transition: border-color 0.2s, box-shadow 0.2s;
   color: var(--text-color);
+  border: 2px solid transparent;
 }
 
 .workflow-node.selected {
   border-color: var(--node-selected);
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.workflow-node.start {
-  border-color: var(--node-start);
-}
-
-.workflow-node.end {
-  border-color: var(--node-end);
-}
-
-.workflow-node.condition {
-  border-color: var(--node-condition);
-}
-
-.workflow-node.function {
-  border-color: var(--node-function);
 }
 
 .workflow-node:hover {
-  box-shadow: 0 0 18px rgba(0, 0, 0, 0.2);
-}
-.dark .workflow-node:hover {
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 18px var(--card-shadow);
 }
 
 .node-header {
@@ -247,5 +230,15 @@ function onInputPointMouseUp(_e: MouseEvent) {
 
 .connection-point.input:hover {
   transform: translateY(-50%) scale(1.2);
+}
+
+.node-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-name {
+  margin-left: 4px;
 }
 </style> 
