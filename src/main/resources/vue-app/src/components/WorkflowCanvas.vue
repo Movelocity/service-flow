@@ -107,8 +107,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, onMounted, ref, onUnmounted } from 'vue';
+<script setup lang="ts">
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import type { Node, Position } from '../types/workflow';
 import { NodeType } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
@@ -118,324 +118,281 @@ import ToolSelectorDialog from './ToolSelectorDialog.vue';
 import { generateBezierPath } from '../utils/canvas';
 import type { Tool } from '../services/toolApi';
 
-export default defineComponent({
-  name: 'WorkflowCanvas',
+const store = useWorkflowStore();
+const canvasContainer = ref<HTMLElement | null>(null);
 
-  components: {
-    NodeElem,
-    NodeConnection,
-    ToolSelectorDialog
-  },
+const workflow = computed(() => store.currentWorkflow);
+const selectedNodeId = computed(() => store.editorState.selectedNodeId);
+const selectedCondition = computed(() => store.editorState.selectedCondition);
+const scale = computed(() => store.editorState.canvasState.scale);
+const position = computed(() => store.editorState.canvasState.position);
 
-  setup() {
-    const store = useWorkflowStore();
-    const canvasContainer = ref<HTMLElement | null>(null);
+const tempConnection = ref({
+  isCreating: false,
+  sourceNodeId: '',
+  sourcePosition: { x: 0, y: 0 },
+  currentPosition: { x: 0, y: 0 }
+});
 
-    const workflow = computed(() => store.currentWorkflow);
-    const selectedNodeId = computed(() => store.editorState.selectedNodeId);
-    const selectedCondition = computed(() => store.editorState.selectedCondition);
-    const scale = computed(() => store.editorState.canvasState.scale);
-    const position = computed(() => store.editorState.canvasState.position);
+// 右键菜单状态
+const showMenu = ref(false);
+const menuPosition = ref({ x: 0, y: 0 });
+const clickPosition = ref({ x: 0, y: 0 });
 
-    const tempConnection = ref({
-      isCreating: false,
-      sourceNodeId: '',
-      sourcePosition: { x: 0, y: 0 },
-      currentPosition: { x: 0, y: 0 }
-    });
+// 可用的节点类型
+const availableNodeTypes = [
+  NodeType.FUNCTION,
+  NodeType.CONDITION,
+  NodeType.END
+];
 
-    // 右键菜单状态
-    const showMenu = ref(false);
-    const menuPosition = ref({ x: 0, y: 0 });
-    const clickPosition = ref({ x: 0, y: 0 });
+// 节点类型标签
+const nodeTypeLabels = {
+  [NodeType.START]: '开始',
+  [NodeType.FUNCTION]: '函数',
+  [NodeType.CONDITION]: '条件',
+  [NodeType.END]: '结束'
+};
 
-    // 可用的节点类型
-    const availableNodeTypes = [
-      NodeType.START,
-      NodeType.FUNCTION,
-      NodeType.CONDITION,
-      NodeType.END
-    ];
+// Add new refs for tool selection
+const showToolSelector = ref(false);
+const pendingNodePosition = ref<Position | null>(null);
 
-    // 节点类型标签
-    const nodeTypeLabels = {
-      [NodeType.START]: '开始',
-      [NodeType.FUNCTION]: '函数',
-      [NodeType.CONDITION]: '条件',
-      [NodeType.END]: '结束'
-    };
+// 获取节点
+function getNode(id: string): Node {
+  return workflow.value?.nodes.find(n => n.id === id) as Node;
+}
 
-    // Add new refs for tool selection
-    const showToolSelector = ref(false);
-    const pendingNodePosition = ref<Position | null>(null);
+// 检查连接是否被选中
+function isConnectionSelected(sourceNodeId: string, condition: string): boolean {
+  return selectedNodeId.value === sourceNodeId && selectedCondition.value === condition;
+}
 
-    // 获取节点
-    function getNode(id: string): Node {
-      return workflow.value?.nodes.find(n => n.id === id) as Node;
-    }
+// 获取临时连接线颜色
+const tempConnectionColor = computed(() => {
+  const sourceNode = getNode(tempConnection.value.sourceNodeId);
+  if (!sourceNode) return '#757575';
 
-    // 检查连接是否被选中
-    function isConnectionSelected(sourceNodeId: string, condition: string): boolean {
-      return selectedNodeId.value === sourceNodeId && selectedCondition.value === condition;
-    }
+  switch (sourceNode.type) {
+    case NodeType.START:
+      return '#4CAF50';
+    case NodeType.FUNCTION:
+      return '#2196F3';
+    case NodeType.CONDITION:
+      return '#FF9800';
+    case NodeType.END:
+      return '#F44336';
+    default:
+      return '#757575';
+  }
+});
 
-    // 获取临时连接线颜色
-    const tempConnectionColor = computed(() => {
-      const sourceNode = getNode(tempConnection.value.sourceNodeId);
-      if (!sourceNode) return '#757575';
+// 选择节点
+function selectNode(nodeId: string) {
+  store.selectNode(nodeId);
+}
 
-      switch (sourceNode.type) {
-        case NodeType.START:
-          return '#4CAF50';
-        case NodeType.FUNCTION:
-          return '#2196F3';
-        case NodeType.CONDITION:
-          return '#FF9800';
-        case NodeType.END:
-          return '#F44336';
-        default:
-          return '#757575';
+// 更新节点位置
+function updateNodePosition(nodeId: string, position: Position) {
+  store.updateNodePosition(nodeId, position);
+}
+
+// 画布缩放
+function onWheel(event: WheelEvent) {
+  event.preventDefault();
+  
+  // 获取鼠标相对于画布的位置
+  const rect = canvasContainer.value?.getBoundingClientRect();
+  if (!rect) return;
+  
+  const mouseX = event.clientX - rect.left;
+  const mouseY = event.clientY - rect.top;
+
+  // 计算新的缩放比例
+  const delta = event.deltaY > 0 ? 0.9 : 1.1;
+  const newScale = Math.max(0.5, Math.min(2, scale.value * delta));
+
+  // 使用 store 的 updateCanvasState 方法，传入鼠标位置
+  store.updateCanvasState({
+    scale: newScale
+  }, { x: mouseX, y: mouseY });
+}
+
+// 画布平移
+let isPanning = false;
+let lastPosition = { x: 0, y: 0 };
+
+function startPan(event: MouseEvent) {
+  if (event.target === canvasContainer.value) {
+    isPanning = true;
+    lastPosition = { x: event.clientX, y: event.clientY };
+  }
+}
+
+function onMouseMove(event: MouseEvent) {
+  if (isPanning) {
+    const dx = (event.clientX - lastPosition.x) / scale.value;
+    const dy = (event.clientY - lastPosition.y) / scale.value;
+    
+    store.updateCanvasState({
+      position: {
+        x: position.value.x + dx,
+        y: position.value.y + dy
       }
     });
 
-    // 选择节点
-    function selectNode(nodeId: string) {
-      store.selectNode(nodeId);
-    }
+    lastPosition = { x: event.clientX, y: event.clientY };
+  }
 
-    // 更新节点位置
-    function updateNodePosition(nodeId: string, position: Position) {
-      store.updateNodePosition(nodeId, position);
-    }
-
-    // 画布缩放
-    function onWheel(event: WheelEvent) {
-      event.preventDefault();
-      
-      // 获取鼠标相对于画布的位置
-      const rect = canvasContainer.value?.getBoundingClientRect();
-      if (!rect) return;
-      
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
-
-      // 计算新的缩放比例
-      const delta = event.deltaY > 0 ? 0.9 : 1.1;
-      const newScale = Math.max(0.5, Math.min(2, scale.value * delta));
-
-      // 使用 store 的 updateCanvasState 方法，传入鼠标位置
-      store.updateCanvasState({
-        scale: newScale
-      }, { x: mouseX, y: mouseY });
-    }
-
-    // 画布平移
-    let isPanning = false;
-    let lastPosition = { x: 0, y: 0 };
-
-    function startPan(event: MouseEvent) {
-      if (event.target === canvasContainer.value) {
-        isPanning = true;
-        lastPosition = { x: event.clientX, y: event.clientY };
-      }
-    }
-
-    function onMouseMove(event: MouseEvent) {
-      if (isPanning) {
-        const dx = (event.clientX - lastPosition.x) / scale.value;
-        const dy = (event.clientY - lastPosition.y) / scale.value;
-        
-        store.updateCanvasState({
-          position: {
-            x: position.value.x + dx,
-            y: position.value.y + dy
-          }
-        });
-
-        lastPosition = { x: event.clientX, y: event.clientY };
-      }
-
-      if (tempConnection.value.isCreating) {
-        const rect = canvasContainer.value?.getBoundingClientRect();
-        if (rect) {
-          tempConnection.value.currentPosition = {
-            x: (event.clientX - rect.left) / scale.value - position.value.x,
-            y: (event.clientY - rect.top) / scale.value - position.value.y
-          };
-        }
-      }
-    }
-
-    function endPan() {
-      isPanning = false;
-    }
-
-    // 连接线操作
-    function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent) {
-      if (!isOutput) return;
-
-      const sourceNode = getNode(nodeId);
-      if (!sourceNode) return;
-
-      const rect = canvasContainer.value?.getBoundingClientRect();
-      if (!rect) return;
-
-      tempConnection.value = {
-        isCreating: true,
-        sourceNodeId: nodeId,
-        sourcePosition: {
-          x: sourceNode.position.x + 100, // 节点宽度
-          y: sourceNode.position.y + 30   // 节点高度的一半
-        },
-        currentPosition: {
-          x: (event.clientX - rect.left) / scale.value - position.value.x,
-          y: (event.clientY - rect.top) / scale.value - position.value.y
-        }
+  if (tempConnection.value.isCreating) {
+    const rect = canvasContainer.value?.getBoundingClientRect();
+    if (rect) {
+      tempConnection.value.currentPosition = {
+        x: (event.clientX - rect.left) / scale.value - position.value.x,
+        y: (event.clientY - rect.top) / scale.value - position.value.y
       };
     }
+  }
+}
 
-    function endConnection(nodeId: string, isOutput: boolean) {
-      if (isOutput || !tempConnection.value.isCreating) return;
+function endPan() {
+  isPanning = false;
+}
 
-      if (tempConnection.value.sourceNodeId !== nodeId) {
-        const sourceNode = getNode(tempConnection.value.sourceNodeId);
-        if (!sourceNode) return;
+// 连接线操作
+function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent) {
+  if (!isOutput) return;
 
-        // 根据节点类型决定连接条件
-        if (sourceNode.type === NodeType.CONDITION) {
-          if (!Object.keys(sourceNode.nextNodes).includes('true')) {
-            store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'true');
-          } else if (!Object.keys(sourceNode.nextNodes).includes('false')) {
-            store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'false');
-          }
-        } else {
-          store.addConnection(tempConnection.value.sourceNodeId, nodeId);
-        }
+  const sourceNode = getNode(nodeId);
+  if (!sourceNode) return;
+
+  const rect = canvasContainer.value?.getBoundingClientRect();
+  if (!rect) return;
+
+  tempConnection.value = {
+    isCreating: true,
+    sourceNodeId: nodeId,
+    sourcePosition: {
+      x: sourceNode.position.x + 100, // 节点宽度
+      y: sourceNode.position.y + 30   // 节点高度的一半
+    },
+    currentPosition: {
+      x: (event.clientX - rect.left) / scale.value - position.value.x,
+      y: (event.clientY - rect.top) / scale.value - position.value.y
+    }
+  };
+}
+
+function endConnection(nodeId: string, isOutput: boolean) {
+  if (isOutput || !tempConnection.value.isCreating) return;
+
+  if (tempConnection.value.sourceNodeId !== nodeId) {
+    const sourceNode = getNode(tempConnection.value.sourceNodeId);
+    if (!sourceNode) return;
+
+    // 根据节点类型决定连接条件
+    if (sourceNode.type === NodeType.CONDITION) {
+      if (!Object.keys(sourceNode.nextNodes).includes('true')) {
+        store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'true');
+      } else if (!Object.keys(sourceNode.nextNodes).includes('false')) {
+        store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'false');
       }
-
-      tempConnection.value.isCreating = false;
+    } else {
+      store.addConnection(tempConnection.value.sourceNodeId, nodeId);
     }
+  }
 
-    // 计算临时连接线路径
-    const tempConnectionPath = computed(() => {
-      if (!tempConnection.value.isCreating) return '';
+  tempConnection.value.isCreating = false;
+}
 
-      return generateBezierPath(
-        tempConnection.value.sourcePosition,
-        tempConnection.value.currentPosition
-      );
-    });
+// 计算临时连接线路径
+const tempConnectionPath = computed(() => {
+  if (!tempConnection.value.isCreating) return '';
 
-    // 添加点击外部关闭菜单的处理
-    function closeMenu() {
-      showMenu.value = false;
-    }
+  return generateBezierPath(
+    tempConnection.value.sourcePosition,
+    tempConnection.value.currentPosition
+  );
+});
 
-    // 显示右键菜单
-    function showContextMenu(event: MouseEvent) {
-      // 获取点击位置相对于画布的坐标
-      const rect = canvasContainer.value?.getBoundingClientRect();
-      if (!rect) return;
+// 添加点击外部关闭菜单的处理
+function closeMenu() {
+  showMenu.value = false;
+}
 
-      // 保存实际点击位置（考虑缩放和平移）
-      clickPosition.value = {
-        x: (event.clientX - rect.left - position.value.x * scale.value) / scale.value,
-        y: (event.clientY - rect.top - position.value.y * scale.value) / scale.value
-      };
+// 显示右键菜单
+function showContextMenu(event: MouseEvent) {
+  // 获取点击位置相对于画布的坐标
+  const rect = canvasContainer.value?.getBoundingClientRect();
+  if (!rect) return;
 
-      // 设置菜单显示位置（使用实际屏幕坐标）
-      menuPosition.value = {
-        x: event.clientX,
-        y: event.clientY
-      };
+  // 保存实际点击位置（考虑缩放和平移）
+  clickPosition.value = {
+    x: (event.clientX - rect.left - position.value.x * scale.value) / scale.value,
+    y: (event.clientY - rect.top - position.value.y * scale.value) / scale.value
+  };
 
-      showMenu.value = true;
+  // 设置菜单显示位置（使用实际屏幕坐标）
+  menuPosition.value = {
+    x: event.clientX,
+    y: event.clientY
+  };
 
-      // 添加一次性点击事件监听器来关闭菜单
-      setTimeout(() => {
-        window.addEventListener('click', closeMenu, { once: true });
-      }, 0);
-    }
+  showMenu.value = true;
 
-    // 添加节点
-    function addNode(type: NodeType) {
-      if (type === NodeType.FUNCTION) {
-        // For function nodes, show the tool selector dialog
-        pendingNodePosition.value = clickPosition.value;
-        showToolSelector.value = true;
-      } else {
-        // For other node types, add them directly
-        store.addNode(type, clickPosition.value);
+  // 添加一次性点击事件监听器来关闭菜单
+  setTimeout(() => {
+    window.addEventListener('click', closeMenu, { once: true });
+  }, 0);
+}
+
+// 添加节点
+function addNode(type: NodeType) {
+  if (type === NodeType.FUNCTION) {
+    // For function nodes, show the tool selector dialog
+    pendingNodePosition.value = clickPosition.value;
+    showToolSelector.value = true;
+  } else {
+    // For other node types, add them directly
+    store.addNode(type, clickPosition.value);
+  }
+  showMenu.value = false;
+}
+
+// Handle tool selection
+function onToolSelected(tool: Tool) {
+  if (pendingNodePosition.value) {
+    store.addFunctionNode(tool, pendingNodePosition.value);
+    pendingNodePosition.value = null;
+  }
+}
+
+// 在组件卸载时清理事件监听器
+onUnmounted(() => {
+  window.removeEventListener('click', closeMenu);
+});
+
+// 扁平化连接列表
+const connections = computed(() => {
+  if (!workflow.value?.nodes) return [];
+  return workflow.value.nodes.flatMap(node => 
+    Object.entries(node.nextNodes).map(([condition, targetId]) => ({
+      sourceId: node.id,
+      targetId,
+      condition
+    }))
+  );
+});
+
+onMounted(() => {
+  if (canvasContainer.value) {
+    const rect = canvasContainer.value.getBoundingClientRect();
+    store.updateCanvasState({
+      position: {
+        x: rect.width / 5,
+        y: rect.height / 5
       }
-      showMenu.value = false;
-    }
-
-    // Handle tool selection
-    function onToolSelected(tool: Tool) {
-      if (pendingNodePosition.value) {
-        store.addFunctionNode(tool.name, pendingNodePosition.value);
-        pendingNodePosition.value = null;
-      }
-    }
-
-    // 在组件卸载时清理事件监听器
-    onUnmounted(() => {
-      window.removeEventListener('click', closeMenu);
     });
-
-    // 扁平化连接列表
-    const connections = computed(() => {
-      if (!workflow.value?.nodes) return [];
-      return workflow.value.nodes.flatMap(node => 
-        Object.entries(node.nextNodes).map(([condition, targetId]) => ({
-          sourceId: node.id,
-          targetId,
-          condition
-        }))
-      );
-    });
-
-    onMounted(() => {
-      if (canvasContainer.value) {
-        const rect = canvasContainer.value.getBoundingClientRect();
-        store.updateCanvasState({
-          position: {
-            x: rect.width / 2,
-            y: rect.height / 2
-          }
-        });
-      }
-    });
-
-    return {
-      canvasContainer,
-      workflow,
-      selectedNodeId,
-      scale,
-      position,
-      tempConnection,
-      tempConnectionPath,
-      tempConnectionColor,
-      getNode,
-      isConnectionSelected,
-      selectNode,
-      updateNodePosition,
-      onWheel,
-      startPan,
-      onMouseMove,
-      endPan,
-      startConnection,
-      endConnection,
-      showMenu,
-      menuPosition,
-      availableNodeTypes,
-      nodeTypeLabels,
-      showContextMenu,
-      addNode,
-      connections,
-      showToolSelector,
-      onToolSelected
-    };
   }
 });
 </script>

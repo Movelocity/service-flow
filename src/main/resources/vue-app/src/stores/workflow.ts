@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import type { Node, Workflow, Position, EditorState } from '../types/workflow';
+import type { Tool } from '../services/toolApi';
 import { NodeType } from '../types/workflow';
 import { WorkflowApi } from '../services/workflowApi';
 
@@ -66,6 +67,14 @@ export const useWorkflowStore = defineStore('workflow', {
       const outboundNodes = Object.entries(node.nextNodes)
         .map(([condition, targetId]) => ({ targetId, condition }));
       return outboundNodes;
+    },
+
+    // 获取节点的所有前置节点ID
+    getNodePredecessors: (state) => (nodeId: string): string[] => {
+      if (!state.currentWorkflow?.nodes) return [];
+      return state.currentWorkflow.nodes
+        .filter(node => Object.values(node.nextNodes).includes(nodeId))
+        .map(node => node.id);
     }
   },
 
@@ -122,6 +131,7 @@ export const useWorkflowStore = defineStore('workflow', {
         id: uuidv4(),
         type,
         name: name || `${type} Node`,
+        description: '',
         position,
         parameters: {},
         nextNodes: {}
@@ -133,9 +143,9 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     // Add function node with a specific tool
-    addFunctionNode(toolName: string, position: Position) {
-      const node = this.addNode(NodeType.FUNCTION, position, toolName);
-      this.updateNodeParameters(node.id, { toolName });
+    addFunctionNode(tool: Tool, position: Position) {
+      const node = this.addNode(NodeType.FUNCTION, position, tool.name);
+      this.updateNodeParameters(node.id, { tool });
     },
 
     updateNode(nodeId: string, updates: Partial<Node>) {

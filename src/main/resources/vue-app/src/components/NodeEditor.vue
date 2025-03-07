@@ -1,7 +1,6 @@
 <template>
+  <!-- 节点编辑器面板 -->
   <div :class="['editor-panel', { visible: isVisible }]">
-    
-
     <template v-if="selectedNode && nodeData">
       <div class="editor-header">
         <div class="editor-title-container">
@@ -16,20 +15,45 @@
         <button class="close-button" @click="onClose">×</button>
       </div>
 
+      <!-- 开始节点的全局变量定义 -->
+      <template v-if="selectedNode.type === 'START'">
+        <div class="form-group">
+          <div class="variable-row">
+            <label class="form-label">工作流参数</label>
+            <div>
+              <el-button
+                type="primary"
+                size="small"
+                @click="addVariable"
+              >
+                +
+              </el-button>
+            </div>
+          </div>
+
+          <div class="variables-list">
+            <div v-for="(variable, index) in nodeData.parameters.globalVariables || []" :key="index" class="variable-row">
+              <!-- 编辑变量 -->
+              <span>{{ variable.name }}</span>
+              <div>
+                <span>{{ variable.type }}</span>
+                <el-button type="primary" link @click="editVariable(index)"> 编辑 </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- 条件节点特有的配置 -->
       <template v-if="selectedNode.type === 'CONDITION'">
         <div class="form-group">
-          <label class="form-label" for="condition">条件表达式</label>
-          <textarea
-            id="condition"
+          <label class="form-label">条件配置</label>
+          <ConditionBuilder
             v-model="nodeData.parameters.condition"
-            class="form-control"
-            rows="3"
-            placeholder="请输入条件表达式"
             @change="updateNode"
           />
           <small class="form-text text-muted">
-            支持JavaScript表达式，例如：value > 100
+            选择变量并设置条件，支持字符串、数字和布尔值类型的比较
           </small>
         </div>
       </template>
@@ -37,30 +61,10 @@
       <!-- 函数节点特有的配置 -->
       <template v-if="selectedNode.type === 'FUNCTION'">
         <div class="form-group">
-          <label class="form-label" for="function">函数名称</label>
-          <input
-            id="function"
-            v-model="nodeData.parameters.function"
-            type="text"
-            class="form-control"
-            placeholder="请输入函数名称"
+          <ToolParamsEditor
+            v-model="nodeData.parameters"
             @change="updateNode"
-          >
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label" for="parameters">函数参数</label>
-          <textarea
-            id="parameters"
-            v-model="parametersJson"
-            class="form-control"
-            rows="5"
-            placeholder="请输入JSON格式的参数"
-            @change="updateParameters"
           />
-          <small class="form-text text-muted">
-            使用JSON格式定义参数，例如：{"param1": "value1"}
-          </small>
         </div>
       </template>
 
@@ -89,7 +93,7 @@
           </div>
         </div>
       </div>
-      <!-- 在模板中直接使用枚举值可能会导致问题，所以将 NodeType.START 写为字符串 'START'-->
+
       <div class="editor-actions" v-if="selectedNode?.type !== 'START'">
         <button
           class="btn btn-danger"
@@ -100,6 +104,12 @@
       </div>
     </template>
   </div>
+
+  <VariableEditor
+    v-model="editingVariable"
+    v-model:visible="variableDialogVisible"
+    @save="saveVariable"
+  />
 </template>
 
 <script setup lang="ts">
@@ -108,6 +118,10 @@ import type { Node } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
 import { Delete } from '@element-plus/icons-vue';
 import NodeIcon from './NodeIcon.vue';
+import { VariableType } from '../types/workflow';
+import ConditionBuilder from './ConditionBuilder.vue';
+import ToolParamsEditor from './ToolParamsEditor.vue';
+import VariableEditor from './VariableEditor.vue';
 defineProps<{
   isVisible: boolean;
 }>();
@@ -123,37 +137,26 @@ const selectedNode = computed(() => store.selectedNode);
 // 节点数据的本地副本
 const nodeData = ref<Node | null>(null);
 
+
+
+// 在 script setup 部分添加以下代码
+const variableDialogVisible = ref(false);
+const editingVariableIndex = ref(-1);
+const editingVariable = ref<any>(null);
+
 // 监听选中节点的变化
 watch(selectedNode, (newNode) => {
   if (newNode) {
+    // 确保开始节点有 globalVariables 数组
+    if (newNode.type === 'START' && !newNode.parameters.globalVariables) {
+      newNode.parameters.globalVariables = [];
+    }
     nodeData.value = JSON.parse(JSON.stringify(newNode));
   } else {
     nodeData.value = null;
   }
 }, { immediate: true });
 
-// 函数参数的JSON字符串表示
-const parametersJson = computed({
-  get() {
-    if (!nodeData.value?.parameters) return '';
-    const params = { ...nodeData.value.parameters };
-    delete params.function; // 排除function字段
-    return JSON.stringify(params, null, 2);
-  },
-  set(value: string) {
-    try {
-      const params = JSON.parse(value);
-      if (nodeData.value) {
-        nodeData.value.parameters = {
-          ...params,
-          function: nodeData.value.parameters.function
-        };
-      }
-    } catch (e) {
-      console.error('Invalid JSON:', e);
-    }
-  }
-});
 
 // 获取节点的连接
 const nodeConnections = computed(() => {
@@ -182,11 +185,6 @@ function updateNode() {
   if (nodeData.value && selectedNode.value) {
     store.updateNode(selectedNode.value.id, nodeData.value);
   }
-}
-
-// 更新参数
-function updateParameters() {
-  updateNode();
 }
 
 // 删除连接
@@ -225,6 +223,44 @@ function onClose() {
   store.selectNode(null);
   emit('close');
 }
+
+// 添加全局变量
+function addVariable() {
+  editingVariableIndex.value = -1;
+  editingVariable.value = {
+    name: '',
+    type: VariableType.STRING,
+    description: '',
+    required: false,
+    defaultValue: ''
+  };
+  variableDialogVisible.value = true;
+}
+
+function editVariable(index: number) {
+  editingVariableIndex.value = index;
+  editingVariable.value = JSON.parse(
+    JSON.stringify(nodeData.value!.parameters.globalVariables[index])
+  );
+  variableDialogVisible.value = true;
+}
+
+function saveVariable() {
+  if (!nodeData.value || !editingVariable.value) return;
+  
+  if (!nodeData.value.parameters.globalVariables) {
+    nodeData.value.parameters.globalVariables = [];
+  }
+
+  if (editingVariableIndex.value === -1) {
+    nodeData.value.parameters.globalVariables.push(editingVariable.value);
+  } else {
+    nodeData.value.parameters.globalVariables[editingVariableIndex.value] = editingVariable.value;
+  }
+
+  updateNode();
+}
+
 </script>
 
 <style scoped>
@@ -232,7 +268,7 @@ function onClose() {
   position: fixed;
   top: 70px;
   right: 0;
-  width: 300px;
+  width: 360px;
   border-radius: 1rem 0 0 1rem;
   height: calc(100vh - 70px);
   background: var(--card-bg);
@@ -356,5 +392,100 @@ function onClose() {
 .btn-delete {
   cursor: pointer;
   color: var(--text-color);
+}
+
+.variables-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.variable-item {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.variable-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+
+.variable-row .form-control {
+  flex: 1;
+}
+
+.type-select {
+  width: 120px;
+}
+
+.variable-options {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.variable-options .form-control {
+  width: 150px;
+}
+
+.btn-outline-primary {
+  color: var(--text-color);
+  border-color: var(--border-color);
+  background: transparent;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+  color: var(--text-color);
+  background: var(--node-bg);
+  border-color: var(--node-selected);
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.variable-form {
+  padding: 1rem;
+}
+
+.dialog-footer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* 添加对话框相关样式 */
+:deep(.variable-dialog) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.el-dialog) {
+  margin: 0 auto;
+  max-width: 90%;
+}
+
+:deep(.el-select) {
+  width: 100%;
 }
 </style> 

@@ -11,6 +11,7 @@ import java.util.HashMap;
 public class WorkflowNode {
     private String id;
     private String name;
+    private String description;
     private NodeType type;
     private Map<String, Object> parameters;
     private Map<String, String> nextNodes; // key: condition/default, value: next node id
@@ -37,6 +38,14 @@ public class WorkflowNode {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public NodeType getType() {

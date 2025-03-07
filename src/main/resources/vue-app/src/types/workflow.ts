@@ -9,6 +9,58 @@ export enum NodeType {
 }
 
 /**
+ * 变量类型枚举
+ */
+export enum VariableType {
+  STRING = 'STRING',
+  NUMBER = 'NUMBER',
+  BOOLEAN = 'BOOLEAN'
+}
+
+/**
+ * 变量定义接口
+ */
+export interface VariableDefinition {
+  name: string;
+  type: VariableType;
+  description?: string;
+  required: boolean;
+  defaultValue?: any;
+}
+
+/**
+ * 工作流变量接口
+ */
+export interface WorkflowVariable {
+  parent: string;  // 变量来源节点的ID
+  name: string;    // 变量名称
+  type: VariableType;
+  value: any;
+}
+
+/**
+ * 工具字段定义接口
+ */
+export interface ToolField {
+  name: string;
+  description: string;
+  type: VariableType;
+  required: boolean;
+  defaultValue?: any;
+  constraints?: any;
+}
+
+/**
+ * 工具定义接口
+ */
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  inputFields: Record<string, ToolField>;
+  outputFields: Record<string, ToolField>;
+}
+
+/**
  * 位置接口
  */
 export interface Position {
@@ -23,6 +75,7 @@ export interface ApiNode {
   id: string;
   type: NodeType;
   name: string;
+  description: string;
   position: Position;
   parameters: Record<string, any>;
   nextNodes: {
@@ -50,11 +103,15 @@ export interface Node {
   id: string;
   type: NodeType;
   name: string;
+  description: string;
   position: Position;
   parameters: Record<string, any>;
   nextNodes: {
     [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
   };
+  inputVariables?: VariableDefinition[];  // 节点接收的输入变量定义
+  outputVariables?: VariableDefinition[]; // 节点产生的输出变量定义
+  toolDefinition?: ToolDefinition;        // 函数节点的工具定义
 }
 
 /**
@@ -67,6 +124,8 @@ export interface Workflow {
   nodes: Node[];
   createdAt?: Date;
   updatedAt?: Date;
+  globalVariables?: VariableDefinition[];  // 工作流级别的全局变量定义
+  variables?: Record<string, WorkflowVariable>;  // 工作流运行时的变量存储
 }
 
 /**
