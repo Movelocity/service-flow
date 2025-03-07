@@ -23,6 +23,7 @@ public class ToolController {
      */
     @GetMapping
     public ResponseEntity<List<Map<String, String>>> listTools() {
+		System.out.println("listTools");
         List<Map<String, String>> tools = ToolRegistry.getAllHandlers().stream()
             .map(handler -> {
                 Map<String, String> toolInfo = new HashMap<>();
@@ -41,6 +42,7 @@ public class ToolController {
      */
     @GetMapping("/{toolName}")
     public ResponseEntity<ToolDefinition> getToolDetails(@PathVariable String toolName) {
+		System.out.println("getToolDetails: " + toolName);
         ToolHandler handler = ToolRegistry.getHandler(toolName);
         if (handler == null) {
             return ResponseEntity.notFound().build();
@@ -58,6 +60,7 @@ public class ToolController {
     public ResponseEntity<ToolResponse<?>> executeTool(
             @PathVariable String toolName,
             @RequestBody Map<String, Object> params) throws ToolException {
+		System.out.println("executeTool: " + toolName);
         ToolHandler handler = ToolRegistry.getHandler(toolName);
         if (handler == null) {
             return ResponseEntity.notFound().build();

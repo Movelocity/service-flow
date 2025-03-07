@@ -1,12 +1,11 @@
 package cn.yafex.tools.handlers.system;
 
-import cn.yafex.tools.core.ToolDefinition;
+import cn.yafex.tools.annotations.Tool;
+import cn.yafex.tools.annotations.ToolField;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.exceptions.ToolException;
-import cn.yafex.tools.schema.FieldDefinition;
 import cn.yafex.tools.schema.FieldType;
-import cn.yafex.tools.utils.CollectionUtils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -15,42 +14,18 @@ import java.util.*;
 /**
  * Tool for retrieving system information
  */
+@Tool(
+    name = "system_info",
+    description = "Get system information"
+)
 public class SystemInfoTool implements ToolHandler {
-    private final ToolDefinition definition;
-
-    public SystemInfoTool() {
-        // Define output parameters
-        Map<String, FieldDefinition> outputFields = new HashMap<>();
-        outputFields.put("system", new FieldDefinition(
-            "system",
-            "System information",
-            FieldType.OBJECT,
-            true,
-            null,
-            null
-        ));
-
-        this.definition = new ToolDefinition(
-            "system_info",
-            "Get system information",
-            new HashMap<>(),  // No input parameters needed
-            outputFields,
-            CollectionUtils.listOf(ToolException.class)
-        );
-    }
-
     @Override
-    public String getName() {
-        return definition.getName();
-    }
-
-    @Override
-    public ToolDefinition getDefinition() {
-        return definition;
-    }
-
-    @Override
-	@SuppressWarnings("unchecked")
+    @ToolField(
+        name = "system",
+        description = "System information",
+        type = FieldType.OBJECT,
+        required = true
+    )
     public <T> ToolResponse<T> execute(Map<String, Object> params) throws ToolException {
         try {
             Map<String, Object> systemInfo = new HashMap<>();
@@ -82,10 +57,12 @@ public class SystemInfoTool implements ToolHandler {
             systemInfo.put("timeZone", TimeZone.getDefault().getID());
             systemInfo.put("currentTime", new Date());
 
-            return (ToolResponse<T>) ToolResponse.success(
+			@SuppressWarnings("unchecked")
+            ToolResponse<T> response = (ToolResponse<T>) ToolResponse.success(
                 systemInfo,
                 "Successfully retrieved system information"
             );
+			return response;
 
         } catch (Exception e) {
             throw new ToolException(

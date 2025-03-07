@@ -98,6 +98,12 @@
         添加{{ nodeTypeLabels[type] }}节点
       </div>
     </div>
+
+    <!-- Tool selector dialog -->
+    <ToolSelectorDialog
+      v-model="showToolSelector"
+      @tool-selected="onToolSelected"
+    />
   </div>
 </template>
 
@@ -108,14 +114,17 @@ import { NodeType } from '../types/workflow';
 import { useWorkflowStore } from '../stores/workflow';
 import WorkflowNode from './WorkflowNode.vue';
 import WorkflowConnection from './WorkflowConnection.vue';
+import ToolSelectorDialog from './ToolSelectorDialog.vue';
 import { generateBezierPath } from '../utils/canvas';
+import type { Tool } from '../services/toolApi';
 
 export default defineComponent({
   name: 'WorkflowCanvas',
 
   components: {
     WorkflowNode,
-    WorkflowConnection
+    WorkflowConnection,
+    ToolSelectorDialog
   },
 
   setup() {
@@ -155,6 +164,10 @@ export default defineComponent({
       [NodeType.CONDITION]: '条件',
       [NodeType.END]: '结束'
     };
+
+    // Add new refs for tool selection
+    const showToolSelector = ref(false);
+    const pendingNodePosition = ref<Position | null>(null);
 
     // 获取节点
     function getNode(id: string): Node {
@@ -346,8 +359,23 @@ export default defineComponent({
 
     // 添加节点
     function addNode(type: NodeType) {
-      store.addNode(type, clickPosition.value);
+      if (type === NodeType.FUNCTION) {
+        // For function nodes, show the tool selector dialog
+        pendingNodePosition.value = clickPosition.value;
+        showToolSelector.value = true;
+      } else {
+        // For other node types, add them directly
+        store.addNode(type, clickPosition.value);
+      }
       showMenu.value = false;
+    }
+
+    // Handle tool selection
+    function onToolSelected(tool: Tool) {
+      if (pendingNodePosition.value) {
+        store.addFunctionNode(tool.name, pendingNodePosition.value);
+        pendingNodePosition.value = null;
+      }
     }
 
     // 在组件卸载时清理事件监听器
@@ -404,7 +432,9 @@ export default defineComponent({
       nodeTypeLabels,
       showContextMenu,
       addNode,
-      connections
+      connections,
+      showToolSelector,
+      onToolSelected
     };
   }
 });

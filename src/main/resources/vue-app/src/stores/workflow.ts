@@ -133,6 +133,12 @@ export const useWorkflowStore = defineStore('workflow', {
       return node;
     },
 
+    // Add function node with a specific tool
+    addFunctionNode(toolName: string, position: Position) {
+      const node = this.addNode(NodeType.FUNCTION, position, toolName);
+      this.updateNodeParameters(node.id, { toolName });
+    },
+
     updateNode(nodeId: string, updates: Partial<Node>) {
       if (!this.currentWorkflow) return;
       

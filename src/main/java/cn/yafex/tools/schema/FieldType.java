@@ -8,6 +8,6 @@ public enum FieldType {
     NUMBER,     // 数字
     BOOLEAN,    // 布尔值
     ARRAY,      // 列表
-    OBJECT,     // 复杂对象 (暂不支持)
+    OBJECT,     // JSON 对象
     DATE,       // 日期 (暂不支持)
 } 

@@ -241,6 +241,7 @@ async function loadWorkflow(id: string) {
   } catch (error) {
     console.error('Failed to load workflow:', error);
     alert('加载工作流失败');
+    store.isDirty = false;
     router.push('/workflows');
   } finally {
     isLoading.value = false;

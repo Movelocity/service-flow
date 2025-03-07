@@ -7,41 +7,51 @@ import java.util.Map;
  * Defines the structure and constraints of a field in a tool's input or output
  */
 public class FieldDefinition {
-    private String name;
-    private String description;
-    private FieldType type;
-    private boolean required;
-    private Object defaultValue;
+    private final String name;
+    private final String description;
+    private final FieldType type;
+    private final boolean required;
+    private final String defaultValue;
+    private final String pattern;
     private Map<String, Object> constraints;
     private List<String> enumValues;
     private Map<String, FieldDefinition> properties;
     private FieldDefinition itemDefinition;
 
-    public FieldDefinition(String name, String description, FieldType type, boolean required,
-                         Object defaultValue, Map<String, Object> constraints) {
+    public FieldDefinition(
+        String name,
+        String description,
+        FieldType type,
+        boolean required,
+        String defaultValue,
+        String pattern
+    ) {
         this.name = name;
         this.description = description;
         this.type = type;
         this.required = required;
         this.defaultValue = defaultValue;
-        this.constraints = constraints;
+        this.pattern = pattern;
     }
 
     // Getters and setters
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setName(String name) { }
 
     public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setDescription(String description) { }
 
     public FieldType getType() { return type; }
-    public void setType(FieldType type) { this.type = type; }
+    public void setType(FieldType type) { }
 
     public boolean isRequired() { return required; }
-    public void setRequired(boolean required) { this.required = required; }
+    public void setRequired(boolean required) { }
 
-    public Object getDefaultValue() { return defaultValue; }
-    public void setDefaultValue(Object defaultValue) { this.defaultValue = defaultValue; }
+    public String getDefaultValue() { return defaultValue; }
+    public void setDefaultValue(String defaultValue) { }
+
+    public String getPattern() { return pattern; }
+    public void setPattern(String pattern) { }
 
     public Map<String, Object> getConstraints() { return constraints; }
     public void setConstraints(Map<String, Object> constraints) { this.constraints = constraints; }
