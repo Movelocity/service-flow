@@ -81,28 +81,11 @@
     </div>
 
     <!-- 右键菜单 -->
-    <div
-      v-show="showMenu"
-      class="context-menu"
-      :style="{
-        left: menuPosition.x + 'px',
-        top: menuPosition.y + 'px'
-      }"
-    >
-      <div
-        v-for="type in availableNodeTypes"
-        :key="type"
-        class="menu-item"
-        @click="addNode(type)"
-      >
-        添加{{ nodeTypeLabels[type] }}节点
-      </div>
-    </div>
-
-    <!-- Tool selector dialog -->
-    <ToolSelectorDialog
-      v-model="showToolSelector"
-      @tool-selected="onToolSelected"
+    <ContextMenu
+      :visible="showMenu"
+      :position="menuPosition"
+      :click-position="clickPosition"
+      @close="closeMenu"
     />
   </div>
 </template>
@@ -114,9 +97,8 @@ import { NodeType } from '@/types/workflow';
 import { useWorkflowStore } from '@/stores/workflow';
 import NodeElem from './NodeElem.vue';
 import NodeConnection from './NodeConnection.vue';
-import ToolSelectorDialog from '../ToolSelectorDialog.vue';
+import ContextMenu from './ContextMenu.vue';
 import { generateBezierPath } from '@/utils/canvas';
-import type { Tool } from '@/services/toolApi';
 
 const store = useWorkflowStore();
 const canvasContainer = ref<HTMLElement | null>(null);
@@ -138,25 +120,6 @@ const tempConnection = ref({
 const showMenu = ref(false);
 const menuPosition = ref({ x: 0, y: 0 });
 const clickPosition = ref({ x: 0, y: 0 });
-
-// 可用的节点类型
-const availableNodeTypes = [
-  NodeType.FUNCTION,
-  NodeType.CONDITION,
-  NodeType.END
-];
-
-// 节点类型标签
-const nodeTypeLabels = {
-  [NodeType.START]: '开始',
-  [NodeType.FUNCTION]: '函数',
-  [NodeType.CONDITION]: '条件',
-  [NodeType.END]: '结束'
-};
-
-// Add new refs for tool selection
-const showToolSelector = ref(false);
-const pendingNodePosition = ref<Position | null>(null);
 
 // 获取节点
 function getNode(id: string): Node {
@@ -346,32 +309,6 @@ function showContextMenu(event: MouseEvent) {
   }, 0);
 }
 
-// 添加节点
-function addNode(type: NodeType) {
-  if (type === NodeType.FUNCTION) {
-    // For function nodes, show the tool selector dialog
-    pendingNodePosition.value = clickPosition.value;
-    showToolSelector.value = true;
-  } else {
-    // For other node types, add them directly
-    store.addNode(type, clickPosition.value);
-  }
-  showMenu.value = false;
-}
-
-// Handle tool selection
-function onToolSelected(tool: Tool) {
-  if (pendingNodePosition.value) {
-    store.addFunctionNode(tool, pendingNodePosition.value);
-    pendingNodePosition.value = null;
-  }
-}
-
-// 在组件卸载时清理事件监听器
-onUnmounted(() => {
-  window.removeEventListener('click', closeMenu);
-});
-
 // 扁平化连接列表
 const connections = computed(() => {
   if (!workflow.value?.nodes) return [];
@@ -382,6 +319,11 @@ const connections = computed(() => {
       condition
     }))
   );
+});
+
+// 在组件卸载时清理事件监听器
+onUnmounted(() => {
+  window.removeEventListener('click', closeMenu);
 });
 
 onMounted(() => {
@@ -429,29 +371,5 @@ onMounted(() => {
 .temp-connection {
   fill: none;
   pointer-events: none;
-}
-
-.context-menu {
-  position: fixed;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  padding: 4px 0;
-  min-width: 160px;
-  z-index: 1000;
-}
-
-.menu-item {
-  padding: 8px 16px;
-  cursor: pointer;
-  user-select: none;
-  color: #333;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.menu-item:hover {
-  background-color: #f5f5f5;
 }
 </style> 
