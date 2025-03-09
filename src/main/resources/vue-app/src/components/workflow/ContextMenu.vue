@@ -72,7 +72,7 @@ function handleNodeAdd(type: NodeType) {
 
 // Handle tool selection
 function onToolSelected(tool: Tool) {
-  store.addFunctionNode(tool, props.clickPosition);
+  store.addFunctionNode(tool, props.clickPosition, tool.name, tool.description);
   showToolSelector.value = false;
 }
 </script>

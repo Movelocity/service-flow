@@ -14,7 +14,10 @@ export enum NodeType {
 export enum VariableType {
   STRING = 'STRING',
   NUMBER = 'NUMBER',
-  BOOLEAN = 'BOOLEAN'
+  BOOLEAN = 'BOOLEAN',
+  OBJECT = 'OBJECT',
+  ARRAY = 'ARRAY',
+  DATE = 'DATE',
 }
 
 /**
@@ -51,16 +54,6 @@ export interface ToolField {
 }
 
 /**
- * 工具定义接口
- */
-export interface ToolDefinition {
-  name: string;
-  description: string;
-  inputFields: Record<string, ToolField>;
-  outputFields: Record<string, ToolField>;
-}
-
-/**
  * 位置接口
  */
 export interface Position {
@@ -77,10 +70,11 @@ export interface ApiNode {
   name: string;
   description: string;
   position: Position;
-  parameters: Record<string, any>;
   nextNodes: {
     [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
   };
+  inputs: Record<string, VariableDefinition>;
+  outputs: Record<string, VariableDefinition>;
 }
 
 /**
@@ -105,13 +99,14 @@ export interface Node {
   name: string;
   description: string;
   position: Position;
-  parameters: Record<string, any>;
+  // parameters: Record<string, any>;
   nextNodes: {
     [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
   };
-  inputs?: VariableDefinition[];  // 节点接收的输入变量定义
-  outputs?: VariableDefinition[]; // 节点产生的输出变量定义
-  toolDefinition?: ToolDefinition;        // 函数节点的工具定义
+  inputs: Record<string, VariableDefinition>;  // 节点接收的输入变量定义
+  outputs: Record<string, VariableDefinition>; // 节点产生的输出变量定义
+  toolName?: string;              // 函数节点的工具定义
+  toolDescription?: string;
 }
 
 /**
@@ -125,7 +120,6 @@ export interface Workflow {
   createdAt?: Date;
   updatedAt?: Date;
   globalVariables?: VariableDefinition[];  // 工作流级别的全局变量定义
-  variables?: Record<string, WorkflowVariable>;  // 工作流运行时的变量存储
 }
 
 /**

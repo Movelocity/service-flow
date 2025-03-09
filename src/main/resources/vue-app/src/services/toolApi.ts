@@ -1,36 +1,6 @@
 /// <reference types="vite/client" />
 
-/**
- * Represents a tool field definition
- */
-export interface ToolField {
-  name: string;
-  description: string;
-  type: 'STRING' | 'NUMBER' | 'BOOLEAN' | 'ARRAY' | 'OBJECT' | 'DATE';
-  required: boolean;
-  defaultValue?: any;
-  constraints?: any;
-}
-
-/**
- * Represents a complete tool definition
- */
-export interface Tool {
-  name: string;
-  description: string;
-  inputFields: Record<string, ToolField>;
-  outputFields: Record<string, ToolField>;
-}
-
-/**
- * Represents the execution result of a tool
- */
-export interface ToolExecutionResult<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  errorCode?: string;
-}
+import type { Tool, ToolExecutionResult } from '@/types/tools';
 
 /**
  * Tool API Service

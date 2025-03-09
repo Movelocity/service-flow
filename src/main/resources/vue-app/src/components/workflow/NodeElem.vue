@@ -19,12 +19,12 @@
     <div class="node-content">
       <template v-if="node.type === 'CONDITION'">
         <div class="condition-expression">
-          {{ node.parameters.condition || '未设置条件' }}
+          {{ node.condition || '未设置条件' }}
         </div>
       </template>
       <template v-else-if="node.type === 'FUNCTION'">
         <div class="function-info">
-          {{ node.parameters.function || '未设置函数' }}
+          {{ node.toolName || '未设置函数' }}
         </div>
       </template>
     </div>

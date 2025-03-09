@@ -83,13 +83,15 @@ public class WorkflowManager {
                 
                 // Execute node based on its type
                 Map<String, Object> nodeResult = executeNode(node, context);
-                
+                Map<String, Object> nodeParameters = new HashMap<>();
+                nodeParameters.put("toolName", node.getToolName());
+                nodeParameters.put("toolDescription", node.getToolDescription());
                 long nodeDuration = System.currentTimeMillis() - nodeStartTime;
                 workflowLogger.logNodeExecution(
                     context.getExecutionId(),
                     node.getName(),
                     node.getType().toString(),
-                    node.getParameters(),
+                    nodeParameters,
                     nodeResult,
                     nodeDuration
                 );

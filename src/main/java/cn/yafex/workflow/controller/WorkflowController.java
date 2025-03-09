@@ -39,7 +39,7 @@ public class WorkflowController {
             return ResponseEntity.ok(workflow);
         } catch (IOException e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Failed to save workflow: " + e.getMessage());
+            error.put("error", "保存工作流失败: " + e.getMessage());
             return ResponseEntity.internalServerError().body(error);
         }
     }
@@ -61,7 +61,7 @@ public class WorkflowController {
             return ResponseEntity.ok(workflow);
         } catch (IOException e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Failed to update workflow: " + e.getMessage());
+            error.put("error", "更新工作流失败: " + e.getMessage());
             return ResponseEntity.internalServerError().body(error);
         }
     }
@@ -120,7 +120,7 @@ public class WorkflowController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Failed to start workflow execution: " + e.getMessage());
+            error.put("error", "工作流执行失败: " + e.getMessage());
             return ResponseEntity.internalServerError().body(error);
         }
     }
@@ -141,7 +141,7 @@ public class WorkflowController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Failed to get execution status: " + e.getMessage());
+            error.put("error", "获取工作流执行状态失败: " + e.getMessage());
             return ResponseEntity.internalServerError().body(error);
         }
     }

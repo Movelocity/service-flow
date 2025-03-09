@@ -14,7 +14,7 @@
     </div>
 
     <div class="variables-list">
-      <div v-for="(variable, index) in node.parameters.inputs || []" :key="index" class="variable-row">
+      <div v-for="(variable, index) in startNode.outputs || []" :key="index" class="variable-row">
         <span>{{ variable.name }}</span>
         <div>
           <span>{{ variable.type }}</span>
@@ -35,17 +35,17 @@
 import { ref, computed } from 'vue';
 import type { Node } from '@/types/workflow';
 import { VariableType } from '@/types/workflow';
+import { NodeType } from '@/types/workflow';
 import VariableEditor from '@/components/VariableModal.vue';
 import { useWorkflowStore } from '@/stores/workflow';
 
 const store = useWorkflowStore();
-const node = computed(() => store.currentWorkflow?.nodes.find(n => n.id === store.editorState.selectedNodeId) as Node);
+const startNode = computed(() => store.currentWorkflow?.nodes.find(n => n.type === NodeType.START) as Node);
 
 const variableDialogVisible = ref(false);
 const editingVariableIndex = ref(-1);
 const editingVariable = ref<any>(null);
 
-// 添加全局变量
 function addVariable() {
   editingVariableIndex.value = -1;
   editingVariable.value = {
@@ -61,37 +61,27 @@ function addVariable() {
 function editVariable(index: number) {
   editingVariableIndex.value = index;
   editingVariable.value = JSON.parse(
-    JSON.stringify(node.value.parameters.inputs[index])
+    JSON.stringify(startNode.value.parameters.outputs[index])
   );
   variableDialogVisible.value = true;
 }
 
 function saveVariable() {
-  if (!editingVariable.value || !node.value) return;
+  if (!editingVariable.value || !startNode.value) return;
   
-  const updatedNode = { ...node.value };
-  if (!updatedNode.parameters.inputs) {
-    updatedNode.parameters.inputs = [];
-  }
+  const updatedNode = { ...startNode.value };
   if (!updatedNode.outputs) {
     updatedNode.outputs = [];
   }
 
+  // 开始节点只需要配置输出变量；工作流输入变量引用开始节点的输出变量
   if (editingVariableIndex.value === -1) {
-    updatedNode.parameters.inputs.push(editingVariable.value);
-    // Also add as output variable
-    updatedNode.outputs.push({
-      ...editingVariable.value
-    });
+    updatedNode.outputs.push(editingVariable.value);
   } else {
-    updatedNode.parameters.inputs[editingVariableIndex.value] = editingVariable.value;
-    // Update corresponding output variable
-    updatedNode.outputs[editingVariableIndex.value] = {
-      ...editingVariable.value
-    };
+    updatedNode.outputs[editingVariableIndex.value] = editingVariable.value;
   }
 
-  store.updateNode(node.value.id, updatedNode);
+  store.updateNode(startNode.value.id, updatedNode);
 }
 </script>
 

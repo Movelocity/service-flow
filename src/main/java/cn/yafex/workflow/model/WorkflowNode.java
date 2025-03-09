@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 import java.util.HashMap;
+import cn.yafex.tools.schema.FieldDefinition;
 
 /**
  * Base class for all workflow nodes
@@ -13,12 +14,15 @@ public class WorkflowNode {
     private String name;
     private String description;
     private NodeType type;
-    private Map<String, Object> parameters;
     private Map<String, String> nextNodes; // key: condition/default, value: next node id
     private Position position;
+    private String toolName;
+    private String toolDescription;
+    // inputs and outputs
+    private Map<String, FieldDefinition> inputs;
+    private Map<String, FieldDefinition> outputs;
 
     public WorkflowNode() {
-        this.parameters = new HashMap<>();
         this.nextNodes = new HashMap<>();
         this.position = new Position(0, 0);
     }
@@ -63,14 +67,6 @@ public class WorkflowNode {
 
     public void setType(NodeType type) {
         this.type = type;
-    }
-
-    public Map<String, Object> getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(Map<String, Object> parameters) {
-        this.parameters = parameters;
     }
 
     public Map<String, String> getNextNodes() {
@@ -121,5 +117,37 @@ public class WorkflowNode {
         public void setY(double y) {
             this.y = y;
         }
+    }
+
+    public String getToolName() {
+        return toolName;
+    }
+
+    public void setToolName(String toolName) {
+        this.toolName = toolName;
+    }
+
+    public String getToolDescription() {
+        return toolDescription;
+    }
+
+    public void setToolDescription(String toolDescription) {
+        this.toolDescription = toolDescription;
+    }
+
+    public Map<String, FieldDefinition> getInputs() {
+        return inputs;
+    }
+
+    public void setInputs(Map<String, FieldDefinition> inputs) {
+        this.inputs = inputs;
+    }
+
+    public Map<String, FieldDefinition> getOutputs() {
+        return outputs;
+    }
+
+    public void setOutputs(Map<String, FieldDefinition> outputs) {
+        this.outputs = outputs;
     }
 } 

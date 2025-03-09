@@ -2,6 +2,8 @@ package cn.yafex.tools.schema;
 
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Defines the structure and constraints of a field in a tool's input or output
@@ -18,13 +20,14 @@ public class FieldDefinition {
     private Map<String, FieldDefinition> properties;
     private FieldDefinition itemDefinition;
 
+    @JsonCreator
     public FieldDefinition(
-        String name,
-        String description,
-        FieldType type,
-        boolean required,
-        String defaultValue,
-        String pattern
+        @JsonProperty("name") String name,
+        @JsonProperty("description") String description,
+        @JsonProperty("type") FieldType type,
+        @JsonProperty("required") boolean required,
+        @JsonProperty("defaultValue") String defaultValue,
+        @JsonProperty("pattern") String pattern
     ) {
         this.name = name;
         this.description = description;
