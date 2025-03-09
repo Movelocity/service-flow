@@ -81,11 +81,23 @@ onMounted(async () => {
 });
 
 // 创建新工作流
-function createWorkflow() {
-  router.push({
-    name: 'workflow-editor',
-    params: { id: 'new' }
-  });
+async function createWorkflow() {
+  try {
+    const newWorkflow = {
+      name: '新工作流',
+      description: '',
+      nodes: []
+    };
+    
+    const createdWorkflow = await workflowApi.saveWorkflow(newWorkflow);
+    router.push({
+      name: 'workflow-editor',
+      params: { id: createdWorkflow.id }
+    });
+  } catch (error) {
+    console.error('Failed to create workflow:', error);
+    alert('创建工作流失败');
+  }
 }
 
 // 打开工作流

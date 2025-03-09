@@ -1,0 +1,12 @@
+---
+description: frontend and backend information
+globs: 
+alwaysApply: false
+---
+
+# backend
+code: src/main/java/cn/yafex/workflow/controller/WorkflowController.java
+api doc: api-doc/
+
+# frontend
+code: src/main/resources/vue-app
