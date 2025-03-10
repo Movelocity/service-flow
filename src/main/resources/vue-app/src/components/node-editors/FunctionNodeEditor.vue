@@ -19,7 +19,7 @@
           class="input-selector"
           placeholder="选择输入来源">
           <el-option
-            v-for="(value, contextKey) in availableContext"
+            v-for="(_value, contextKey) in availableContext"
             :key="contextKey"
             :label="contextKey"
             :value="contextKey"
@@ -64,7 +64,7 @@ const selectedTool = computed(() => {
   return workflowStore.currentWorkflow.tools[currentNode.value.toolName]
 })
 
-console.log(selectedTool.value?.outputs)
+// console.log(selectedTool.value?.outputs)
 
 // Available context for input selection
 const availableContext = computed(() => {

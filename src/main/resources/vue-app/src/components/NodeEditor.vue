@@ -40,8 +40,8 @@
       </template>
 
       <!-- 连接信息 -->
-      <div class="form-group">
-        <label class="form-label">连接</label>
+      <div class="outbound-connections">
+        <label class="form-label">下一步</label>
         <div class="connections-list">
           <template v-if="nodeConnections.length">
             <div
@@ -105,16 +105,9 @@ const selectedNode = computed(() => store.selectedNode);
 // 获取节点的连接
 const nodeConnections = computed(() => {
   if (!selectedNode.value) return [];
-  const inputs = store.nodeInputConnections(selectedNode.value.id);
   const outputs = store.nodeOutputConnections(selectedNode.value.id);
   
   return [
-    ...inputs.map(conn => ({
-      id: `${conn.sourceId}-${conn.condition}`,
-      sourceNodeId: conn.sourceId,
-      targetNodeId: selectedNode.value!.id,
-      condition: conn.condition
-    })),
     ...outputs.map(conn => ({
       id: `${selectedNode.value!.id}-${conn.condition}`,
       sourceNodeId: selectedNode.value!.id,
@@ -160,13 +153,11 @@ function deleteNode() {
 
 // 获取连接的描述文本
 function getConnectionLabel(connection: { sourceNodeId: string; targetNodeId: string; condition?: string }) {
-  const isSource = connection.sourceNodeId === selectedNode.value?.id;
-  const otherNodeId = isSource ? connection.targetNodeId : connection.sourceNodeId;
+  // const isSource = connection.sourceNodeId === selectedNode.value?.id;
+  const otherNodeId = connection.sourceNodeId === selectedNode.value?.id ? connection.targetNodeId : connection.sourceNodeId;
   const otherNode = store.currentWorkflow?.nodes.find(n => n.id === otherNodeId);
   
-  return `${isSource ? '输出到' : '输入自'} ${otherNode?.name || otherNodeId}${
-    connection.condition ? ` (条件: ${connection.condition})` : ''
-  }`;
+  return `${otherNode?.name || otherNodeId}${connection.condition ? ` (条件: ${connection.condition})` : ''}`;
 }
 
 // 关闭面板
@@ -412,5 +403,11 @@ function onClose() {
 
 :deep(.el-select) {
   width: 100%;
+}
+
+.outbound-connections {
+  border-top: 1px solid var(--border-color);
+  margin-top: 1rem;
+  padding-top: 1rem;
 }
 </style> 
