@@ -50,6 +50,25 @@
         {{ condition }}
       </text>
     </g>
+
+    <!-- 删除按钮 -->
+    <!-- <g
+      v-if="isSelected"
+      :transform="'translate(' + (labelPosition.x + 30) + ',' + labelPosition.y + ')'"
+      @click.stop="deleteConnection"
+      class="delete-button"
+    >
+      <circle
+        r="8"
+        fill="#ff4444"
+      />
+      <text
+        text-anchor="middle"
+        dominant-baseline="middle"
+        fill="white"
+        font-size="12"
+      >×</text>
+    </g> -->
   </g>
 </template>
 
@@ -198,4 +217,14 @@ export default defineComponent({
   stroke-width: 2;
   stroke: #1976D2;
 }
+
+/* .delete-button {
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.delete-button:hover {
+  opacity: 1;
+} */
 </style> 

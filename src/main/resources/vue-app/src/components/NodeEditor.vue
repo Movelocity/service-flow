@@ -133,13 +133,9 @@ function updateNodeDescription() {
 
 // 删除连接
 function deleteConnection(connectionId: string) {
-  const [sourceId, condition] = connectionId.split('-');
-  if (sourceId === selectedNode.value?.id) {
-    // 如果当前节点是源节点，直接删除其nextNodes中的连接
-    store.deleteConnection(sourceId, condition);
-  } else {
-    // 如果当前节点是目标节点，找到源节点并删除连接
-    store.deleteConnection(sourceId, condition);
+  const connection = nodeConnections.value.find(conn => conn.id === connectionId);
+  if (connection) {
+    store.deleteConnection(connection.sourceNodeId, connection.condition);
   }
 }
 

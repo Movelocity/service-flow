@@ -309,26 +309,26 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     deleteConnection(sourceNodeId: string, condition: string) {
+      console.log('deleteConnection', sourceNodeId, condition);
       if (!this.currentWorkflow) return;
-
+      
       const sourceNode = this.currentWorkflow.nodes.find(n => n.id === sourceNodeId);
       if (!sourceNode) return;
 
-      // 保存要删除的目标节点ID，以便更新其context
+      // Store the target node ID before removing the connection
       const targetNodeId = sourceNode.nextNodes[condition];
 
-      const { [condition]: _, ...remainingNextNodes } = sourceNode.nextNodes;
-      sourceNode.nextNodes = remainingNextNodes;
+      // Remove the connection
+      const { [condition]: removed, ...remainingConnections } = sourceNode.nextNodes;
+      sourceNode.nextNodes = remainingConnections;
 
-      if (this.editorState.selectedNodeId === sourceNodeId && 
-          this.editorState.selectedCondition === condition) {
-        this.editorState.selectedCondition = null;
-      }
-
-      // 如果有目标节点，更新其及下游节点的context
+      // If there was a target node, update its and downstream nodes' context
       if (targetNodeId) {
         this.updateNodeContextChain(targetNodeId);
       }
+
+      // Mark workflow as modified
+      this.isDirty = true;
     },
 
     // 编辑器状态操作
