@@ -14,14 +14,14 @@
                     :value="`input:${key}`"
                   />
                 </el-option-group>
-                <el-option-group label="全局变量">
+                <!-- <el-option-group label="全局变量">
                   <el-option
                     v-for="(global, key) in globalVariables"
                     :key="`global:${key}`"
                     :label="key"
                     :value="`global:${key}`"
                   />
-                </el-option-group>
+                </el-option-group> -->
                 <el-option-group label="节点输出">
                   <el-option
                     v-for="node in previousNodes"
@@ -51,8 +51,8 @@
             <el-form-item label="比较值">
               <div class="value-input">
                 <el-radio-group v-model="localCondition.type" size="small">
-                  <el-radio-button label="CONSTANT">常量</el-radio-button>
-                  <el-radio-button label="VARIABLE">变量</el-radio-button>
+                  <el-radio-button value="CONSTANT">常量</el-radio-button>
+                  <el-radio-button value="VARIABLE">变量</el-radio-button>
                 </el-radio-group>
                 <el-input
                   v-if="localCondition.type === 'CONSTANT'"
@@ -72,14 +72,14 @@
                       :value="`input:${key}`"
                     />
                   </el-option-group>
-                  <el-option-group label="全局变量">
+                  <!-- <el-option-group label="全局变量">
                     <el-option
                       v-for="(global, key) in globalVariables"
                       :key="`global:${key}`"
                       :label="key"
                       :value="`global:${key}`"
                     />
-                  </el-option-group>
+                  </el-option-group> -->
                 </el-select>
               </div>
             </el-form-item>
@@ -145,7 +145,7 @@ watch(() => props.modelValue, (newValue) => {
 const workflowInputs = computed(() => store.currentWorkflow?.inputs || {});
 
 // 获取全局变量
-const globalVariables = computed(() => store.currentWorkflow?.globalVariables || {});
+// const globalVariables = computed(() => store.currentWorkflow?.globalVariables || {});
 
 // 获取前置节点列表
 const previousNodes = computed(() => {

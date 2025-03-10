@@ -50,17 +50,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import type { Workflow, VariableDefinition } from '@/types/workflow';
 import { VariableType } from '@/types/workflow';
-import { useWorkflowStore } from '@/stores/workflow';
+// import { useWorkflowStore } from '@/stores/workflow';
 import { workflowApi } from '@/services/workflowApi';
 
 const props = defineProps<{
   workflow: Workflow;
 }>();
 
-const store = useWorkflowStore();
+// const store = useWorkflowStore();
 const executionInputs = ref<Record<string, any>>({});
 const executionOutputs = ref<Record<string, any>>({});
 const executionId = ref<string | null>(null);
@@ -95,16 +95,16 @@ const getDefaultValue = (def: VariableDefinition) => {
 };
 
 // Get input type for HTML input element
-const getInputType = (type: VariableType) => {
-  switch (type) {
-    case VariableType.NUMBER:
-      return 'number';
-    case VariableType.BOOLEAN:
-      return 'checkbox';
-    default:
-      return 'text';
-  }
-};
+// const getInputType = (type: VariableType) => {
+//   switch (type) {
+//     case VariableType.NUMBER:
+//       return 'number';
+//     case VariableType.BOOLEAN:
+//       return 'checkbox';
+//     default:
+//       return 'text';
+//   }
+// };
 
 // Execute the workflow
 const executeWorkflow = async () => {

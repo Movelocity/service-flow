@@ -14,6 +14,15 @@
         </div>
         <button class="close-button" @click="onClose">×</button>
       </div>
+      
+      <input
+        v-model="selectedNode.description"
+        type="text"
+        class="editor-description"
+        placeholder="添加描述..."
+        @change="updateNodeDescription"
+      >
+      
 
       <!-- 开始节点的全局变量定义 -->
       <template v-if="selectedNode.type === 'START'">
@@ -70,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
 import { Delete } from '@element-plus/icons-vue';
 import NodeIcon from '@/components/NodeIcon.vue';
@@ -90,8 +99,8 @@ const store = useWorkflowStore();
 const selectedNode = computed(() => store.selectedNode);
 
 // 在 script setup 部分添加以下代码
-const editingVariableIndex = ref(-1);
-const editingVariable = ref<any>(null);
+// const editingVariableIndex = ref(-1);
+// const editingVariable = ref<any>(null);
 
 // 获取节点的连接
 const nodeConnections = computed(() => {
@@ -117,6 +126,13 @@ const nodeConnections = computed(() => {
 
 // 更新节点名称
 function updateNodeName() {
+  if (selectedNode.value) {
+    store.updateNode(selectedNode.value.id, selectedNode.value);
+  }
+}
+
+// 更新节点描述
+function updateNodeDescription() {
   if (selectedNode.value) {
     store.updateNode(selectedNode.value.id, selectedNode.value);
   }
@@ -159,22 +175,6 @@ function onClose() {
   emit('close');
 }
 
-// function saveVariable() {
-//   if (!selectedNode.value || !editingVariable.value) return;
-  
-//   if (!selectedNode.value.parameters.globalVariables) {
-//     selectedNode.value.parameters.globalVariables = [];
-//   }
-
-//   if (editingVariableIndex.value === -1) {
-//     selectedNode.value.parameters.globalVariables.push(editingVariable.value);
-//   } else {
-//     selectedNode.value.parameters.globalVariables[editingVariableIndex.value] = editingVariable.value;
-//   }
-
-//   updateNodeName();
-// }
-
 </script>
 
 <style scoped>
@@ -204,9 +204,8 @@ function onClose() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
+  /* border-bottom: 1px solid var(--border-color); */
 }
 
 .editor-title-container {
@@ -223,6 +222,18 @@ function onClose() {
   background: none;
   max-width: 200px;
   outline: none;
+}
+
+.editor-description {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-color);
+  width: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px;
 }
 
 .close-button {

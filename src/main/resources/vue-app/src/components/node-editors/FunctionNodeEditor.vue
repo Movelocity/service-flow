@@ -2,15 +2,18 @@
   <div class="function-node-editor">
     <!-- Tool Information -->
     <div class="tool-info" v-if="selectedTool">
-      <h3>{{ selectedTool.name }}</h3>
-      <p class="description">{{ selectedTool.description }}</p>
+      <span class="tool-name">工具 {{ selectedTool.name }}</span>
+      <span class="tool-description">{{ selectedTool.description }}</span>
     </div>
 
     <!-- Input Variables -->
     <div class="input-section" v-if="selectedTool?.inputs">
-      <h4>输入变量</h4>
-      <div v-for="(input, key) in selectedTool.inputs" :key="key" class="input-item">
-        <div class="input-label">{{ key }}</div>
+      <b>输入变量</b>
+      <div v-for="(input, key) in selectedTool.inputs" :key="key" class="param-item">
+        <div class="param-label-container">
+          <div class="param-label">{{ key }}</div>
+          <div class="param-type">{{ input.type }}</div>
+        </div>
         <el-select 
           v-model="nodeInputs[key]" 
           class="input-selector"
@@ -22,16 +25,19 @@
             :value="contextKey"
           />
         </el-select>
-        <div class="input-description">{{ input.description }}</div>
+        <div class="param-description">{{ input.description }}</div>
       </div>
     </div>
 
     <!-- Output Variables -->
     <div class="output-section" v-if="selectedTool?.outputs">
-      <h4>输出变量</h4>
-      <div v-for="(output, key) in selectedTool.outputs" :key="key" class="output-item">
-        <div class="output-label">{{ key }}</div>
-        <div class="output-description">{{ output.description }}</div>
+      <b>输出变量</b>
+      <div v-for="(output, key) in selectedTool.outputs" :key="key" class="param-item">
+        <div class="param-label-container">
+          <div class="param-label">{{ key }}</div>
+          <div class="param-type">{{ output.type }}</div>
+        </div>
+        <div class="param-description">{{ output.description }}</div>
       </div>
     </div>
   </div>
@@ -58,6 +64,8 @@ const selectedTool = computed(() => {
   return workflowStore.currentWorkflow.tools[currentNode.value.toolName]
 })
 
+console.log(selectedTool.value?.outputs)
+
 // Available context for input selection
 const availableContext = computed(() => {
   const context: Record<string, any> = {};
@@ -83,9 +91,9 @@ const nodeInputs = ref<Record<string, string>>({})
 </script>
 
 <style scoped>
-.function-node-editor {
+/* .function-node-editor {
   padding: 16px;
-}
+} */
 
 .tool-info {
   margin-bottom: 20px;
@@ -100,13 +108,8 @@ const nodeInputs = ref<Record<string, string>>({})
   margin-bottom: 20px;
 }
 
-.input-item, .output-item {
-  margin-bottom: 16px;
-}
-
-.input-label, .output-label {
-  font-weight: bold;
-  margin-bottom: 4px;
+.param-item {
+  margin: 8px;
 }
 
 .input-selector {
@@ -114,9 +117,45 @@ const nodeInputs = ref<Record<string, string>>({})
   margin: 4px 0;
 }
 
-.input-description, .output-description {
+.param-description {
   font-size: 12px;
   color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
+
+.param-label-container {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+
+.param-label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.param-type {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.tool-info {
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: start;
+}
+
+.tool-name {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.tool-description {
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+}
+
+
 </style> 
