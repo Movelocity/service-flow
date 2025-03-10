@@ -2,6 +2,7 @@ package cn.yafex.tools.core;
 
 import cn.yafex.tools.schema.FieldDefinition;
 import cn.yafex.tools.exceptions.ToolException;
+import com.alibaba.fastjson.annotation.JSONField;
 
 import java.util.List;
 import java.util.Map;
@@ -10,11 +11,24 @@ import java.util.Map;
  * Defines a tool's properties, input parameters, and output format
  */
 public class ToolDefinition {
+    @JSONField(name = "name")
     private String name;
+
+    @JSONField(name = "description")
     private String description;
+
+    @JSONField(name = "inputFields")
     private Map<String, FieldDefinition> inputFields;
+
+    @JSONField(name = "outputFields")
     private Map<String, FieldDefinition> outputFields;
+
+    @JSONField(name = "possibleExceptions")
     private List<Class<? extends ToolException>> possibleExceptions;
+
+    public ToolDefinition() {
+        // Default constructor for Fastjson
+    }
 
     public ToolDefinition(String name, String description,
                          Map<String, FieldDefinition> inputFields,

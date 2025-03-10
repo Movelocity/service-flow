@@ -38,8 +38,9 @@
 
     <!-- Jackson for JSON processing -->
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <groupId>com.alibaba</groupId>
+      <artifactId>fastjson</artifactId>
+      <version>1.2.60</version>
     </dependency>
 
     <!-- Add reflections library for annotation scanning -->

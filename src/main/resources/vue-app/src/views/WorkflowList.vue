@@ -83,10 +83,16 @@ onMounted(async () => {
 // 创建新工作流
 async function createWorkflow() {
   try {
-    const newWorkflow = {
+    const newWorkflow: Partial<Workflow> = {
       name: '新工作流',
       description: '',
-      nodes: []
+      inputs: {},
+      outputs: {},
+      tools: {},
+      globalVariables: {},
+      nodes: [],
+      startNodeId: '',
+      isActive: true
     };
     
     const createdWorkflow = await workflowApi.saveWorkflow(newWorkflow);

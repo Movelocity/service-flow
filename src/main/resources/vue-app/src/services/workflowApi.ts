@@ -44,25 +44,19 @@ export class WorkflowApi {
   }
 
   /**
-   * Create or update a workflow
+   * Save a new workflow or update an existing one
    */
-  async saveWorkflow(workflow: Workflow): Promise<Workflow> {
-    console.log('saveWorkflow', workflow);
-    const method = workflow.id ? 'PUT' : 'POST';
-    const url = workflow.id ? `${this.baseUrl}/${workflow.id}` : this.baseUrl;
-
-    const response = await fetch(url, {
-      method,
+  async saveWorkflow(workflow: Partial<Workflow>): Promise<Workflow> {
+    const response = await fetch(this.baseUrl, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(workflow)
     });
-
     if (!response.ok) {
       throw new Error(`Failed to save workflow: ${response.statusText}`);
     }
-
     return await response.json();
   }
 

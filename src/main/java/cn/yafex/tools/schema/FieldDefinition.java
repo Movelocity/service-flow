@@ -2,32 +2,59 @@ package cn.yafex.tools.schema;
 
 import java.util.List;
 import java.util.Map;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.alibaba.fastjson.annotation.JSONField;
 
 /**
  * Defines the structure and constraints of a field in a tool's input or output
  */
 public class FieldDefinition {
+    @JSONField(name = "name")
     private final String name;
+
+    @JSONField(name = "description")
     private final String description;
+
+    @JSONField(name = "type")
     private final FieldType type;
+
+    @JSONField(name = "required")
     private final boolean required;
+
+    @JSONField(name = "defaultValue")
     private final String defaultValue;
+
+    @JSONField(name = "pattern")
     private final String pattern;
+
+    @JSONField(name = "constraints")
     private Map<String, Object> constraints;
+
+    @JSONField(name = "enumValues")
     private List<String> enumValues;
+
+    @JSONField(name = "properties")
     private Map<String, FieldDefinition> properties;
+
+    @JSONField(name = "itemDefinition")
     private FieldDefinition itemDefinition;
 
-    @JsonCreator
+    public FieldDefinition() {
+        // Default constructor for Fastjson
+        this.name = null;
+        this.description = null;
+        this.type = null;
+        this.required = false;
+        this.defaultValue = null;
+        this.pattern = null;
+    }
+
     public FieldDefinition(
-        @JsonProperty("name") String name,
-        @JsonProperty("description") String description,
-        @JsonProperty("type") FieldType type,
-        @JsonProperty("required") boolean required,
-        @JsonProperty("defaultValue") String defaultValue,
-        @JsonProperty("pattern") String pattern
+        String name,
+        String description,
+        FieldType type,
+        boolean required,
+        String defaultValue,
+        String pattern
     ) {
         this.name = name;
         this.description = description;
@@ -37,34 +64,21 @@ public class FieldDefinition {
         this.pattern = pattern;
     }
 
-    // Getters and setters
+    // Getters
     public String getName() { return name; }
-    public void setName(String name) { }
-
     public String getDescription() { return description; }
-    public void setDescription(String description) { }
-
     public FieldType getType() { return type; }
-    public void setType(FieldType type) { }
-
     public boolean isRequired() { return required; }
-    public void setRequired(boolean required) { }
-
     public String getDefaultValue() { return defaultValue; }
-    public void setDefaultValue(String defaultValue) { }
-
     public String getPattern() { return pattern; }
-    public void setPattern(String pattern) { }
-
     public Map<String, Object> getConstraints() { return constraints; }
-    public void setConstraints(Map<String, Object> constraints) { this.constraints = constraints; }
-
     public List<String> getEnumValues() { return enumValues; }
-    public void setEnumValues(List<String> enumValues) { this.enumValues = enumValues; }
-
     public Map<String, FieldDefinition> getProperties() { return properties; }
-    public void setProperties(Map<String, FieldDefinition> properties) { this.properties = properties; }
-
     public FieldDefinition getItemDefinition() { return itemDefinition; }
+
+    // Setters for mutable fields
+    public void setConstraints(Map<String, Object> constraints) { this.constraints = constraints; }
+    public void setEnumValues(List<String> enumValues) { this.enumValues = enumValues; }
+    public void setProperties(Map<String, FieldDefinition> properties) { this.properties = properties; }
     public void setItemDefinition(FieldDefinition itemDefinition) { this.itemDefinition = itemDefinition; }
 } 

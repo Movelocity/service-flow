@@ -1,8 +1,7 @@
 package cn.yafex.workflow.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import cn.yafex.workflow.model.Workflow;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,14 +23,14 @@ public class JsonFileHandler {
     @Value("${workflow.definitions.path:workflow-definitions}")
     private String workflowPath;
     
-    private final ObjectMapper objectMapper;
     private Path workflowDir;
 
     public JsonFileHandler() {
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        this.objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        this.objectMapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
+        // Configure Fastjson global settings if needed
+        JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.PrettyFormat.getMask();
+        JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.WriteMapNullValue.getMask();
+        JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.WriteNullListAsEmpty.getMask();
+        JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.WriteNullStringAsEmpty.getMask();
     }
 
     @PostConstruct
@@ -56,7 +55,11 @@ public class JsonFileHandler {
 
         Path filePath = workflowDir.resolve(workflow.getId() + ".json");
         try {
-            objectMapper.writeValue(filePath.toFile(), workflow);
+            String jsonString = JSON.toJSONString(workflow, SerializerFeature.PrettyFormat, 
+                                                SerializerFeature.WriteMapNullValue,
+                                                SerializerFeature.WriteNullListAsEmpty,
+                                                SerializerFeature.WriteNullStringAsEmpty);
+            Files.write(filePath, jsonString.getBytes());
             logger.info("Saved workflow {} to {}", workflow.getId(), filePath);
         } catch (IOException e) {
             logger.error("Failed to save workflow {}: {}", workflow.getId(), e.getMessage());
@@ -81,7 +84,9 @@ public class JsonFileHandler {
         }
 
         try {
-            return objectMapper.readValue(filePath.toFile(), Workflow.class);
+            byte[] bytes = Files.readAllBytes(filePath);
+            String jsonString = new String(bytes);
+            return JSON.parseObject(jsonString, Workflow.class);
         } catch (IOException e) {
             logger.error("Failed to load workflow {}: {}", workflowId, e.getMessage());
             throw e;
