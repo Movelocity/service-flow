@@ -38,11 +38,6 @@
         />
       </div>
       <div class="form-group mb-3">
-        <el-checkbox v-model="localVariable.required">
-          必填
-        </el-checkbox>
-      </div>
-      <div class="form-group mb-3">
         <label class="form-label">默认值</label>
         <el-input
           v-model="localVariable.defaultValue"
@@ -66,15 +61,19 @@ import { ref, computed, watch } from 'vue';
 import type { VariableDefinition } from '@/types/workflow';
 import { VariableType } from '@/types/workflow';
 
+interface EditingVariable extends VariableDefinition {
+  name: string;
+}
+
 // Props
 const props = defineProps<{
-  modelValue: VariableDefinition | null;
+  modelValue: EditingVariable | null;
   visible: boolean;
 }>();
 
 // Emits
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: VariableDefinition | null): void;
+  (e: 'update:modelValue', value: EditingVariable | null): void;
   (e: 'save'): void;
   (e: 'close'): void;
   (e: 'update:visible', value: boolean): void;
@@ -84,7 +83,7 @@ const emit = defineEmits<{
 const variableTypes = Object.values(VariableType);
 
 // Local state
-const localVariable = ref<VariableDefinition | null>(null);
+const localVariable = ref<EditingVariable | null>(null);
 const isNewVariable = computed(() => !props.modelValue?.name);
 
 // Computed for dialog visibility with two-way binding

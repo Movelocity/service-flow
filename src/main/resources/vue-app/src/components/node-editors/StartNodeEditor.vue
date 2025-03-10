@@ -1,102 +1,123 @@
 <template>
-  <div class="form-group">
-    <div class="variable-row">
-      <label class="form-label">工作流参数</label>
-      <div>
-        <el-button
-          type="primary"
-          size="small"
-          @click="addVariable"
-        >
-          +
-        </el-button>
-      </div>
-    </div>
-
+  <div class="start-node-editor">
+    <h3>工作流输入变量</h3>
     <div class="variables-list">
-      <div v-for="(variable, key) in startNode.outputs || []" :key="key" class="variable-row">
-        <span>{{ variable.name }}</span>
+      <div v-for="(def, key) in workflow?.inputs" :key="key" class="variable-row">
+        <span>{{ key }}</span>
         <div>
-          <span>{{ variable.type }}</span>
-          <el-button type="primary" link @click="editVariable(key)"> 编辑 </el-button>
+          <span>{{ def.type }}</span>
+          <span v-if="def.description" class="description">{{ def.description }}</span>
+          <el-button type="primary" link @click="editVariable(String(key))">编辑</el-button>
+          <el-button type="danger" link @click="deleteVariable(String(key))">删除</el-button>
         </div>
       </div>
+      <el-button type="primary" @click="addVariable">添加输入变量</el-button>
     </div>
-  </div>
 
-  <VariableEditor
-    v-model="editingVariable"
-    v-model:visible="variableDialogVisible"
-    @save="saveVariable"
-  />
+    <VariableModal
+      v-model="editingVariable"
+      v-model:visible="showVariableModal"
+      @save="handleVariableSave"
+      @close="handleModalClose"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { Node } from '@/types/workflow';
-import { VariableType } from '@/types/workflow';
-import { NodeType } from '@/types/workflow';
-import VariableEditor from '@/components/VariableModal.vue';
 import { useWorkflowStore } from '@/stores/workflow';
+import type { VariableDefinition } from '@/types/workflow';
+import { VariableType } from '@/types/workflow';
+import VariableModal from '../VariableModal.vue';
+
+interface EditingVariable extends VariableDefinition {
+  name: string;
+}
 
 const store = useWorkflowStore();
-const startNode = computed(() => store.currentWorkflow?.nodes.find(n => n.type === NodeType.START) as Node);
+const workflow = computed(() => store.currentWorkflow);
+const showVariableModal = ref(false);
+const editingVariable = ref<EditingVariable | null>(null);
 
-const variableDialogVisible = ref(false);
-const editingVariableIndex = ref(-1);
-const editingVariable = ref<any>(null);
-
-function addVariable() {
-  editingVariableIndex.value = -1;
+const addVariable = () => {
   editingVariable.value = {
     name: '',
     type: VariableType.STRING,
     description: '',
-    required: false,
-    defaultValue: ''
+    defaultValue: undefined
   };
-  variableDialogVisible.value = true;
-}
+  showVariableModal.value = true;
+};
 
-function editVariable(key: string) {
-  editingVariable.value = JSON.parse(
-    JSON.stringify(startNode.value.outputs[key])
-  );
-  variableDialogVisible.value = true;
-}
-
-function saveVariable() {
-  if (!editingVariable.value || !startNode.value) return;
-  
-  const updatedNode = { ...startNode.value };
-  if (!updatedNode.outputs) {
-    updatedNode.outputs = {};
+const editVariable = (key: string) => {
+  const def = workflow.value?.inputs[key];
+  if (def) {
+    editingVariable.value = {
+      name: key,
+      ...def
+    };
+    showVariableModal.value = true;
   }
+};
 
-  // 开始节点只需要配置输出变量；工作流输入变量引用开始节点的输出变量
-  if (editingVariableIndex.value === -1) {
-    updatedNode.outputs[editingVariable.value.name] = editingVariable.value;
+const deleteVariable = (key: string) => {
+  if (workflow.value) {
+    const { [key]: _, ...rest } = workflow.value.inputs;
+    workflow.value.inputs = rest;
+  }
+};
+
+const handleVariableSave = () => {
+  if (!workflow.value || !editingVariable.value) return;
+
+  const { name, ...def } = editingVariable.value;
+
+  const oldName = editingVariable.value.name;
+  if (oldName && oldName !== name) {
+    // 如果是编辑现有变量，且名称改变了，需要删除旧的并添加新的
+    const { [oldName]: _, ...rest } = workflow.value.inputs;
+    workflow.value.inputs = {
+      ...rest,
+      [name]: def
+    };
   } else {
-    updatedNode.outputs[editingVariableIndex.value] = editingVariable.value;
+    // 添加新变量或更新现有变量
+    workflow.value.inputs = {
+      ...workflow.value.inputs,
+      [name]: def
+    };
   }
+};
 
-  store.updateNode(startNode.value.id, updatedNode);
-}
+const handleModalClose = () => {
+  editingVariable.value = null;
+};
 </script>
 
 <style scoped>
+.start-node-editor {
+  padding: 1rem;
+}
+
 .variables-list {
-  margin-top: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .variable-row {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 0.5rem;
   align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.variable-row:last-child {
+  border-bottom: none;
+}
+
+.description {
+  color: #666;
+  font-size: 0.875rem;
+  margin: 0 0.5rem;
 }
 </style> 

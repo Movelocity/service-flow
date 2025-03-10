@@ -84,7 +84,13 @@ export const useWorkflowStore = defineStore('workflow', {
         id: uuidv4(),
         name,
         description,
-        nodes: []
+        inputs: {},
+        outputs: {},
+        tools: {},
+        globalVariables: {},
+        nodes: [],
+        startNodeId: '',
+        isActive: true
       };
     },
 
@@ -132,20 +138,34 @@ export const useWorkflowStore = defineStore('workflow', {
         name: name || `${type} Node`,
         description: '',
         position,
-        inputs: {},
-        outputs: {},
         nextNodes: {},
+        toolName: type === NodeType.FUNCTION ? undefined : undefined,
+        context: {}
       };
 
       this.currentWorkflow!.nodes.push(node);
+      if (type === NodeType.START) {
+        this.currentWorkflow!.startNodeId = node.id;
+      }
       this.selectNode(node.id);
       return node;
     },
 
     // Add function node with a specific tool
-    addFunctionNode(tool: Tool, position: Position, toolName: string, toolDescription: string) {
+    addFunctionNode(tool: Tool, position: Position, toolName: string) {
       const node = this.addNode(NodeType.FUNCTION, position, tool.name);
-      this.updateNode(node.id, { toolName, toolDescription, inputs: tool.inputFields, outputs: tool.outputFields });
+      this.updateNode(node.id, { toolName });
+      
+      // Add tool definition to workflow if not exists
+      if (!this.currentWorkflow!.tools[toolName]) {
+        this.currentWorkflow!.tools[toolName] = {
+          name: toolName,
+          description: tool.description,
+          inputs: tool.inputFields,
+          outputs: tool.outputFields
+        };
+      }
+      
       console.log('addFunctionNode', this.currentWorkflow?.nodes);
     },
 

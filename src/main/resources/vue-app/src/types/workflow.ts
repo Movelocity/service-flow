@@ -12,22 +12,19 @@ export enum NodeType {
  * 变量类型枚举
  */
 export enum VariableType {
-  STRING = 'STRING',
-  NUMBER = 'NUMBER',
-  BOOLEAN = 'BOOLEAN',
-  OBJECT = 'OBJECT',
-  ARRAY = 'ARRAY',
-  DATE = 'DATE',
+  STRING = 'string',
+  NUMBER = 'number',
+  BOOLEAN = 'boolean',
+  OBJECT = 'object',
+  ARRAY = 'array'
 }
 
 /**
  * 变量定义接口
  */
 export interface VariableDefinition {
-  name: string;
   type: VariableType;
-  description?: string;
-  required: boolean;
+  description: string;
   defaultValue?: any;
 }
 
@@ -62,6 +59,16 @@ export interface Position {
 }
 
 /**
+ * 工具定义接口
+ */
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  inputs: { [key: string]: VariableDefinition };
+  outputs: { [key: string]: VariableDefinition };
+}
+
+/**
  * API响应中的节点接口
  */
 export interface ApiNode {
@@ -71,10 +78,10 @@ export interface ApiNode {
   description: string;
   position: Position;
   nextNodes: {
-    [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
+    [key: string]: string;
   };
-  inputs: Record<string, VariableDefinition>;
-  outputs: Record<string, VariableDefinition>;
+  toolName?: string;
+  context: { [key: string]: any };
 }
 
 /**
@@ -84,10 +91,13 @@ export interface ApiWorkflow {
   id: string;
   name: string;
   description: string;
+  inputs: { [key: string]: VariableDefinition };
+  outputs: { [key: string]: VariableDefinition };
+  tools: { [name: string]: ToolDefinition };
+  globalVariables: { [key: string]: any };
   nodes: ApiNode[];
   startNodeId: string;
-  active: boolean;
-  globalVariables?: Record<string, any>;
+  isActive: boolean;
 }
 
 /**
@@ -99,14 +109,11 @@ export interface Node {
   name: string;
   description: string;
   position: Position;
-  // parameters: Record<string, any>;
   nextNodes: {
     [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
   };
-  inputs: Record<string, VariableDefinition>;  // 节点接收的输入变量定义
-  outputs: Record<string, VariableDefinition>; // 节点产生的输出变量定义
-  toolName?: string;              // 函数节点的工具定义
-  toolDescription?: string;
+  toolName?: string;              // 仅用于 FUNCTION 类型节点
+  context: { [key: string]: any }; // 新增：存储函数节点的输出
 }
 
 /**
@@ -116,10 +123,15 @@ export interface Workflow {
   id: string;
   name: string;
   description: string;
+  inputs: { [key: string]: VariableDefinition };  // 新增：工作流级别输入
+  outputs: { [key: string]: VariableDefinition }; // 新增：工作流级别输出
+  tools: { [name: string]: ToolDefinition };      // 新增：工具定义移至工作流级别
+  globalVariables: { [key: string]: any };        // 变更：现在为只读
   nodes: Node[];
+  startNodeId: string;
+  isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  globalVariables?: VariableDefinition[];  // 工作流级别的全局变量定义
 }
 
 /**
@@ -149,7 +161,13 @@ export function convertApiToAppWorkflow(apiWorkflow: ApiWorkflow): Workflow {
     id: apiWorkflow.id,
     name: apiWorkflow.name,
     description: apiWorkflow.description,
-    nodes: apiWorkflow.nodes
+    inputs: apiWorkflow.inputs,
+    outputs: apiWorkflow.outputs,
+    tools: apiWorkflow.tools,
+    globalVariables: apiWorkflow.globalVariables,
+    nodes: apiWorkflow.nodes,
+    startNodeId: apiWorkflow.startNodeId,
+    isActive: apiWorkflow.isActive
   };
 }
 
@@ -161,8 +179,12 @@ export function convertAppToApiWorkflow(workflow: Workflow): ApiWorkflow {
     id: workflow.id,
     name: workflow.name,
     description: workflow.description,
+    inputs: workflow.inputs,
+    outputs: workflow.outputs,
+    tools: workflow.tools,
+    globalVariables: workflow.globalVariables,
     nodes: workflow.nodes,
-    startNodeId: workflow.nodes.find(n => n.type === NodeType.START)?.id || '',
-    active: true
+    startNodeId: workflow.startNodeId,
+    isActive: workflow.isActive
   };
 } 
