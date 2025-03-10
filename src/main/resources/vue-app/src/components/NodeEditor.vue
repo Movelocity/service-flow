@@ -27,7 +27,7 @@
 
       <!-- 函数节点特有的配置 -->
       <template v-if="selectedNode.type === 'FUNCTION'">
-        <FunctionNodeEditor />
+        <FunctionNodeEditor :nodeId="selectedNode.id" />
       </template>
 
       <!-- 连接信息 -->

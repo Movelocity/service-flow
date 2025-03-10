@@ -209,6 +209,37 @@ export const useWorkflowStore = defineStore('workflow', {
       this.editorState.selectedCondition = condition;
     },
 
+    // 递归更新节点及其下游节点的context
+    updateNodeContextChain(nodeId: string, visitedNodes: Set<string> = new Set()) {
+      if (!this.currentWorkflow || visitedNodes.has(nodeId)) return;
+      
+      const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
+      if (!node) return;
+
+      visitedNodes.add(nodeId);
+
+      // 获取所有上游节点的context
+      const predecessors = this.getNodePredecessors(nodeId);
+      const upstreamContext: Record<string, any> = {};
+      
+      predecessors.forEach(predId => {
+        const predNode = this.currentWorkflow!.nodes.find(n => n.id === predId);
+        if (predNode) {
+          Object.entries(predNode.context).forEach(([key, value]) => {
+            upstreamContext[`${predNode.name}:${key}`] = value;
+          });
+        }
+      });
+
+      // 更新当前节点的可用context
+      node.context = { ...upstreamContext };
+
+      // 递归更新所有下游节点
+      Object.values(node.nextNodes).forEach(targetId => {
+        this.updateNodeContextChain(targetId, visitedNodes);
+      });
+    },
+
     addConnection(sourceNodeId: string, targetNodeId: string, condition: string = 'default') {
       if (!this.currentWorkflow) return;
       
@@ -223,6 +254,9 @@ export const useWorkflowStore = defineStore('workflow', {
         ...sourceNode.nextNodes,
         [condition]: targetNodeId
       };
+
+      // 更新目标节点及其下游节点的context
+      this.updateNodeContextChain(targetNodeId);
     },
 
     deleteConnection(sourceNodeId: string, condition: string) {
@@ -231,12 +265,20 @@ export const useWorkflowStore = defineStore('workflow', {
       const sourceNode = this.currentWorkflow.nodes.find(n => n.id === sourceNodeId);
       if (!sourceNode) return;
 
+      // 保存要删除的目标节点ID，以便更新其context
+      const targetNodeId = sourceNode.nextNodes[condition];
+
       const { [condition]: _, ...remainingNextNodes } = sourceNode.nextNodes;
       sourceNode.nextNodes = remainingNextNodes;
 
       if (this.editorState.selectedNodeId === sourceNodeId && 
           this.editorState.selectedCondition === condition) {
         this.editorState.selectedCondition = null;
+      }
+
+      // 如果有目标节点，更新其及下游节点的context
+      if (targetNodeId) {
+        this.updateNodeContextChain(targetNodeId);
       }
     },
 
