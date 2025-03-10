@@ -19,7 +19,7 @@
     <div class="node-content">
       <template v-if="node.type === 'CONDITION'">
         <div class="condition-expression">
-          {{ node.condition || '未设置条件' }}
+          {{ node.context.conditionBlocks || '未设置条件' }}
         </div>
       </template>
       <template v-else-if="node.type === 'FUNCTION'">

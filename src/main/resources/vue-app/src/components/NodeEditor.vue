@@ -214,13 +214,17 @@ function onClose() {
 .editor-description {
   margin: 0;
   font-size: 1rem;
-  color: var(--text-color);
+  color: var(--el-text-color-secondary);
   width: 100%;
   border: none;
   background: none;
   outline: none;
   border-bottom: 1px solid var(--border-color);
   padding: 10px;
+}
+
+.editor-description::placeholder {
+  color: var(--el-text-color-secondary);
 }
 
 .close-button {

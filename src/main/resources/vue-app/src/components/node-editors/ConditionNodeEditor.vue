@@ -3,7 +3,7 @@
     <div v-for="(block, blockIndex) in conditionBlocks" :key="blockIndex" class="condition-group">
       <div class="condition-header">{{ block.type }}</div>
       <div class="condition-content">
-        <div v-for="(_condition, conditionIndex) in block.conditions" :key="conditionIndex">
+        <div v-for="(_condition, conditionIndex) in block.conditions" :key="conditionIndex" class="condition-item">
           <ConditionBuilder
             v-if="selectedNode"
             v-model="conditionBlocks[blockIndex].conditions[conditionIndex]"
@@ -180,7 +180,14 @@ function addElif() {
 }
 
 .condition-content {
-  padding-left: 1rem;
+  flex-grow: 1;
+}
+
+.condition-item {
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .add-condition-btn,

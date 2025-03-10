@@ -2,7 +2,7 @@
   <div class="condition-builder">
     <div class="condition-group">
       <el-form :model="condition" label-position="top">
-        <div class="condition-left">
+        <div class="compare1">
           <el-select 
             :model-value="condition.leftOperand"
             @update:model-value="updateLeftOperand"
@@ -37,18 +37,8 @@
           </el-select>
         </div>
 
-        <div class="condition-right">
-          <el-select
-            :model-value="condition.type"
-            @update:model-value="updateType"
-            size="small"
-            placeholder="选择类型"
-            style="width: 100%; margin-bottom: 0.5rem;"
-            default-first-option
-          >
-            <el-option label="常量" value="CONSTANT" />
-            <el-option label="变量" value="VARIABLE" />
-          </el-select>
+        <div class="compare2">
+          
           <el-input
             v-if="condition.type === 'CONSTANT'"
             :model-value="condition.rightOperand"
@@ -70,6 +60,17 @@
               />
             </el-option-group>
           </el-select>
+
+          <el-select
+            :model-value="condition.type"
+            @update:model-value="updateType"
+            placeholder="选择类型"
+            style="width: 100%; margin-bottom: 0.5rem;"
+            default-first-option
+          >
+            <el-option label="常量" value="CONSTANT" />
+            <el-option label="变量" value="VARIABLE" />
+          </el-select>
         </div>
       </el-form>
     </div>
@@ -87,7 +88,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
-import type { Node } from '@/types/workflow';
 
 interface Condition {
   leftOperand: string;
@@ -142,10 +142,23 @@ function updateRightOperand(value: string) {
 const workflowInputs = computed(() => store.currentWorkflow?.inputs || {});
 
 const availableContext = computed(() => {
-  const currentNodeId = store.selectedNode?.id;
-  const currentNode = store.currentWorkflow?.nodes.find((node: Node) => node.id === currentNodeId);
-  return currentNode?.context;
-});
+  const context: Record<string, any> = {};
+  
+  // Add workflow inputs with 'global:' prefix
+  if (store.currentWorkflow?.inputs) {
+    Object.keys(store.currentWorkflow.inputs).forEach(key => {
+      context[`global:${key}`] = store.currentWorkflow!.inputs[key];
+    });
+  }
+  
+  // Add node context
+  const nodeContext = store.selectedNode?.context || {};
+  Object.entries(nodeContext).forEach(([key, value]) => {
+    context[key] = value;
+  });
+  
+  return context;
+})
 
 // 获取前置节点列表
 // const previousNodes = computed(() => {
@@ -182,16 +195,15 @@ const availableContext = computed(() => {
   margin-bottom: 1rem;
 }
 
-.condition-left {
+.compare1, .compare2 {
   display: flex;
   flex-direction: row;
-  gap: 0.5rem;
+  align-items: center;
 }
 
-.condition-right {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
+.compare2 {
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.5rem;
 }
 
 .condition-preview {

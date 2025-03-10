@@ -22,6 +22,8 @@
   --node-min-height: 80px;
   --connection-point-size: 10px;
   --grid-size: 20px;
+
+  --bg-secondary: #f0f0f0;
 }
 html.dark {
   --node-bg: #2d3436;
@@ -40,6 +42,8 @@ html.dark {
   --border-color: #485460;
   --card-bg: #2d3436;
   --card-shadow: rgba(255, 255, 255, 0.2);
+
+  --bg-secondary: #2d3436;
 }
 
 

@@ -30,7 +30,7 @@ import { useWorkflowStore } from '@/stores/workflow';
 import type { Position } from '@/types/workflow';
 import { ref } from 'vue';
 import ToolSelectorDialog from '../ToolSelectorDialog.vue';
-import type { Tool } from '@/services/toolApi';
+import type { Tool } from '@/types/tools';
 
 const props = defineProps<{
   visible: boolean;
@@ -72,7 +72,7 @@ function handleNodeAdd(type: NodeType) {
 
 // Handle tool selection
 function onToolSelected(tool: Tool) {
-  store.addFunctionNode(tool, props.clickPosition, tool.name, tool.description);
+  store.addFunctionNode(tool, props.clickPosition, tool.name);
   showToolSelector.value = false;
 }
 </script>
