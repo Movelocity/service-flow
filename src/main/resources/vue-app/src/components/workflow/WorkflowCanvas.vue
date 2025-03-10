@@ -210,6 +210,18 @@ function endPan() {
   isPanning = false;
 }
 
+// 处理全局鼠标抬起事件
+function handleGlobalMouseUp(event: MouseEvent) {
+  // 如果正在创建连接线，检查目标元素是否为节点
+  if (tempConnection.value.isCreating) {
+    const targetElement = event.target as HTMLElement;
+    // 如果目标元素不是节点组件，取消连接创建
+    if (!targetElement.closest('.workflow-node')) {
+      tempConnection.value.isCreating = false;
+    }
+  }
+}
+
 // 连接线操作
 function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent) {
   if (!isOutput) return;
@@ -309,11 +321,6 @@ const connections = computed(() => {
   );
 });
 
-// 在组件卸载时清理事件监听器
-onUnmounted(() => {
-  window.removeEventListener('click', closeMenu);
-});
-
 onMounted(() => {
   if (canvasContainer.value) {
     const rect = canvasContainer.value.getBoundingClientRect();
@@ -324,6 +331,14 @@ onMounted(() => {
       }
     });
   }
+  // 添加全局鼠标抬起事件监听
+  window.addEventListener('mouseup', handleGlobalMouseUp);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeMenu);
+  // 移除全局鼠标抬起事件监听
+  window.removeEventListener('mouseup', handleGlobalMouseUp);
 });
 </script>
 
