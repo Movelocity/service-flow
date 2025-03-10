@@ -7,6 +7,10 @@ import cn.yafex.workflow.execution.WorkflowContext;
 import cn.yafex.workflow.execution.WorkflowStatus;
 import cn.yafex.workflow.util.WorkflowLogger;
 import cn.yafex.workflow.util.JsonFileHandler;
+import cn.yafex.tools.core.ToolDefinition;
+import cn.yafex.tools.core.ToolHandler;
+import cn.yafex.tools.core.ToolResponse;
+import cn.yafex.tools.exceptions.ToolException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +30,7 @@ public class WorkflowManager {
     private final WorkflowLogger workflowLogger;
     private final ExecutorService executorService;
     private final Map<String, WorkflowContext> activeWorkflows;
+    private final Map<String, ToolHandler> toolHandlers;
 
     @Autowired
     public WorkflowManager(JsonFileHandler jsonFileHandler, WorkflowLogger workflowLogger) {
@@ -33,6 +38,41 @@ public class WorkflowManager {
         this.workflowLogger = workflowLogger;
         this.executorService = Executors.newCachedThreadPool();
         this.activeWorkflows = new ConcurrentHashMap<>();
+        this.toolHandlers = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * Register a tool handler
+     * @param handler The tool handler to register
+     * @throws IllegalArgumentException if a handler with the same name already exists
+     */
+    public void registerToolHandler(ToolHandler handler) {
+        ToolDefinition definition = handler.getDefinition();
+        String toolName = definition.getName();
+        
+        if (toolHandlers.containsKey(toolName)) {
+            throw new IllegalArgumentException("工具已存在注册: " + toolName);
+        }
+        
+        toolHandlers.put(toolName, handler);
+    }
+
+    /**
+     * Check if a tool handler is registered
+     * @param toolName The name of the tool
+     * @return true if registered, false otherwise
+     */
+    public boolean hasToolHandler(String toolName) {
+        return toolHandlers.containsKey(toolName);
+    }
+
+    /**
+     * Get a tool handler by name
+     * @param toolName The name of the tool
+     * @return The tool handler, or null if not found
+     */
+    public ToolHandler getToolHandler(String toolName) {
+        return toolHandlers.get(toolName);
     }
 
     /**
@@ -72,6 +112,9 @@ public class WorkflowManager {
         String currentNodeId = workflow.getStartNodeId();
 
         try {
+            // Initialize workflow inputs
+            context.setVariables(new HashMap<>(workflow.getInputs()));
+
             while (currentNodeId != null) {
                 WorkflowNode node = workflow.getNodeById(currentNodeId);
                 if (node == null) {
@@ -83,9 +126,19 @@ public class WorkflowManager {
                 
                 // Execute node based on its type
                 Map<String, Object> nodeResult = executeNode(node, context);
+                
+                // Update node context for function nodes
+                if (node.getType() == NodeType.FUNCTION) {
+                    node.setContext(new HashMap<>(nodeResult));
+                }
+
                 Map<String, Object> nodeParameters = new HashMap<>();
                 nodeParameters.put("toolName", node.getToolName());
-                nodeParameters.put("toolDescription", node.getToolDescription());
+                if (node.getType() == NodeType.FUNCTION && workflow.hasTool(node.getToolName())) {
+                    ToolDefinition toolDef = workflow.getToolDefinition(node.getToolName());
+                    nodeParameters.put("toolDescription", toolDef.getDescription());
+                }
+
                 long nodeDuration = System.currentTimeMillis() - nodeStartTime;
                 workflowLogger.logNodeExecution(
                     context.getExecutionId(),
@@ -98,6 +151,8 @@ public class WorkflowManager {
 
                 // Determine next node
                 if (node.getType() == NodeType.END) {
+                    // Copy relevant context variables to workflow outputs
+                    workflow.getOutputs().putAll(context.getVariables());
                     currentNodeId = null;
                 } else if (node.getType() == NodeType.CONDITION) {
                     boolean condition = evaluateCondition(node, context);
@@ -108,7 +163,7 @@ public class WorkflowManager {
                     currentNodeId = node.getNextNodes().get("default");
                 }
             }
-			
+            
             context.setStatus(WorkflowStatus.COMPLETED);
         } catch (Exception e) {
             context.setStatus(WorkflowStatus.FAILED);
@@ -131,11 +186,66 @@ public class WorkflowManager {
      * @return Node execution result
      */
     private Map<String, Object> executeNode(WorkflowNode node, WorkflowContext context) {
-        // This is a placeholder implementation
-        // In a real system, this would handle different node types and their specific logic
         Map<String, Object> result = new HashMap<>();
-        result.put("status", "executed");
+        
+        try {
+            switch (node.getType()) {
+                case START:
+                    // Start node initializes global variables
+                    result.putAll(context.getVariables());
+                    break;
+                    
+                case FUNCTION:
+                    if (node.getToolName() != null) {
+                        // Execute the tool and get its outputs
+                        result = executeTool(node.getToolName(), context.getVariables());
+                        // Update context with tool outputs
+                        context.getVariables().putAll(result);
+                    }
+                    break;
+                    
+                case CONDITION:
+                    // Condition nodes don't modify the context
+                    result.put("evaluated", evaluateCondition(node, context));
+                    break;
+                    
+                case END:
+                    // End node captures final state
+                    result.putAll(context.getVariables());
+                    break;
+            }
+        } catch (ToolException e) {
+            result.put("error", e.getMessage());
+            result.put("errorCode", e.getErrorCode());
+            result.put("details", e.getDetails());
+        }
+        
         return result;
+    }
+
+    /**
+     * Execute a tool with given inputs
+     * @param toolName Name of the tool to execute
+     * @param inputs Tool input parameters
+     * @return Tool execution results
+     */
+    private Map<String, Object> executeTool(String toolName, Map<String, Object> inputs) throws ToolException {
+        ToolHandler handler = toolHandlers.get(toolName);
+        if (handler == null) {
+            throw new ToolException("Tool not found: " + toolName, "TOOL_NOT_FOUND");
+        }
+
+        try {
+            ToolResponse<Map<String, Object>> response = handler.execute(inputs);
+            if (!response.isSuccess()) {
+                throw new ToolException(response.getMessage(), response.getErrorCode());
+            }
+            return response.getData();
+        } catch (ToolException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ToolException("Tool execution failed: " + e.getMessage(), "EXECUTION_ERROR");
+        }
     }
 
     /**

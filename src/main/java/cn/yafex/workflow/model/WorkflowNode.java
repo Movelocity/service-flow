@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 import java.util.HashMap;
-import cn.yafex.tools.schema.FieldDefinition;
 
 /**
  * Base class for all workflow nodes
@@ -15,16 +14,14 @@ public class WorkflowNode {
     private String description;
     private NodeType type;
     private Map<String, String> nextNodes; // key: condition/default, value: next node id
-    private Position position;
-    private String toolName;
-    private String toolDescription;
-    // inputs and outputs
-    private Map<String, FieldDefinition> inputs;
-    private Map<String, FieldDefinition> outputs;
+    private Position position;      // 节点在画布上的位置，用于编辑器
+    private String toolName;        // Only used for FUNCTION type nodes
+    private Map<String, Object> context; // Node context for function outputs
 
     public WorkflowNode() {
         this.nextNodes = new HashMap<>();
         this.position = new Position(0, 0);
+        this.context = new HashMap<>();
     }
 
     // Getters and setters
@@ -127,27 +124,36 @@ public class WorkflowNode {
         this.toolName = toolName;
     }
 
-    public String getToolDescription() {
-        return toolDescription;
+    public Map<String, Object> getContext() {
+        return context;
     }
 
-    public void setToolDescription(String toolDescription) {
-        this.toolDescription = toolDescription;
+    public void setContext(Map<String, Object> context) {
+        this.context = context;
     }
 
-    public Map<String, FieldDefinition> getInputs() {
-        return inputs;
+    /**
+     * Add a value to the node's context
+     * @param key Context variable name
+     * @param value Context variable value
+     */
+    public void addToContext(String key, Object value) {
+        this.context.put(key, value);
     }
 
-    public void setInputs(Map<String, FieldDefinition> inputs) {
-        this.inputs = inputs;
+    /**
+     * Get a value from the node's context
+     * @param key Context variable name
+     * @return Context variable value or null if not found
+     */
+    public Object getFromContext(String key) {
+        return this.context.get(key);
     }
 
-    public Map<String, FieldDefinition> getOutputs() {
-        return outputs;
-    }
-
-    public void setOutputs(Map<String, FieldDefinition> outputs) {
-        this.outputs = outputs;
+    /**
+     * Clear the node's context
+     */
+    public void clearContext() {
+        this.context.clear();
     }
 } 

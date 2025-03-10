@@ -14,11 +14,11 @@
     </div>
 
     <div class="variables-list">
-      <div v-for="(variable, index) in startNode.outputs || []" :key="index" class="variable-row">
+      <div v-for="(variable, key) in startNode.outputs || []" :key="key" class="variable-row">
         <span>{{ variable.name }}</span>
         <div>
           <span>{{ variable.type }}</span>
-          <el-button type="primary" link @click="editVariable(index)"> 编辑 </el-button>
+          <el-button type="primary" link @click="editVariable(key)"> 编辑 </el-button>
         </div>
       </div>
     </div>
@@ -58,10 +58,9 @@ function addVariable() {
   variableDialogVisible.value = true;
 }
 
-function editVariable(index: number) {
-  editingVariableIndex.value = index;
+function editVariable(key: string) {
   editingVariable.value = JSON.parse(
-    JSON.stringify(startNode.value.parameters.outputs[index])
+    JSON.stringify(startNode.value.outputs[key])
   );
   variableDialogVisible.value = true;
 }
@@ -71,12 +70,12 @@ function saveVariable() {
   
   const updatedNode = { ...startNode.value };
   if (!updatedNode.outputs) {
-    updatedNode.outputs = [];
+    updatedNode.outputs = {};
   }
 
   // 开始节点只需要配置输出变量；工作流输入变量引用开始节点的输出变量
   if (editingVariableIndex.value === -1) {
-    updatedNode.outputs.push(editingVariable.value);
+    updatedNode.outputs[editingVariable.value.name] = editingVariable.value;
   } else {
     updatedNode.outputs[editingVariableIndex.value] = editingVariable.value;
   }
