@@ -310,6 +310,10 @@ function onClose() {
   color: var(--text-color);
 }
 
+.btn-delete:hover {
+  color: var(--node-selected);
+}
+
 .variables-list {
   margin-top: 0.5rem;
   display: flex;

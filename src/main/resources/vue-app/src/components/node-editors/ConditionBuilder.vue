@@ -10,9 +10,9 @@
           >
             <el-option
               v-for="(input, key) in workflowInputs"
-              :key="`input:${key}`"
+              :key="`input.${key}`"
               :label="input.description || key"
-              :value="`input:${key}`"
+              :value="`input.${key}`"
             />
             <el-option
               v-for="(_value, contextKey) in availableContext"
@@ -54,9 +54,9 @@
             <el-option-group label="工作流输入">
               <el-option
                 v-for="(input, key) in workflowInputs"
-                :key="`input:${key}`"
+                :key="`input.${key}`"
                 :label="input.description || key"
-                :value="`input:${key}`"
+                :value="`input.${key}`"
               />
             </el-option-group>
           </el-select>
@@ -75,13 +75,13 @@
       </el-form>
     </div>
     
-    <!-- <div class="condition-preview">
+    <div class="condition-preview">
       <el-alert
         :title="previewText"
         type="info"
         :closable="false"
       />
-    </div> -->
+    </div>
   </div>
 </template>
 
@@ -147,7 +147,7 @@ const availableContext = computed(() => {
   // Add workflow inputs with 'global:' prefix
   if (store.currentWorkflow?.inputs) {
     Object.keys(store.currentWorkflow.inputs).forEach(key => {
-      context[`global:${key}`] = store.currentWorkflow!.inputs[key];
+      context[`global.${key}`] = store.currentWorkflow!.inputs[key];
     });
   }
   
@@ -167,27 +167,17 @@ const availableContext = computed(() => {
 // });
 
 // 生成预览文本
-// const previewText = computed(() => {
-//   const { leftOperand, operator, rightOperand, type } = condition.value;
-//   const operatorText = {
-//     '==': '等于',
-//     '!=': '不等于',
-//     '>': '大于',
-//     '>=': '大于等于',
-//     '<': '小于',
-//     '<=': '小于等于',
-//     'contains': '包含',
-//     'notContains': '不包含'
-//   }[operator] || operator;
+const previewText = computed(() => {
+  const { leftOperand, operator, rightOperand, type } = condition.value;
 
-//   return `当 ${leftOperand} ${operatorText} ${type === 'CONSTANT' ? `"${rightOperand}"` : rightOperand} 时`;
-// });
+  return `${leftOperand} ${operator} ${type === 'CONSTANT' ? `"${rightOperand}"` : rightOperand}`;
+});
 </script>
 
 <style scoped>
 .condition-builder {
   /* padding: 1rem; */
-  border: 1px solid var(--border-color);
+  /* border: 1px solid var(--border-color); */
   border-radius: 4px;
 }
 
@@ -198,7 +188,7 @@ const availableContext = computed(() => {
 .compare1, .compare2 {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: start;
 }
 
 .compare2 {
@@ -216,5 +206,9 @@ const availableContext = computed(() => {
 
 :deep(.el-radio-group) {
   margin-bottom: 0.5rem;
+}
+
+.slim-select {
+  width: 150px;
 }
 </style> 

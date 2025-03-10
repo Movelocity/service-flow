@@ -186,8 +186,6 @@ function addElif() {
 .condition-item {
   background-color: var(--bg-secondary);
   border-radius: 0.5rem;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
 }
 
 .add-condition-btn,

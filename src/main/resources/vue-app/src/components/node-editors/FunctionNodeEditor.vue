@@ -73,7 +73,7 @@ const availableContext = computed(() => {
   // Add workflow inputs with 'global:' prefix
   if (workflowStore.currentWorkflow?.inputs) {
     Object.keys(workflowStore.currentWorkflow.inputs).forEach(key => {
-      context[`global:${key}`] = workflowStore.currentWorkflow!.inputs[key];
+      context[`global.${key}`] = workflowStore.currentWorkflow!.inputs[key];
     });
   }
   

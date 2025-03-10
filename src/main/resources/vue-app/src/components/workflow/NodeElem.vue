@@ -122,6 +122,8 @@ function onNodeClick(event: MouseEvent) {
   // 如果没有拖拽，则选中节点
   if (!isDragging) {
     store.selectNode(props.node.id);
+
+    console.log("store", store.selectedNode?.context)
   }
 }
 

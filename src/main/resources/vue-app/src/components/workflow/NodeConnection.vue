@@ -50,136 +50,98 @@
         {{ condition }}
       </text>
     </g>
-
-    <!-- 删除按钮 -->
-    <!-- <g
-      v-if="isSelected"
-      :transform="'translate(' + (labelPosition.x + 30) + ',' + labelPosition.y + ')'"
-      @click.stop="deleteConnection"
-      class="delete-button"
-    >
-      <circle
-        r="8"
-        fill="#ff4444"
-      />
-      <text
-        text-anchor="middle"
-        dominant-baseline="middle"
-        fill="white"
-        font-size="12"
-      >×</text>
-    </g> -->
   </g>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, type PropType } from 'vue';
+<script setup lang="ts">
+import { computed, type PropType } from 'vue';
 import type { Node } from '@/types/workflow';
 import { NodeType } from '@/types/workflow';
 import { generateBezierPath, calculateConnectionPoint } from '@/utils/canvas';
 import { useWorkflowStore } from '@/stores/workflow';
 
-export default defineComponent({
-  name: 'WorkflowConnection',
-
-  props: {
-    sourceNode: {
-      type: Object as PropType<Node>,
-      required: true
-    },
-    targetNode: {
-      type: Object as PropType<Node>,
-      required: true
-    },
-    condition: {
-      type: String,
-      required: true
-    },
-    isSelected: {
-      type: Boolean,
-      default: false
-    }
+const props = defineProps({
+  sourceNode: {
+    type: Object as PropType<Node>,
+    required: true
   },
-
-  setup(props) {
-    const store = useWorkflowStore();
-
-    // 计算连接路径
-    const path = computed(() => {
-      const sourcePoint = calculateConnectionPoint(
-        props.sourceNode.position,
-        100, // 节点宽度
-        60,  // 节点高度
-        false // 输出点
-      );
-
-      const targetPoint = calculateConnectionPoint(
-        props.targetNode.position,
-        100, // 节点宽度
-        60,  // 节点高度
-        true  // 输入点
-      );
-
-      return generateBezierPath(sourcePoint, targetPoint);
-    });
-
-    // 计算标签位置
-    const labelPosition = computed(() => {
-      const sourcePoint = calculateConnectionPoint(
-        props.sourceNode.position,
-        100,
-        60,
-        false
-      );
-
-      const targetPoint = calculateConnectionPoint(
-        props.targetNode.position,
-        100,
-        60,
-        true
-      );
-
-      return {
-        x: (sourcePoint.x + targetPoint.x) / 2,
-        y: (sourcePoint.y + targetPoint.y) / 2
-      };
-    });
-
-    // 获取连接颜色
-    function getConnectionColor(nodeType: NodeType): string {
-      switch (nodeType) {
-        case NodeType.START:
-          return '#4CAF50';
-        case NodeType.FUNCTION:
-          return '#2196F3';
-        case NodeType.CONDITION:
-          return '#FF9800';
-        case NodeType.END:
-          return '#F44336';
-        default:
-          return '#757575';
-      }
-    }
-
-    // 点击连接线
-    function onConnectionClick() {
-      store.selectConnection(props.sourceNode.id, props.condition);
-    }
-
-    // 删除连接
-    function deleteConnection() {
-      store.deleteConnection(props.sourceNode.id, props.condition);
-    }
-
-    return {
-      path,
-      labelPosition,
-      getConnectionColor,
-      onConnectionClick,
-      deleteConnection
-    };
+  targetNode: {
+    type: Object as PropType<Node>,
+    required: true
+  },
+  condition: {
+    type: String,
+    required: true
+  },
+  isSelected: {
+    type: Boolean,
+    default: false
   }
 });
+
+const store = useWorkflowStore();
+
+// 计算连接路径
+const path = computed(() => {
+  const sourcePoint = calculateConnectionPoint(
+    props.sourceNode.position,
+    100, // 节点宽度
+    60,  // 节点高度
+    false // 输出点
+  );
+
+  const targetPoint = calculateConnectionPoint(
+    props.targetNode.position,
+    100, // 节点宽度
+    60,  // 节点高度
+    true  // 输入点
+  );
+
+  return generateBezierPath(sourcePoint, targetPoint);
+});
+
+// 计算标签位置
+const labelPosition = computed(() => {
+  const sourcePoint = calculateConnectionPoint(
+    props.sourceNode.position,
+    100,
+    60,
+    false
+  );
+
+  const targetPoint = calculateConnectionPoint(
+    props.targetNode.position,
+    100,
+    60,
+    true
+  );
+
+  return {
+    x: (sourcePoint.x + targetPoint.x) / 2,
+    y: (sourcePoint.y + targetPoint.y) / 2
+  };
+});
+
+// 获取连接颜色
+function getConnectionColor(nodeType: NodeType): string {
+  switch (nodeType) {
+    case NodeType.START:
+      return '#4CAF50';
+    case NodeType.FUNCTION:
+      return '#2196F3';
+    case NodeType.CONDITION:
+      return '#FF9800';
+    case NodeType.END:
+      return '#F44336';
+    default:
+      return '#757575';
+  }
+}
+
+// 点击连接线
+function onConnectionClick() {
+  store.selectConnection(props.sourceNode.id, props.condition);
+}
 </script>
 
 <style scoped>
@@ -217,14 +179,4 @@ export default defineComponent({
   stroke-width: 2;
   stroke: #1976D2;
 }
-
-/* .delete-button {
-  cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.2s;
-}
-
-.delete-button:hover {
-  opacity: 1;
-} */
 </style> 

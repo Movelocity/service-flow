@@ -73,10 +73,8 @@
         :key="node.id"
         :node="node"
         :is-selected="node.id === selectedNodeId"
-        @node-move="updateNodePosition"
         @start-connection="startConnection"
         @end-connection="endConnection"
-        @node-click="selectNode"
       />
     </div>
 
@@ -92,7 +90,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import type { Node, Position } from '@/types/workflow';
+import type { Node } from '@/types/workflow';
 import { NodeType } from '@/types/workflow';
 import { useWorkflowStore } from '@/stores/workflow';
 import NodeElem from './NodeElem.vue';
@@ -149,16 +147,6 @@ const tempConnectionColor = computed(() => {
       return '#757575';
   }
 });
-
-// 选择节点
-function selectNode(nodeId: string) {
-  store.selectNode(nodeId);
-}
-
-// 更新节点位置
-function updateNodePosition(nodeId: string, position: Position) {
-  store.updateNodePosition(nodeId, position);
-}
 
 // 画布缩放
 function onWheel(event: WheelEvent) {

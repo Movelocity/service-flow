@@ -236,7 +236,7 @@ export const useWorkflowStore = defineStore('workflow', {
         const predNode = this.currentWorkflow!.nodes.find(n => n.id === predId);
         if (predNode) {
           Object.entries(predNode.context).forEach(([key, value]) => {
-            upstreamContext[`${predNode.name}:${key}`] = value;
+            upstreamContext[`${predNode.name}.${key}`] = value;
           });
         }
       });
@@ -266,7 +266,7 @@ export const useWorkflowStore = defineStore('workflow', {
               if (predNode) {
                 const predContext = updates.get(predId) || predNode.context;
                 Object.entries(predContext).forEach(([key, value]) => {
-                  targetUpstreamContext[`${predNode.name}:${key}`] = value;
+                  targetUpstreamContext[`${predNode.name}.${key}`] = value;
                 });
               }
             });
@@ -400,7 +400,7 @@ export const useWorkflowStore = defineStore('workflow', {
       const globalContext: Record<string, any> = {};
       if (this.currentWorkflow?.inputs) {
         Object.entries(this.currentWorkflow.inputs).forEach(([key, value]) => {
-          globalContext[`global:${key}`] = value;
+          globalContext[`global.${key}`] = value;
         });
       }
 
