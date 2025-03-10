@@ -35,8 +35,8 @@ cn.yafex.tools/
 
        public MyNewTool() {
            // 定义输入参数
-           Map<String, FieldDefinition> inputFields = new HashMap<>();
-           inputFields.put("param1", new FieldDefinition(
+           Map<String, FieldDefinition> inputs = new HashMap<>();
+           inputs.put("param1", new FieldDefinition(
                "param1",
                "Parameter description",
                FieldType.STRING,
@@ -46,8 +46,8 @@ cn.yafex.tools/
            ));
 
            // 定义输出参数
-           Map<String, FieldDefinition> outputFields = new HashMap<>();
-           outputFields.put("result", new FieldDefinition(
+           Map<String, FieldDefinition> outputs = new HashMap<>();
+           outputs.put("result", new FieldDefinition(
                "result",
                "Result description",
                FieldType.OBJECT,
@@ -60,8 +60,8 @@ cn.yafex.tools/
            this.definition = new ToolDefinition(
                "tool_name",           // 工具名称
                "Tool description",    // 工具描述
-               inputFields,           // 输入参数定义
-               outputFields,          // 输出参数定义
+               inputs,           // 输入参数定义
+               outputs,          // 输出参数定义
                CollectionUtils.listOf(ToolException.class)  // 可能的异常
            );
        }

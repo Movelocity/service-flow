@@ -18,8 +18,8 @@ export interface ToolField {
 export interface Tool {
   name: string;
   description: string;
-  inputFields: Record<string, ToolField>;
-  outputFields: Record<string, ToolField>;
+  inputs: Record<string, ToolField>;
+  outputs: Record<string, ToolField>;
 }
 
 /**

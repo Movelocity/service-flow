@@ -102,7 +102,7 @@ public interface ToolHandler {
      */
     default void validateParams(Map<String, Object> params) throws ValidationException {
         ToolDefinition definition = getDefinition();
-        Map<String, FieldDefinition> inputFields = definition.getInputFields();
+        Map<String, FieldDefinition> inputFields = definition.getInputs();
 
         // Check required fields
         for (Map.Entry<String, FieldDefinition> entry : inputFields.entrySet()) {

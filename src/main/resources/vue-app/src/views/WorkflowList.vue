@@ -62,6 +62,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Workflow } from '@/types/workflow';
+import { NodeType } from '@/types/workflow';
 import { workflowApi } from '@/services/workflowApi';
 import ThemeButton from '@/components/ThemeButton.vue';
 
@@ -83,6 +84,20 @@ onMounted(async () => {
 // 创建新工作流
 async function createWorkflow() {
   try {
+    // 创建一个开始节点
+    const startNode = {
+      id: 'start',
+      type: NodeType.START,
+      name: '开始',
+      description: '',
+      position: { x: 100, y: 100 },
+      inputs: {},
+      outputs: {},
+      config: {},
+      nextNodes: {},
+      context: {}
+    };
+
     const newWorkflow: Partial<Workflow> = {
       name: '新工作流',
       description: '',
@@ -90,8 +105,8 @@ async function createWorkflow() {
       outputs: {},
       tools: {},
       globalVariables: {},
-      nodes: [],
-      startNodeId: '',
+      nodes: [startNode],
+      startNodeId: 'start',
       isActive: true
     };
     

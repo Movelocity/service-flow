@@ -16,7 +16,7 @@
 {
   "name": "string",
   "description": "string",
-  "inputFields": {
+  "inputs": {
     "fieldName": {
       "name": "string",
       "description": "string",
@@ -26,7 +26,7 @@
       "constraints": null
     }
   },
-  "outputFields": {
+  "outputs": {
     "fieldName": {
       "name": "string",
       "description": "string",

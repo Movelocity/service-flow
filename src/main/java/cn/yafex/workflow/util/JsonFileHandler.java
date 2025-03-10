@@ -59,7 +59,7 @@ public class JsonFileHandler {
                                                 SerializerFeature.WriteMapNullValue,
                                                 SerializerFeature.WriteNullListAsEmpty,
                                                 SerializerFeature.WriteNullStringAsEmpty);
-            Files.write(filePath, jsonString.getBytes());
+            Files.write(filePath, jsonString.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             logger.info("Saved workflow {} to {}", workflow.getId(), filePath);
         } catch (IOException e) {
             logger.error("Failed to save workflow {}: {}", workflow.getId(), e.getMessage());
@@ -85,7 +85,7 @@ public class JsonFileHandler {
 
         try {
             byte[] bytes = Files.readAllBytes(filePath);
-            String jsonString = new String(bytes);
+            String jsonString = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
             return JSON.parseObject(jsonString, Workflow.class);
         } catch (IOException e) {
             logger.error("Failed to load workflow {}: {}", workflowId, e.getMessage());

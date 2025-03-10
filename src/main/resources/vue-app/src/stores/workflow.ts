@@ -95,8 +95,18 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     async loadWorkflow(id: string) {
-      const workflow = await workflowApi.getWorkflow(id);
-      this.updateWorkflow(workflow);
+      try {
+        const response = await fetch(`/api/workflows/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to load workflow');
+        }
+        const data = await response.json();
+        this.currentWorkflow = data;
+        this.initializeWorkflowContext(); // Initialize context after loading
+      } catch (error) {
+        console.error('Error loading workflow:', error);
+        throw error;
+      }
     },
 
     updateWorkflow(workflow: Workflow) {
@@ -161,8 +171,8 @@ export const useWorkflowStore = defineStore('workflow', {
         this.currentWorkflow!.tools[toolName] = {
           name: toolName,
           description: tool.description,
-          inputs: tool.inputFields,
-          outputs: tool.outputFields
+          inputs: tool.inputs,
+          outputs: tool.outputs
         };
       }
       
@@ -333,5 +343,36 @@ export const useWorkflowStore = defineStore('workflow', {
         node.position = position;
       }
     },
+
+    // Initialize and propagate context from start node
+    initializeWorkflowContext() {
+      if (!this.currentWorkflow?.startNodeId) return;
+      
+      // Clear all nodes' context first
+      this.currentWorkflow?.nodes.forEach(node => {
+        node.context = {};
+      });
+
+      // Get start node's successors
+      const startNode = this.currentWorkflow?.nodes.find(n => n.id === this.currentWorkflow?.startNodeId);
+      if (!startNode) return;
+
+      // Initialize global context
+      const globalContext: Record<string, any> = {};
+      if (this.currentWorkflow?.inputs) {
+        Object.entries(this.currentWorkflow.inputs).forEach(([key, value]) => {
+          globalContext[`global:${key}`] = value;
+        });
+      }
+
+      // Propagate context to all successors of start node
+      Object.values(startNode.nextNodes).forEach(nextNodeId => {
+        const nextNode = this.currentWorkflow?.nodes.find(n => n.id === nextNodeId);
+        if (nextNode) {
+          nextNode.context = { ...globalContext };
+          this.updateNodeContextChain(nextNodeId);
+        }
+      });
+    }
   }
 }); 

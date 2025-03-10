@@ -17,11 +17,11 @@ public class ToolDefinition {
     @JSONField(name = "description")
     private String description;
 
-    @JSONField(name = "inputFields")
-    private Map<String, FieldDefinition> inputFields;
+    @JSONField(name = "inputs")
+    private Map<String, FieldDefinition> inputs;
 
-    @JSONField(name = "outputFields")
-    private Map<String, FieldDefinition> outputFields;
+    @JSONField(name = "outputs")
+    private Map<String, FieldDefinition> outputs;
 
     @JSONField(name = "possibleExceptions")
     private List<Class<? extends ToolException>> possibleExceptions;
@@ -31,13 +31,13 @@ public class ToolDefinition {
     }
 
     public ToolDefinition(String name, String description,
-                         Map<String, FieldDefinition> inputFields,
-                         Map<String, FieldDefinition> outputFields,
+                         Map<String, FieldDefinition> inputs,
+                         Map<String, FieldDefinition> outputs,
                          List<Class<? extends ToolException>> possibleExceptions) {
         this.name = name;
         this.description = description;
-        this.inputFields = inputFields;
-        this.outputFields = outputFields;
+        this.inputs = inputs;
+        this.outputs = outputs;
         this.possibleExceptions = possibleExceptions;
     }
 
@@ -48,11 +48,11 @@ public class ToolDefinition {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public Map<String, FieldDefinition> getInputFields() { return inputFields; }
-    public void setInputFields(Map<String, FieldDefinition> inputFields) { this.inputFields = inputFields; }
+    public Map<String, FieldDefinition> getInputs() { return inputs; }
+    public void setInputs(Map<String, FieldDefinition> inputs) { this.inputs = inputs; }
 
-    public Map<String, FieldDefinition> getOutputFields() { return outputFields; }
-    public void setOutputFields(Map<String, FieldDefinition> outputFields) { this.outputFields = outputFields; }
+    public Map<String, FieldDefinition> getOutputs() { return outputs; }
+    public void setOutputs(Map<String, FieldDefinition> outputs) { this.outputs = outputs; }
 
     public List<Class<? extends ToolException>> getPossibleExceptions() { return possibleExceptions; }
     public void setPossibleExceptions(List<Class<? extends ToolException>> possibleExceptions) {
