@@ -1,11 +1,15 @@
 <template>
   <div class="condition-builder">
     <div class="condition-group">
-      <el-form :model="localCondition" label-position="top">
+      <el-form :model="condition" label-position="top">
         <el-row :gutter="12">
           <el-col :span="8">
             <el-form-item label="变量">
-              <el-select v-model="localCondition.leftOperand" placeholder="选择变量">
+              <el-select 
+                :model-value="condition.leftOperand"
+                @update:model-value="updateLeftOperand"
+                placeholder="选择变量"
+              >
                 <el-option-group label="工作流输入">
                   <el-option
                     v-for="(input, key) in workflowInputs"
@@ -35,7 +39,11 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="操作符">
-              <el-select v-model="localCondition.operator" placeholder="选择操作符">
+              <el-select 
+                :model-value="condition.operator"
+                @update:model-value="updateOperator"
+                placeholder="选择操作符"
+              >
                 <el-option label="等于" value="==" />
                 <el-option label="不等于" value="!=" />
                 <el-option label="大于" value=">" />
@@ -50,18 +58,24 @@
           <el-col :span="8">
             <el-form-item label="比较值">
               <div class="value-input">
-                <el-radio-group v-model="localCondition.type" size="small">
+                <el-radio-group 
+                  :model-value="condition.type"
+                  @update:model-value="updateType"
+                  size="small"
+                >
                   <el-radio-button value="CONSTANT">常量</el-radio-button>
                   <el-radio-button value="VARIABLE">变量</el-radio-button>
                 </el-radio-group>
                 <el-input
-                  v-if="localCondition.type === 'CONSTANT'"
-                  v-model="localCondition.rightOperand"
+                  v-if="condition.type === 'CONSTANT'"
+                  :model-value="condition.rightOperand"
+                  @update:model-value="updateRightOperand"
                   placeholder="输入比较值"
                 />
                 <el-select
                   v-else
-                  v-model="localCondition.rightOperand"
+                  :model-value="condition.rightOperand"
+                  @update:model-value="updateRightOperand"
                   placeholder="选择变量"
                 >
                   <el-option-group label="工作流输入">
@@ -99,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
 import type { Node } from '@/types/workflow';
 
@@ -121,25 +135,36 @@ const emit = defineEmits<{
 
 const store = useWorkflowStore();
 
-const localCondition = ref<Condition>({
-  leftOperand: props.modelValue?.leftOperand || '',
-  operator: props.modelValue?.operator || '==',
-  rightOperand: props.modelValue?.rightOperand || '',
-  type: props.modelValue?.type || 'CONSTANT'
-});
+// 使用计算属性来访问条件值
+const condition = computed(() => props.modelValue);
 
-// 监听本地条件变化并更新
-watch(localCondition, (newValue) => {
-  emit('update:modelValue', { ...newValue });
+// 更新处理函数
+function emitUpdate(updates: Partial<Condition>) {
+  emit('update:modelValue', {
+    ...condition.value,
+    ...updates
+  });
   emit('change');
-}, { deep: true });
+}
 
-// 监听外部值变化
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    localCondition.value = { ...newValue };
-  }
-}, { deep: true });
+function updateLeftOperand(value: string) {
+  emitUpdate({ leftOperand: value });
+}
+
+function updateOperator(value: string) {
+  emitUpdate({ operator: value });
+}
+
+function updateType(value: 'VARIABLE' | 'CONSTANT') {
+  emitUpdate({ 
+    type: value,
+    rightOperand: '' // 清空右操作数，因为类型改变了
+  });
+}
+
+function updateRightOperand(value: string) {
+  emitUpdate({ rightOperand: value });
+}
 
 // 获取工作流输入
 const workflowInputs = computed(() => store.currentWorkflow?.inputs || {});
@@ -155,7 +180,7 @@ const previousNodes = computed(() => {
 
 // 生成预览文本
 const previewText = computed(() => {
-  const { leftOperand, operator, rightOperand, type } = localCondition.value;
+  const { leftOperand, operator, rightOperand, type } = condition.value;
   const operatorText = {
     '==': '等于',
     '!=': '不等于',

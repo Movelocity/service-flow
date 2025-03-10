@@ -3,7 +3,7 @@
     <label class="form-label">条件配置</label>
     <ConditionBuilder
       v-if="selectedNode"
-      v-model="nodeCondition"
+      v-model="localCondition"
       @change="updateCondition"
     />
     <small class="form-text text-muted">
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
 import ConditionBuilder from '@/components/node-editors/ConditionBuilder.vue';
 import type { Node } from '@/types/workflow';
@@ -28,34 +28,42 @@ interface Condition {
 const store = useWorkflowStore();
 const selectedNode = computed(() => store.selectedNode as Node);
 
-const nodeCondition = computed({
-  get: () => {
-    if (!selectedNode.value?.context?.condition) {
-      return {
+// 使用本地状态来管理条件
+const localCondition = ref<Condition>({
+  leftOperand: '',
+  operator: '==',
+  rightOperand: '',
+  type: 'CONSTANT'
+});
+
+// 监听选中节点的变化，更新本地状态
+watch(
+  () => selectedNode.value?.context?.condition,
+  (newCondition) => {
+    if (newCondition) {
+      localCondition.value = { ...newCondition };
+    } else {
+      localCondition.value = {
         leftOperand: '',
         operator: '==',
         rightOperand: '',
-        type: 'CONSTANT' as const
+        type: 'CONSTANT'
       };
     }
-    return selectedNode.value.context.condition as Condition;
   },
-  set: (value: Condition) => {
-    if (selectedNode.value) {
-      store.updateNode(selectedNode.value.id, {
-        ...selectedNode.value,
-        context: {
-          ...selectedNode.value.context,
-          condition: value
-        }
-      });
-    }
-  }
-});
+  { immediate: true }
+);
 
 function updateCondition() {
   if (selectedNode.value) {
-    store.updateNode(selectedNode.value.id, selectedNode.value);
+    // 使用新的对象更新节点，避免直接修改 context
+    store.updateNode(selectedNode.value.id, {
+      ...selectedNode.value,
+      context: {
+        ...selectedNode.value.context,
+        condition: { ...localCondition.value }
+      }
+    });
   }
 }
 

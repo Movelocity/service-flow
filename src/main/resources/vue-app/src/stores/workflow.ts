@@ -241,12 +241,51 @@ export const useWorkflowStore = defineStore('workflow', {
         }
       });
 
+      // 收集所有需要更新的节点及其context
+      const updates = new Map<string, Record<string, any>>();
+      
       // 更新当前节点的可用context
-      node.context = { ...upstreamContext };
+      updates.set(nodeId, { ...upstreamContext });
 
-      // 递归更新所有下游节点
-      Object.values(node.nextNodes).forEach(targetId => {
-        this.updateNodeContextChain(targetId, visitedNodes);
+      // 递归收集所有下游节点的更新
+      const collectDownstreamUpdates = (currentNodeId: string, visited: Set<string>) => {
+        const currentNode = this.currentWorkflow!.nodes.find(n => n.id === currentNodeId);
+        if (!currentNode || visited.has(currentNodeId)) return;
+        
+        visited.add(currentNodeId);
+        
+        Object.values(currentNode.nextNodes).forEach(targetId => {
+          const targetNode = this.currentWorkflow!.nodes.find(n => n.id === targetId);
+          if (targetNode) {
+            // 获取目标节点的上游context
+            const targetPredecessors = this.getNodePredecessors(targetId);
+            const targetUpstreamContext: Record<string, any> = {};
+            
+            targetPredecessors.forEach(predId => {
+              const predNode = this.currentWorkflow!.nodes.find(n => n.id === predId);
+              if (predNode) {
+                const predContext = updates.get(predId) || predNode.context;
+                Object.entries(predContext).forEach(([key, value]) => {
+                  targetUpstreamContext[`${predNode.name}:${key}`] = value;
+                });
+              }
+            });
+            
+            updates.set(targetId, { ...targetUpstreamContext });
+            collectDownstreamUpdates(targetId, visited);
+          }
+        });
+      };
+
+      // 收集所有下游更新
+      collectDownstreamUpdates(nodeId, new Set<string>());
+
+      // 批量应用所有更新
+      updates.forEach((context, id) => {
+        const targetNode = this.currentWorkflow!.nodes.find(n => n.id === id);
+        if (targetNode) {
+          targetNode.context = context;
+        }
       });
     },
 
