@@ -9,12 +9,6 @@
             placeholder="选择变量"
           >
             <el-option
-              v-for="(input, key) in workflowInputs"
-              :key="`input.${key}`"
-              :label="input.description || key"
-              :value="`input.${key}`"
-            />
-            <el-option
               v-for="(_value, contextKey) in availableContext"
               :key="contextKey"
               :label="contextKey"
@@ -160,12 +154,6 @@ const availableContext = computed(() => {
   return context;
 })
 
-// 获取前置节点列表
-// const previousNodes = computed(() => {
-//   const currentNodeId = store.selectedNode?.id;
-//   return (store.currentWorkflow?.nodes || []).filter((node: Node) => node.id !== currentNodeId);
-// });
-
 // 生成预览文本
 const previewText = computed(() => {
   const { leftOperand, operator, rightOperand, type } = condition.value;
@@ -176,8 +164,6 @@ const previewText = computed(() => {
 
 <style scoped>
 .condition-builder {
-  /* padding: 1rem; */
-  /* border: 1px solid var(--border-color); */
   border-radius: 4px;
 }
 

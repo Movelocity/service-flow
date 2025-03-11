@@ -26,6 +26,7 @@ export interface VariableDefinition {
   type: VariableType;
   description: string;
   defaultValue?: any;
+  parent?: string;
 }
 
 /**

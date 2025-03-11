@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
-import type { Node, Workflow, Position, EditorState } from '../types/workflow';
+import type { Node, Workflow, Position, EditorState, VariableDefinition } from '../types/workflow';
 import type { Tool } from '@/types/tools';
 import { NodeType } from '@/types/workflow';
 import { WorkflowApi } from '@/services/workflowApi';
@@ -202,10 +202,20 @@ export const useWorkflowStore = defineStore('workflow', {
         node.nextNodes = updatedNextNodes;
       });
 
+      // 获取节点所属的工具名称
+      const toolName = this.currentWorkflow?.nodes.find(node => node.id === nodeId)?.toolName;
+
       // 删除节点
       this.currentWorkflow.nodes = this.currentWorkflow.nodes.filter(
         node => node.id !== nodeId
       );
+
+      // 对于函数节点，如果该函数已经没有其它节点在用，则在 workflow.tools 中删除该函数
+      if (toolName) {
+        if (!this.currentWorkflow?.nodes.some(node => node.toolName === toolName)) {
+          delete this.currentWorkflow.tools[toolName];
+        }
+      }
 
       if (this.editorState.selectedNodeId === nodeId) {
         this.editorState.selectedNodeId = null;
@@ -220,72 +230,24 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     // 递归更新节点及其下游节点的context
-    updateNodeContextChain(nodeId: string, visitedNodes: Set<string> = new Set()) {
+    updateNodeContextChain(nodeId: string, visitedNodes: Set<string> = new Set(), upstreamContext: Record<string, VariableDefinition> = {}) {
       if (!this.currentWorkflow || visitedNodes.has(nodeId)) return;
       
       const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
       if (!node) return;
 
       visitedNodes.add(nodeId);
-
-      // 获取所有上游节点的context
-      const predecessors = this.getNodePredecessors(nodeId);
-      const upstreamContext: Record<string, any> = {};
-      
-      predecessors.forEach(predId => {
-        const predNode = this.currentWorkflow!.nodes.find(n => n.id === predId);
-        if (predNode) {
-          Object.entries(predNode.context).forEach(([key, value]) => {
-            upstreamContext[`${predNode.name}.${key}`] = value;
-          });
-        }
-      });
-
-      // 收集所有需要更新的节点及其context
-      const updates = new Map<string, Record<string, any>>();
-      
-      // 更新当前节点的可用context
-      updates.set(nodeId, { ...upstreamContext });
-
-      // 递归收集所有下游节点的更新
-      const collectDownstreamUpdates = (currentNodeId: string, visited: Set<string>) => {
-        const currentNode = this.currentWorkflow!.nodes.find(n => n.id === currentNodeId);
-        if (!currentNode || visited.has(currentNodeId)) return;
-        
-        visited.add(currentNodeId);
-        
-        Object.values(currentNode.nextNodes).forEach(targetId => {
-          const targetNode = this.currentWorkflow!.nodes.find(n => n.id === targetId);
-          if (targetNode) {
-            // 获取目标节点的上游context
-            const targetPredecessors = this.getNodePredecessors(targetId);
-            const targetUpstreamContext: Record<string, any> = {};
-            
-            targetPredecessors.forEach(predId => {
-              const predNode = this.currentWorkflow!.nodes.find(n => n.id === predId);
-              if (predNode) {
-                const predContext = updates.get(predId) || predNode.context;
-                Object.entries(predContext).forEach(([key, value]) => {
-                  targetUpstreamContext[`${predNode.name}.${key}`] = value;
-                });
-              }
-            });
-            
-            updates.set(targetId, { ...targetUpstreamContext });
-            collectDownstreamUpdates(targetId, visited);
-          }
+      node.context = { ...node.context, ...upstreamContext };
+      const newContext: Record<string, VariableDefinition> = {}
+      if (node.type === NodeType.FUNCTION && node.toolName) {
+        const tool = this.currentWorkflow.tools[node.toolName];
+        Object.entries(tool.outputs).forEach(([key, value]) => {
+          newContext[`${key}`] = {...value, parent: node.id};
         });
-      };
-
-      // 收集所有下游更新
-      collectDownstreamUpdates(nodeId, new Set<string>());
-
-      // 批量应用所有更新
-      updates.forEach((context, id) => {
-        const targetNode = this.currentWorkflow!.nodes.find(n => n.id === id);
-        if (targetNode) {
-          targetNode.context = context;
-        }
+      }
+      console.log('updateNodeContextChain', nodeId, node.context, newContext);
+      Object.values(node.nextNodes).forEach(nextNodeId => {
+        this.updateNodeContextChain(nextNodeId, visitedNodes, { ...node.context, ...newContext });
       });
     },
 
@@ -305,7 +267,7 @@ export const useWorkflowStore = defineStore('workflow', {
       };
 
       // 更新目标节点及其下游节点的context
-      this.updateNodeContextChain(targetNodeId);
+      this.updateNodeContextChain(sourceNodeId);
     },
 
     deleteConnection(sourceNodeId: string, condition: string) {
@@ -392,26 +354,11 @@ export const useWorkflowStore = defineStore('workflow', {
         node.context = {};
       });
 
-      // Get start node's successors
+      // 获取开始节点
       const startNode = this.currentWorkflow?.nodes.find(n => n.id === this.currentWorkflow?.startNodeId);
       if (!startNode) return;
 
-      // Initialize global context
-      const globalContext: Record<string, any> = {};
-      if (this.currentWorkflow?.inputs) {
-        Object.entries(this.currentWorkflow.inputs).forEach(([key, value]) => {
-          globalContext[`global.${key}`] = value;
-        });
-      }
-
-      // Propagate context to all successors of start node
-      Object.values(startNode.nextNodes).forEach(nextNodeId => {
-        const nextNode = this.currentWorkflow?.nodes.find(n => n.id === nextNodeId);
-        if (nextNode) {
-          nextNode.context = { ...globalContext };
-          this.updateNodeContextChain(nextNodeId);
-        }
-      });
+      this.updateNodeContextChain(startNode.id);
     }
   }
 }); 
