@@ -3,23 +3,22 @@
     <template v-for="(caseData, index) in conditionBlocks" :key="index">
       <div class="condition-group">
         <div class="condition-header">
-          {{ index === 0 ? 'IF' : (isLastCase(index) ? 'ELSE' : 'ELIF') }}
+          <span class="condition-type">{{ index === 0 ? 'IF' : (isLastCase(index) ? 'ELSE' : 'ELIF') }}</span>
           <button 
             v-if="!isLastCase(index)"
             class="type-toggle-btn" 
-            @click="() => toggleConditionType(index)"
+            @click="toggleConditionType(index)"
             type="button"
           >
             {{ caseData.type.toUpperCase() }}
           </button>
         </div>
         <div class="condition-content">
-          <div v-if="!isLastCase(index)">
+          <template v-if="!isLastCase(index)">
             <div v-for="(condition, conditionIndex) in caseData.conditions" :key="conditionIndex" class="condition-item">
               <ConditionBuilder
-                v-if="selectedNode"
-                v-model="conditionBlocks[index].conditions[conditionIndex]"
-                @change="updateCondition"
+                :modelValue="condition"
+                @update:modelValue="(updatedCondition) => updateSingleCondition(index, conditionIndex, updatedCondition)"
               />
             </div>
             <button 
@@ -29,10 +28,12 @@
             >
               + 添加条件
             </button>
+          </template>
+          <div v-else class="else-block">
+            <small class="form-text text-muted">
+              用于定义当所有条件不满足时应执行的逻辑。
+            </small>
           </div>
-          <small v-else class="form-text text-muted">
-            用于定义当所有条件不满足时应执行的逻辑。
-          </small>
         </div>
       </div>
     </template>
@@ -43,7 +44,7 @@
         @click="addCase"
         type="button"
       >
-        + 添加条件分支
+        + 添加{{ conditionBlocks.length === 0 ? 'IF' : (conditionBlocks.length === 1 ? 'ELSE' : 'ELIF') }}条件分支
       </button>
     </div>
   </div>
@@ -53,96 +54,194 @@
 import { computed, ref, watch } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
 import ConditionBuilder from '@/components/node-editors/ConditionBuilder.vue';
-import type { ConditionCase } from '@/types/condition';
+import type { ConditionCase, Condition } from '@/types/condition';
 import type { Node } from '@/types/workflow';
+
 interface WorkflowStore {
   selectedNode: Node | null;
   updateNode(id: string, updates: Partial<Node>): void;
 }
 
 const store = useWorkflowStore() as WorkflowStore;
-const selectedNode = computed(() => store.selectedNode as Node);
+const selectedNode = computed(() => store.selectedNode);
 
-// 使用本地状态来管理条件组
-const conditionBlocks = ref<ConditionCase[]>([{
-  conditions: [{
+// 使用响应式数组管理条件组
+const conditionBlocks = ref<ConditionCase[]>([]);
+
+// 创建默认条件块
+const createDefaultConditionBlock = (isElse: boolean = false): ConditionCase => ({
+  conditions: isElse ? [] : [{
     leftOperand: '',
     operator: '==',
     rightOperand: '',
     type: 'CONSTANT'
   }],
-  type: 'and'
-}]);
+  type: 'and',
+  hint: ''
+});
+
+// 更新条件组的hint，综合所有条件生成预览文本
+const updateCaseHint = (caseIndex: number) => {
+  if (caseIndex < conditionBlocks.value.length) {
+    const caseData = conditionBlocks.value[caseIndex];
+    const conditionTexts = caseData.conditions.map(condition => {
+      const { leftOperand, operator, rightOperand, type } = condition;
+      return `${leftOperand} ${operator} ${type === 'CONSTANT' ? `"${rightOperand}"` : rightOperand}`;
+    });
+    
+    // 使用条件组的类型（and/or）连接所有条件
+    caseData.hint = conditionTexts.join(` ${caseData.type.toUpperCase()} `);
+  }
+};
+
+// 初始化条件块
+const initializeConditionBlocks = () => {
+  const node = selectedNode.value;
+  if (!node) {
+    conditionBlocks.value = [];
+    return;
+  }
+
+  if (Array.isArray(node.conditions) && node.conditions.length > 0) {
+    // 创建深拷贝以确保不直接修改原始数据
+    conditionBlocks.value = JSON.parse(JSON.stringify(node.conditions));
+  } else {
+    // 初始化时创建一个默认的 IF 条件块
+    conditionBlocks.value = [createDefaultConditionBlock()];
+  }
+  
+  // 为每个条件组更新hint
+  conditionBlocks.value.forEach((_, index) => {
+    updateCaseHint(index);
+  });
+};
 
 // 监听选中节点的变化，更新本地状态
 watch(
-  () => selectedNode.value?.conditions as ConditionCase[] | undefined,
-  (newBlocks) => {
-    if (newBlocks) {
-      conditionBlocks.value = { ...newBlocks };
-    } else {
-      conditionBlocks.value = [{
-        conditions: [{
-          leftOperand: '',
-          operator: '==',
-          rightOperand: '',
-          type: 'CONSTANT'
-        }],
-        type: 'and'
-      }];
+  () => selectedNode.value,
+  (newNode) => {
+    if (newNode) {
+      initializeConditionBlocks();
     }
   },
   { immediate: true }
 );
 
-function updateCondition() {
-  if (selectedNode.value) {
-    store.updateNode(selectedNode.value.id, {
-      ...selectedNode.value,
-      conditions: { ...conditionBlocks.value }
-    });
-  }
-}
+// 更新节点中的条件数据
+const updateNodeConditions = () => {
+  const node = selectedNode.value;
+  if (!node) return;
 
+  // 确保条件数组有效
+  const conditions = conditionBlocks.value.map(block => ({
+    conditions: block.conditions.map(condition => ({
+      leftOperand: condition.leftOperand,
+      operator: condition.operator,
+      rightOperand: condition.rightOperand,
+      type: condition.type
+    })),
+    type: block.type,
+    hint: block.hint
+  }));
+
+  store.updateNode(node.id, {
+    conditions
+  });
+};
+
+// 更新单个条件
+const updateSingleCondition = (caseIndex: number, conditionIndex: number, updatedCondition: Condition) => {
+  if (caseIndex < conditionBlocks.value.length && 
+      conditionIndex < conditionBlocks.value[caseIndex].conditions.length) {
+    // 创建新的条件对象以确保响应性
+    const newCondition = {
+      leftOperand: updatedCondition.leftOperand,
+      operator: updatedCondition.operator,
+      rightOperand: updatedCondition.rightOperand,
+      type: updatedCondition.type
+    };
+    
+    conditionBlocks.value[caseIndex].conditions[conditionIndex] = newCondition;
+    
+    // 更新整个条件组的hint
+    updateCaseHint(caseIndex);
+    
+    updateNodeConditions();
+  }
+};
+
+// 添加新条件到指定条件组
 function addCondition(index: number) {
-  if (conditionBlocks.value[index]) {
+  if (index < conditionBlocks.value.length) {
     conditionBlocks.value[index].conditions.push({
       leftOperand: '',
       operator: '==',
       rightOperand: '',
       type: 'CONSTANT'
     });
+    
+    // 更新条件组的hint
+    updateCaseHint(index);
+    
+    updateNodeConditions();
   }
-  updateCondition();
 }
 
+// 添加新的条件分支
 function addCase() {
-  conditionBlocks.value.push({
-    conditions: [{
-      leftOperand: '',
-      operator: '==',
-      rightOperand: '',
-      type: 'CONSTANT'
-    }],
-    type: 'and'
-  });
-  
-  updateCondition();
+  const isElse = conditionBlocks.value.length > 0;
+  conditionBlocks.value.push(createDefaultConditionBlock(isElse));
+  updateNodeConditions();
 }
 
+// 切换条件组类型（AND/OR）
 function toggleConditionType(index: number) {
-  if (conditionBlocks.value[index]) {
+  if (index < conditionBlocks.value.length) {
     conditionBlocks.value[index].type = conditionBlocks.value[index].type === 'and' ? 'or' : 'and';
-    updateCondition();
+    
+    // 更新条件组的hint
+    updateCaseHint(index);
+    
+    updateNodeConditions();
   }
 }
 
+// 判断是否为最后一个条件组（即ELSE分支）
 const hasElse = computed(() => {
-  return conditionBlocks.value.length > 0 && isLastCase(conditionBlocks.value.length - 1);
+  return conditionBlocks.value.length > 1 && isLastCase(conditionBlocks.value.length - 1);
 });
 
 function isLastCase(index: number): boolean {
-  return index === conditionBlocks.value.length - 1;
+  return index === conditionBlocks.value.length - 1 && index > 0;
+}
+
+// 删除单个条件
+function removeCondition(caseIndex: number, conditionIndex: number) {
+  if (caseIndex < conditionBlocks.value.length) {
+    const caseData = conditionBlocks.value[caseIndex];
+    if (conditionIndex < caseData.conditions.length) {
+      // 如果是最后一个条件，不允许删除
+      if (caseData.conditions.length === 1) {
+        return;
+      }
+      
+      // 删除指定条件
+      caseData.conditions.splice(conditionIndex, 1);
+      
+      // 更新条件组的hint
+      updateCaseHint(caseIndex);
+      
+      updateNodeConditions();
+    }
+  }
+}
+
+// 删除条件分支
+function removeCase(index: number) {
+  if (index < conditionBlocks.value.length) {
+    conditionBlocks.value.splice(index, 1);
+    updateNodeConditions();
+  }
 }
 
 /**
