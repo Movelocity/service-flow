@@ -20,12 +20,21 @@ import java.util.*;
 )
 public class SystemInfoTool implements ToolHandler {
     @Override
-    @ToolField(
-        name = "system",
-        description = "System information",
-        type = FieldType.OBJECT,
-        required = true
-    )
+    @ToolField(name = "osName", description = "Operating system name", type = FieldType.STRING)
+    @ToolField(name = "osVersion", description = "Operating system version", type = FieldType.STRING)
+    @ToolField(name = "osArch", description = "Operating system architecture", type = FieldType.STRING)
+    @ToolField(name = "processors", description = "Number of available processors", type = FieldType.NUMBER)
+    @ToolField(name = "javaVersion", description = "Java runtime version", type = FieldType.STRING)
+    @ToolField(name = "javaVendor", description = "Java vendor name", type = FieldType.STRING)
+    @ToolField(name = "javaHome", description = "Java installation directory", type = FieldType.STRING)
+    @ToolField(name = "totalMemory", description = "Total memory available to JVM", type = FieldType.NUMBER)
+    @ToolField(name = "freeMemory", description = "Free memory available to JVM", type = FieldType.NUMBER)
+    @ToolField(name = "maxMemory", description = "Maximum memory JVM will attempt to use", type = FieldType.NUMBER)
+    @ToolField(name = "userName", description = "Current user name", type = FieldType.STRING)
+    @ToolField(name = "userHome", description = "User home directory", type = FieldType.STRING)
+    @ToolField(name = "userDir", description = "User working directory", type = FieldType.STRING)
+    @ToolField(name = "timeZone", description = "System default timezone ID", type = FieldType.STRING)
+    @ToolField(name = "currentTime", description = "Current system time", type = FieldType.STRING)
     public <T> ToolResponse<T> execute(Map<String, Object> params) throws ToolException {
         try {
             Map<String, Object> systemInfo = new HashMap<>();

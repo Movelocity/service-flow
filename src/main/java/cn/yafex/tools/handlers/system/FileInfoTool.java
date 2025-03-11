@@ -14,16 +14,17 @@ import java.util.Map;
 @Tool(
     name = "file_info",
     description = "Get detailed information about a file"
-)
+)// @Tool 注解可以声明一个工具的名称和描述，供工具管理器自动扫描并注册
 public class FileInfoTool implements ToolHandler {
-    @Override
-    @ToolField(
-        name = "info",
-        description = "File information",
-        type = FieldType.OBJECT
-    )
-    public <T> ToolResponse<T> execute(
-        @ToolField(
+
+    @Override  // @ToolField 注解可以声明一个工具的返回值，多返回值表示返回的是 map
+    @ToolField(name = "name", description = "Name of the file", type = FieldType.STRING)
+    @ToolField(name = "absolutePath", description = "Absolute path of the file", type = FieldType.STRING)
+    @ToolField(name = "size", description = "Size of the file in bytes", type = FieldType.NUMBER)
+    @ToolField(name = "isDirectory", description = "Whether the file is a directory", type = FieldType.BOOLEAN)
+    @ToolField(name = "lastModified", description = "Last modified timestamp of the file", type = FieldType.NUMBER)
+    public <T> ToolResponse<T> execute(  // 工具的执行方法，返回值类型为 ToolResponse<T>，T 为泛型，表示返回值的类型
+        @ToolField(  // @ToolField 注解可以声明一个工具的参数，多参数应有多个注解
             name = "path",
             description = "Path to the file",
             type = FieldType.STRING,
@@ -43,8 +44,6 @@ public class FileInfoTool implements ToolHandler {
         info.put("size", file.length());
         info.put("isDirectory", file.isDirectory());
         info.put("lastModified", file.lastModified());
-        info.put("canRead", file.canRead());
-        info.put("canWrite", file.canWrite());
 
         @SuppressWarnings("unchecked")
         ToolResponse<T> response = (ToolResponse<T>) ToolResponse.success(info);

@@ -16,11 +16,11 @@ import java.util.Map;
 )
 public class TextProcessTool implements ToolHandler {
     @Override
-    @ToolField(
-        name = "result",
-        description = "Processed text result",
-        type = FieldType.OBJECT
-    )
+    @ToolField(name = "length", description = "Length of the input text", type = FieldType.NUMBER)
+    @ToolField(name = "words", description = "Number of words in the text", type = FieldType.NUMBER)
+    @ToolField(name = "uppercase", description = "Text converted to uppercase", type = FieldType.STRING)
+    @ToolField(name = "lowercase", description = "Text converted to lowercase", type = FieldType.STRING)
+    @ToolField(name = "trimmed", description = "Text with leading and trailing whitespace removed", type = FieldType.STRING)
     public <T> ToolResponse<T> execute(
         @ToolField(
             name = "text",

@@ -66,16 +66,20 @@ public interface ToolHandler {
         
         // Build output fields from method
         Map<String, FieldDefinition> outputFields = new HashMap<>();
-        ToolField returnField = executeMethod.getAnnotation(ToolField.class);
-        if (returnField != null) {
-            outputFields.put(returnField.name(), new FieldDefinition(
-                returnField.name(),
-                returnField.description(),
-                returnField.type(),
-                returnField.required(),
-                returnField.defaultValue(),
-                returnField.pattern()
-            ));
+        
+        // First try to get repeatable annotations
+        ToolField[] fields = executeMethod.getAnnotationsByType(ToolField.class);
+        if (fields.length > 0) {
+            for (ToolField field : fields) {
+                outputFields.put(field.name(), new FieldDefinition(
+                    field.name(),
+                    field.description(),
+                    field.type(),
+                    field.required(),
+                    field.defaultValue(),
+                    field.pattern()
+                ));
+            }
         }
 
         return new ToolDefinition(

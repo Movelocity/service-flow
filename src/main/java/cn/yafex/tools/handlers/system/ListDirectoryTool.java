@@ -59,9 +59,6 @@ public class ListDirectoryTool implements ToolHandler {
                     entry.put("size", file.length());
                     entry.put("isDirectory", file.isDirectory());
                     entry.put("lastModified", new Date(file.lastModified()));
-                    entry.put("canRead", file.canRead());
-                    entry.put("canWrite", file.canWrite());
-                    entry.put("canExecute", file.canExecute());
                     entry.put("isHidden", file.isHidden());
                     entries.add(entry);
                 }

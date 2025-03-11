@@ -1,0 +1,9 @@
+---
+description: Tool Register in Java backend
+globs: 
+alwaysApply: false
+---
+
+Tool classes: src/main/java/cn/yafex/tools/handlers
+
+Usage example: src/main/java/cn/yafex/tools/handlers/system/FileInfo.java
