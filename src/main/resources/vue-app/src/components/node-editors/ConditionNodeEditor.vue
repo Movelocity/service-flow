@@ -1,33 +1,53 @@
 <template>
   <div class="condition-editor">
     <template v-for="(caseData, index) in conditionBlocks" :key="index">
-      <div class="condition-group">
-        <div class="condition-header">
-          <span class="condition-type">{{ index === 0 ? 'IF' : (isLastCase(index) ? 'ELSE' : 'ELIF') }}</span>
-          <button 
-            v-if="!isLastCase(index)"
-            class="type-toggle-btn" 
-            @click="toggleConditionType(index)"
-            type="button"
-          >
-            {{ caseData.type.toUpperCase() }}
-          </button>
-        </div>
-        <div class="condition-content">
-          <template v-if="!isLastCase(index)">
-            <div v-for="(condition, conditionIndex) in caseData.conditions" :key="conditionIndex" class="condition-item">
-              <ConditionBuilder
-                :modelValue="condition"
-                @update:modelValue="(updatedCondition) => updateSingleCondition(index, conditionIndex, updatedCondition)"
-              />
-            </div>
+      <div class="condition-case">
+        <div class="case-header">
+          <div class="case-type">
+            <span class="case-label">{{ index === 0 ? 'IF' : (isLastCase(index) ? 'ELSE' : 'ELIF') }}</span>
             <button 
-              class="add-condition-btn" 
-              @click="() => addCondition(index)"
+              v-if="!isLastCase(index)"
+              class="type-toggle-btn" 
+              @click="toggleConditionType(index)"
               type="button"
             >
-              + 添加条件
+              {{ caseData.type.toUpperCase() }}
             </button>
+          </div>
+          <el-icon 
+            v-if="canDeleteCase(index)"
+            class="btn-delete"
+            @click="removeCase(index)"
+          >
+            <Delete />
+          </el-icon>
+        </div>
+
+        <div class="case-content">
+          <template v-if="!isLastCase(index)">
+            <div v-for="(condition, conditionIndex) in caseData.conditions" :key="conditionIndex" class="condition-item">
+              <div class="condition-wrapper">
+                <ConditionBuilder
+                  :modelValue="condition"
+                  @update:modelValue="(updatedCondition) => updateSingleCondition(index, conditionIndex, updatedCondition)"
+                />
+                <el-icon 
+                  v-if="canDeleteCondition(caseData)"
+                  class="btn-delete"
+                  @click="() => removeCondition(index, conditionIndex)"
+                  title="删除条件"
+                >
+                  <Delete />
+                </el-icon>
+              </div>
+            </div>
+            <div
+              class="add-condition-btn" 
+              @click="() => addCondition(index)"
+              title="添加条件"
+            >
+              添加条件
+            </div>
           </template>
           <div v-else class="else-block">
             <small class="form-text text-muted">
@@ -38,13 +58,13 @@
       </div>
     </template>
 
-    <div class="condition-group" v-if="!hasElse">
+    <div class="add-case-wrapper" v-if="!hasElse">
       <button 
         class="add-case-btn" 
         @click="addCase"
         type="button"
       >
-        + 添加{{ conditionBlocks.length === 0 ? 'IF' : (conditionBlocks.length === 1 ? 'ELSE' : 'ELIF') }}条件分支
+        添加{{ conditionBlocks.length === 0 ? 'IF' : (conditionBlocks.length === 1 ? 'ELSE' : 'ELIF') }}条件分支
       </button>
     </div>
   </div>
@@ -56,6 +76,7 @@ import { useWorkflowStore } from '@/stores/workflow';
 import ConditionBuilder from '@/components/node-editors/ConditionBuilder.vue';
 import type { ConditionCase, Condition } from '@/types/condition';
 import type { Node } from '@/types/workflow';
+import { Delete } from '@element-plus/icons-vue';
 
 interface WorkflowStore {
   selectedNode: Node | null;
@@ -244,6 +265,20 @@ function removeCase(index: number) {
   }
 }
 
+// 判断是否可以删除条件分支
+function canDeleteCase(index: number): boolean {
+  // 不能删除第一个IF分支
+  if (index === 0) return false;
+  // 不能删除ELSE分支
+  if (isLastCase(index)) return false;
+  return true;
+}
+
+// 判断是否可以删除条件
+function canDeleteCondition(caseData: ConditionCase): boolean {
+  return caseData.conditions.length > 1;
+}
+
 /**
  * 条件节点编辑器
  * 
@@ -285,44 +320,116 @@ function removeCase(index: number) {
 .condition-editor {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1rem 0;
+  gap: 1.5rem;
+  border-radius: 8px;
 }
 
-.condition-group {
+.condition-case {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.case-header {
   display: flex;
-  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  background-color: var(--bg-tertiary);
+}
+
+.case-type {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
-.condition-header {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.condition-content {
-  flex-grow: 1;
-}
-
-.condition-item {
-  background-color: var(--bg-secondary);
-  border-radius: 0.5rem;
-}
-
-.add-condition-btn,
-.elif-btn {
-  background: none;
-  border: none;
+.case-label {
+  font-weight: 600;
+  font-size: 1rem;
   color: var(--text-color);
-  padding: 0.5rem;
-  text-align: left;
+}
+
+.case-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.condition-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.type-toggle-btn {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.type-toggle-btn:hover {
+  background-color: var(--hover-bg-color);
+}
+
+.btn-delete {
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  color: var(--node-end);
+}
+
+.add-condition-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  padding: 0.25rem;
+  width: 100px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
 }
 
-.add-condition-btn:hover,
-.elif-btn:hover {
-  background-color: var(--hover-bg-color, rgba(0, 0, 0, 0.05));
+.add-condition-btn:hover {
+  background-color: var(--hover-bg-color);
+  border-style: solid;
+}
+
+.add-case-wrapper {
+  padding: 0.5rem;
+  /* background-color: var(--bg-secondary); */
+  border-radius: 8px;
+}
+
+.add-case-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: none;
+  border: 1px dashed var(--border-color);
+  color: var(--text-color);
+  padding: 0.75rem;
+  width: 100%;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.add-case-btn:hover {
+  background-color: var(--hover-bg-color);
+  border-style: solid;
+}
+
+.else-block {
+  padding: 1rem;
+  background-color: var(--bg-primary);
   border-radius: 4px;
 }
 
@@ -330,35 +437,5 @@ function removeCase(index: number) {
   font-size: 0.875rem;
   color: var(--text-color);
   opacity: 0.7;
-}
-
-.type-toggle-btn {
-  background: none;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 2px 6px;
-  margin-left: 8px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.type-toggle-btn:hover {
-  background-color: var(--hover-bg-color, rgba(0, 0, 0, 0.05));
-}
-
-.add-case-btn {
-  background: none;
-  border: none;
-  color: var(--text-color);
-  padding: 0.5rem;
-  text-align: left;
-  cursor: pointer;
-  font-size: 0.9rem;
-  width: 100%;
-}
-
-.add-case-btn:hover {
-  background-color: var(--hover-bg-color, rgba(0, 0, 0, 0.05));
-  border-radius: 4px;
 }
 </style> 
