@@ -1,3 +1,4 @@
+import type { ConditionCase } from './condition';
 /**
  * 工作流节点类型枚举
  */
@@ -82,7 +83,7 @@ export interface ApiNode {
     [key: string]: string;
   };
   toolName?: string;
-  context: { [key: string]: any };
+  context?: { [key: string]: any };
 }
 
 /**
@@ -114,7 +115,8 @@ export interface Node {
     [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
   };
   toolName?: string;              // 仅用于 FUNCTION 类型节点
-  context: { [key: string]: any }; // 新增：存储函数节点的输出
+  context?: { [key: string]: any }; // 新增：存储函数节点的输出
+  conditions?: ConditionCase[];
 }
 
 /**

@@ -47,6 +47,12 @@ export class WorkflowApi {
    * Save a new workflow or update an existing one
    */
   async saveWorkflow(workflow: Partial<Workflow>): Promise<Workflow> {
+    // 剔除节点中的context
+    workflow.nodes = workflow.nodes?.map(node => {
+      const { context, ...rest } = node;
+      return rest;
+    });
+
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {

@@ -1,32 +1,50 @@
 <template>
   <div class="condition-editor">
-    <div v-for="(block, blockIndex) in conditionBlocks" :key="blockIndex" class="condition-group">
-      <div class="condition-header">{{ block.type }}</div>
-      <div class="condition-content">
-        <div v-for="(_condition, conditionIndex) in block.conditions" :key="conditionIndex" class="condition-item">
-          <ConditionBuilder
-            v-if="selectedNode"
-            v-model="conditionBlocks[blockIndex].conditions[conditionIndex]"
-            @change="updateCondition"
-          />
+    <template v-for="(caseData, index) in conditionBlocks" :key="index">
+      <div class="condition-group">
+        <div class="condition-header">
+          {{ index === 0 ? 'IF' : (isLastCase(index) ? 'ELSE' : 'ELIF') }}
+          <button 
+            v-if="!isLastCase(index)"
+            class="type-toggle-btn" 
+            @click="() => toggleConditionType(index)"
+            type="button"
+          >
+            {{ caseData.type.toUpperCase() }}
+          </button>
         </div>
-        <button class="add-condition-btn" @click="addCondition" v-if="block.type === 'IF'">
-          + 添加条件
-        </button>
+        <div class="condition-content">
+          <div v-if="!isLastCase(index)">
+            <div v-for="(condition, conditionIndex) in caseData.conditions" :key="conditionIndex" class="condition-item">
+              <ConditionBuilder
+                v-if="selectedNode"
+                v-model="conditionBlocks[index].conditions[conditionIndex]"
+                @change="updateCondition"
+              />
+            </div>
+            <button 
+              class="add-condition-btn" 
+              @click="() => addCondition(index)"
+              type="button"
+            >
+              + 添加条件
+            </button>
+          </div>
+          <small v-else class="form-text text-muted">
+            用于定义当所有条件不满足时应执行的逻辑。
+          </small>
+        </div>
       </div>
-    </div>
+    </template>
 
-    <div class="condition-group">
-      <button class="elif-btn" @click="addElif">+ ELIF</button>
-    </div>
-
-    <div class="condition-group">
-      <div class="condition-header">ELSE</div>
-      <div class="condition-content">
-        <small class="form-text text-muted">
-          用于定义当 if 条件不满足时应执行的逻辑。
-        </small>
-      </div>
+    <div class="condition-group" v-if="!hasElse">
+      <button 
+        class="add-case-btn" 
+        @click="addCase"
+        type="button"
+      >
+        + 添加条件分支
+      </button>
     </div>
   </div>
 </template>
@@ -35,51 +53,42 @@
 import { computed, ref, watch } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
 import ConditionBuilder from '@/components/node-editors/ConditionBuilder.vue';
+import type { ConditionCase } from '@/types/condition';
 import type { Node } from '@/types/workflow';
-
-interface Condition {
-  leftOperand: string;
-  operator: string;
-  rightOperand: string;
-  type: 'VARIABLE' | 'CONSTANT';
+interface WorkflowStore {
+  selectedNode: Node | null;
+  updateNode(id: string, updates: Partial<Node>): void;
 }
 
-interface ConditionBlock {
-  type: 'IF' | 'ELIF';
-  conditions: Condition[];
-}
-
-const store = useWorkflowStore();
+const store = useWorkflowStore() as WorkflowStore;
 const selectedNode = computed(() => store.selectedNode as Node);
 
 // 使用本地状态来管理条件组
-const conditionBlocks = ref<ConditionBlock[]>([
-  {
-    type: 'IF',
-    conditions: [{
-      leftOperand: '',
-      operator: '==',
-      rightOperand: '',
-      type: 'CONSTANT'
-    }]
-  }
-]);
+const conditionBlocks = ref<ConditionCase[]>([{
+  conditions: [{
+    leftOperand: '',
+    operator: '==',
+    rightOperand: '',
+    type: 'CONSTANT'
+  }],
+  type: 'and'
+}]);
 
 // 监听选中节点的变化，更新本地状态
 watch(
-  () => selectedNode.value?.context?.conditionBlocks,
+  () => selectedNode.value?.conditions as ConditionCase[] | undefined,
   (newBlocks) => {
     if (newBlocks) {
-      conditionBlocks.value = [...newBlocks];
+      conditionBlocks.value = { ...newBlocks };
     } else {
       conditionBlocks.value = [{
-        type: 'IF',
         conditions: [{
           leftOperand: '',
           operator: '==',
           rightOperand: '',
           type: 'CONSTANT'
-        }]
+        }],
+        type: 'and'
       }];
     }
   },
@@ -90,17 +99,14 @@ function updateCondition() {
   if (selectedNode.value) {
     store.updateNode(selectedNode.value.id, {
       ...selectedNode.value,
-      context: {
-        ...selectedNode.value.context,
-        conditionBlocks: [...conditionBlocks.value]
-      }
+      conditions: { ...conditionBlocks.value }
     });
   }
 }
 
-function addCondition() {
-  if (conditionBlocks.value[0]) {
-    conditionBlocks.value[0].conditions.push({
+function addCondition(index: number) {
+  if (conditionBlocks.value[index]) {
+    conditionBlocks.value[index].conditions.push({
       leftOperand: '',
       operator: '==',
       rightOperand: '',
@@ -110,17 +116,33 @@ function addCondition() {
   updateCondition();
 }
 
-function addElif() {
+function addCase() {
   conditionBlocks.value.push({
-    type: 'ELIF',
     conditions: [{
       leftOperand: '',
       operator: '==',
       rightOperand: '',
       type: 'CONSTANT'
-    }]
+    }],
+    type: 'and'
   });
+  
   updateCondition();
+}
+
+function toggleConditionType(index: number) {
+  if (conditionBlocks.value[index]) {
+    conditionBlocks.value[index].type = conditionBlocks.value[index].type === 'and' ? 'or' : 'and';
+    updateCondition();
+  }
+}
+
+const hasElse = computed(() => {
+  return conditionBlocks.value.length > 0 && isLastCase(conditionBlocks.value.length - 1);
+});
+
+function isLastCase(index: number): boolean {
+  return index === conditionBlocks.value.length - 1;
 }
 
 /**
@@ -144,7 +166,7 @@ function addElif() {
  *    - [ ] 优化变量选择器的显示和分组
  * 
  * 2. 功能增强
- *    - [ ] 支持多条件组合（AND/OR）
+ *    - [x] 支持多条件组合（AND/OR）
  *    - [ ] 支持条件组嵌套
  *    - [ ] 添加条件模板功能
  * 
@@ -209,5 +231,35 @@ function addElif() {
   font-size: 0.875rem;
   color: var(--text-color);
   opacity: 0.7;
+}
+
+.type-toggle-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.type-toggle-btn:hover {
+  background-color: var(--hover-bg-color, rgba(0, 0, 0, 0.05));
+}
+
+.add-case-btn {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  padding: 0.5rem;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.add-case-btn:hover {
+  background-color: var(--hover-bg-color, rgba(0, 0, 0, 0.05));
+  border-radius: 4px;
 }
 </style> 
