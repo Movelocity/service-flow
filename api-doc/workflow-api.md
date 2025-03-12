@@ -93,6 +93,40 @@
   - 成功 (200): 返回状态 `{"status": "string"}`
   - 错误 (500): 如果状态检索失败，则返回错误信息
 
+### 8. 调试工作流
+以调试模式启动工作流的执行，返回 Server-Sent Events 流，包含节点执行的实时信息。
+
+- **URL**: `/api/workflows/{workflowId}/debug`
+- **方法**: `POST`
+- **路径参数**:
+  - `workflowId`: 要执行的工作流的 ID
+- **请求体**: (可选)
+```jsonc
+{
+    "key": "value" // 工作流执行的输入变量
+}
+```
+- **响应**:
+  - 成功: 返回 EventStream，每个事件包含以下格式的数据:
+```jsonc
+{
+    "executionId": "string",
+    "nodeId": "string",
+    "nodeName": "string",
+    "nodeType": "string",
+    "eventType": "ENTER" | "COMPLETE",
+    "nodeContext": {
+        // 节点上下文数据
+    },
+    "globalVariables": {
+        // 全局变量
+    },
+    "timestamp": "string",
+    "duration": number // 仅在 COMPLETE 事件中存在
+}
+```
+  - 错误 (500): 如果执行启动失败，则返回错误信息
+
 ## 错误响应
 所有端点可能返回以下错误响应格式：
 ```json

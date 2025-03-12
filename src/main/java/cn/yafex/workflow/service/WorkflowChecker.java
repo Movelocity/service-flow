@@ -281,8 +281,7 @@ public class WorkflowChecker {
             String nextNodeId = entry.getValue();
             
             if (nextNodeId == null || nextNodeId.isEmpty()) {
-                result.addError("Node '" + node.getName() + "' (ID: " + node.getId() + 
-                        ") has empty next node ID for branch: " + branch);
+                result.addError("Node '" + node.getName() + "' (ID: " + node.getId() + ") has empty next node ID for branch: " + branch);
                 continue;
             }
             

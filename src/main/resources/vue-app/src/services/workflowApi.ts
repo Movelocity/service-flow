@@ -10,9 +10,11 @@ export class WorkflowApi {
    * Base URL for workflow API endpoints
    * Uses localhost:8080 in development and relative path in production
    */
-  private baseUrl = import.meta.env.DEV 
-    ? 'http://localhost:8080/api/workflows'
-    : '/api/workflows';
+  private baseUrl: string;
+
+  constructor(baseUrl: string = '/api/workflows') {
+    this.baseUrl = baseUrl;
+  }
 
   /**
    * Fetch a workflow by ID
@@ -109,6 +111,30 @@ export class WorkflowApi {
 
     const result = await response.json();
     return result.status;
+  }
+
+  /**
+   * Start workflow execution in debug mode
+   * @returns EventSource for receiving debug events
+   */
+  debugWorkflow(workflowId: string, input?: Record<string, any>): EventSource {
+    const params = new URLSearchParams();
+    if (input) {
+      Object.entries(input).forEach(([key, value]) => {
+        params.append(key, JSON.stringify(value));
+      });
+    }
+
+    const eventSource = new EventSource(
+      `${this.baseUrl}/${workflowId}/debug?${params.toString()}`
+    );
+
+    eventSource.addEventListener('node-execution', (event) => {
+      const data = JSON.parse(event.data);
+      // Event data will be handled by the caller
+    });
+
+    return eventSource;
   }
 }
 

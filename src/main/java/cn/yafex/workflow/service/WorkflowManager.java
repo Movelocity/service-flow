@@ -29,11 +29,13 @@ public class WorkflowManager {
     private final ExecutorService executorService;
     private final Map<String, WorkflowContext> activeWorkflows;
     private final Map<String, ToolHandler> toolHandlers;
+    private final WorkflowDebugService debugService;
 
     @Autowired
-    public WorkflowManager(JsonFileHandler jsonFileHandler, WorkflowLogger workflowLogger) {
+    public WorkflowManager(JsonFileHandler jsonFileHandler, WorkflowLogger workflowLogger, WorkflowDebugService debugService) {
         this.jsonFileHandler = jsonFileHandler;
         this.workflowLogger = workflowLogger;
+        this.debugService = debugService;
         this.executorService = Executors.newCachedThreadPool();
         this.activeWorkflows = new ConcurrentHashMap<>();
         this.toolHandlers = new ConcurrentHashMap<>();
@@ -122,6 +124,18 @@ public class WorkflowManager {
                 context.setCurrentNodeId(currentNodeId);
                 long nodeStartTime = System.currentTimeMillis();
                 
+                // Send node enter event
+                NodeExecutionEvent enterEvent = new NodeExecutionEvent(
+                    context.getExecutionId(),
+                    node.getId(),
+                    node.getName(),
+                    node.getType().toString(),
+                    "ENTER"
+                );
+                enterEvent.setGlobalVariables(new HashMap<>(context.getVariables()));
+                enterEvent.setNodeContext(node.getContext() != null ? new HashMap<>(node.getContext()) : new HashMap<>());
+                debugService.sendDebugEvent(enterEvent);
+                
                 // Execute node based on its type
                 Map<String, Object> nodeResult = executeNode(node, context);
                 
@@ -146,6 +160,19 @@ public class WorkflowManager {
                     nodeResult,
                     nodeDuration
                 );
+
+                // Send node complete event
+                NodeExecutionEvent completeEvent = new NodeExecutionEvent(
+                    context.getExecutionId(),
+                    node.getId(),
+                    node.getName(),
+                    node.getType().toString(),
+                    "COMPLETE"
+                );
+                completeEvent.setGlobalVariables(new HashMap<>(context.getVariables()));
+                completeEvent.setNodeContext(node.getContext() != null ? new HashMap<>(node.getContext()) : new HashMap<>());
+                completeEvent.setDuration(nodeDuration);
+                debugService.sendDebugEvent(completeEvent);
 
                 // Determine next node
                 if (node.getType() == NodeType.END) {
@@ -173,6 +200,7 @@ public class WorkflowManager {
                 context.getStatus().toString(),
                 duration
             );
+            debugService.completeDebugSession(context.getExecutionId());
             activeWorkflows.remove(context.getExecutionId());
         }
     }

@@ -2,10 +2,14 @@ package cn.yafex.workflow.controller;
 
 import cn.yafex.workflow.model.Workflow;
 import cn.yafex.workflow.service.WorkflowManager;
+import cn.yafex.workflow.service.WorkflowDebugService;
 import cn.yafex.workflow.util.JsonFileHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.Map;
@@ -16,11 +20,13 @@ import java.util.HashMap;
 public class WorkflowController {
     private final WorkflowManager workflowManager;
     private final JsonFileHandler jsonFileHandler;
+    private final WorkflowDebugService debugService;
 
     @Autowired
-    public WorkflowController(WorkflowManager workflowManager, JsonFileHandler jsonFileHandler) {
+    public WorkflowController(WorkflowManager workflowManager, JsonFileHandler jsonFileHandler, WorkflowDebugService debugService) {
         this.workflowManager = workflowManager;
         this.jsonFileHandler = jsonFileHandler;
+        this.debugService = debugService;
     }
 
     /**
@@ -143,6 +149,25 @@ public class WorkflowController {
             Map<String, String> error = new HashMap<>();
             error.put("error", "获取工作流执行状态失败: " + e.getMessage());
             return ResponseEntity.internalServerError().body(error);
+        }
+    }
+
+    /**
+     * Start a workflow execution in debug mode
+     * @param workflowId The ID of the workflow to execute
+     * @param input The input variables for execution
+     * @return SSE stream of execution events
+     */
+    @PostMapping("/{workflowId}/debug")
+    public SseEmitter debugWorkflow(
+            @PathVariable String workflowId,
+            @RequestBody(required = false) Map<String, Object> input) {
+        try {
+            String executionId = workflowManager.startWorkflow(workflowId, input);
+            return debugService.registerDebugSession(executionId);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "工作流调试启动失败: " + e.getMessage());
         }
     }
 } 
