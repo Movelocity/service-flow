@@ -267,7 +267,7 @@ function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent, c
   };
 }
 
-function endConnection(nodeId: string, isOutput: boolean, condition?: string) {
+function endConnection(nodeId: string, isOutput: boolean) {
   if (isOutput || !tempConnection.value.isCreating) return;
 
   if (tempConnection.value.sourceNodeId !== nodeId) {

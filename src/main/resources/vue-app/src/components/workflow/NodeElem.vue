@@ -33,7 +33,7 @@
     <template v-if="node.type === 'CONDITION' && node.conditions">
       <!-- Multiple output points for condition nodes - aligned with condition hints -->
       <div 
-        v-for="(condition, index) in node.conditions" 
+        v-for="(_condition, index) in node.conditions" 
         :key="index"
         class="connection-point output"
         :class="'case-' + (index + 1)"
@@ -154,7 +154,7 @@ function onOutputPointMouseDown(e: MouseEvent, condition: string = 'default') {
   emit('startConnection', props.node.id, true, e, condition);
 }
 
-function onOutputPointMouseUp(e: MouseEvent, condition: string = 'default') {
+function onOutputPointMouseUp(_e: MouseEvent, condition: string = 'default') {
   emit('endConnection', props.node.id, true, condition);
 }
 

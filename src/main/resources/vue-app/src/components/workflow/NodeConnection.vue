@@ -59,7 +59,7 @@
 import { computed, type PropType } from 'vue';
 import type { Node } from '@/types/workflow';
 import { NodeType } from '@/types/workflow';
-import { generateBezierPath, calculateConnectionPoint } from '@/utils/canvas';
+import { generateBezierPath } from '@/utils/canvas';
 import { useWorkflowStore } from '@/stores/workflow';
 
 const props = defineProps({
@@ -209,7 +209,7 @@ function getDisplayLabel(condition: string): string {
   return condition;
 }
 
-function getLabelColor(condition: string): string {
+function getLabelColor(_condition: string): string {
   return props.sourceNode.type === NodeType.CONDITION ? '#FF9800' : '#666666';
 }
 </script>

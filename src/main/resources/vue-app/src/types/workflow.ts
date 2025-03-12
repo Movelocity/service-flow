@@ -97,6 +97,7 @@ export interface Node {
   toolName?: string;              // 仅用于 FUNCTION 类型节点
   context?:VariableDefinition[]; // 新增：存储函数节点的输出
   conditions?: ConditionCase[];
+  inputMap?: Record<string, VariableDefinition>;
 }
 
 /**
