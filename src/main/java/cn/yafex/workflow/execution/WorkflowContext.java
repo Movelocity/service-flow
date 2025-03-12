@@ -1,5 +1,6 @@
 package cn.yafex.workflow.execution;
 
+import cn.yafex.workflow.model.Workflow;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 public class WorkflowContext {
     private String executionId;
     private String workflowId;
+    private Workflow workflow;
     private Map<String, Object> variables;
     private String currentNodeId;
     private LocalDateTime startTime;
@@ -23,6 +25,11 @@ public class WorkflowContext {
         this.variables = new HashMap<>();
         this.startTime = LocalDateTime.now();
         this.status = WorkflowStatus.RUNNING;
+    }
+
+    public WorkflowContext(Workflow workflow) {
+        this(workflow.getId());
+        this.workflow = workflow;
     }
 
     public String getExecutionId() {
@@ -67,6 +74,14 @@ public class WorkflowContext {
 
     public void setStatus(WorkflowStatus status) {
         this.status = status;
+    }
+
+    public Workflow getWorkflow() {
+        return workflow;
+    }
+
+    public void setWorkflow(Workflow workflow) {
+        this.workflow = workflow;
     }
 
     /**

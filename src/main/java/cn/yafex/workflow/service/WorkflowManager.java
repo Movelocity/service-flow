@@ -1,8 +1,6 @@
 package cn.yafex.workflow.service;
 
-import cn.yafex.workflow.model.Workflow;
-import cn.yafex.workflow.model.WorkflowNode;
-import cn.yafex.workflow.model.NodeType;
+import cn.yafex.workflow.model.*;
 import cn.yafex.workflow.execution.WorkflowContext;
 import cn.yafex.workflow.execution.WorkflowStatus;
 import cn.yafex.workflow.util.WorkflowLogger;
@@ -255,9 +253,49 @@ public class WorkflowManager {
      * @return Condition result
      */
     private boolean evaluateCondition(WorkflowNode node, WorkflowContext context) {
-        // This is a placeholder implementation
-        // In a real system, this would evaluate the condition based on the node's parameters
-        return true;
+        if (node.getType() != NodeType.CONDITION) {
+            return true;
+        }
+
+        // Update variable values from context
+        for (ConditionCase conditionCase : node.getConditions()) {
+            for (Condition condition : conditionCase.getConditions()) {
+                // Update left operand value if it's a variable
+                VariableDefinition leftOp = condition.getLeftOperand();
+                if (leftOp != null && leftOp.getParent() != null) {
+                    Object value = null;
+                    if ("global".equals(leftOp.getParent())) {
+                        value = context.getVariable(leftOp.getName());
+                    } else {
+                        // Get value from node context
+                        WorkflowNode parentNode = context.getWorkflow().getNodeById(leftOp.getParent());
+                        if (parentNode != null) {
+                            value = parentNode.getFromContext(leftOp.getName());
+                        }
+                    }
+                    leftOp.setValue(value);
+                }
+
+                // Update right operand value if it's a variable
+                VariableDefinition rightOp = condition.getRightOperand();
+                if (rightOp != null && "VARIABLE".equals(condition.getType()) && rightOp.getParent() != null) {
+                    Object value = null;
+                    if ("global".equals(rightOp.getParent())) {
+                        value = context.getVariable(rightOp.getName());
+                    } else {
+                        // Get value from node context
+                        WorkflowNode parentNode = context.getWorkflow().getNodeById(rightOp.getParent());
+                        if (parentNode != null) {
+                            value = parentNode.getFromContext(rightOp.getName());
+                        }
+                    }
+                    rightOp.setValue(value);
+                }
+            }
+        }
+
+        // Evaluate conditions
+        return node.evaluateConditions();
     }
 
     /**

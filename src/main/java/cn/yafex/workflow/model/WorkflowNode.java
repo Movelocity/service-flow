@@ -1,9 +1,11 @@
 package cn.yafex.workflow.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.alibaba.fastjson.annotation.JSONCreator;
+import com.alibaba.fastjson.annotation.JSONField;
 import java.util.Map;
+import java.util.List;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * Base class for all workflow nodes
@@ -17,11 +19,13 @@ public class WorkflowNode {
     private Position position;      // 节点在画布上的位置，用于编辑器
     private String toolName;        // Only used for FUNCTION type nodes
     private Map<String, Object> context; // Node context for function outputs
+    private List<ConditionCase> conditions; // Only used for CONDITION type nodes
 
     public WorkflowNode() {
         this.nextNodes = new HashMap<>();
         this.position = new Position(0, 0);
         this.context = new HashMap<>();
+        this.conditions = new ArrayList<>();
     }
 
     // Getters and setters
@@ -53,7 +57,7 @@ public class WorkflowNode {
         return type;
     }
 
-    @JsonCreator
+    @JSONCreator
     public void setType(String type) {
         try {
             this.type = NodeType.valueOf(type.toUpperCase());
@@ -93,8 +97,8 @@ public class WorkflowNode {
             this(0, 0);
         }
 
-        @JsonCreator
-        public Position(@JsonProperty("x") double x, @JsonProperty("y") double y) {
+        @JSONCreator
+        public Position(@JSONField(name = "x") double x, @JSONField(name = "y") double y) {
             this.x = x;
             this.y = y;
         }
@@ -155,5 +159,42 @@ public class WorkflowNode {
      */
     public void clearContext() {
         this.context.clear();
+    }
+
+    public List<ConditionCase> getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(List<ConditionCase> conditions) {
+        this.conditions = conditions != null ? conditions : new ArrayList<>();
+    }
+
+    /**
+     * Add a condition case to this node
+     * @param conditionCase The condition case to add
+     */
+    public void addConditionCase(ConditionCase conditionCase) {
+        if (conditionCase != null) {
+            this.conditions.add(conditionCase);
+        }
+    }
+
+    /**
+     * Evaluates all condition cases for this node
+     * @return true if any condition case evaluates to true, false otherwise
+     */
+    public boolean evaluateConditions() {
+        if (type != NodeType.CONDITION || conditions.isEmpty()) {
+            return true;
+        }
+
+        // For condition nodes, evaluate each case
+        for (ConditionCase conditionCase : conditions) {
+            if (conditionCase.evaluate()) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 } 
