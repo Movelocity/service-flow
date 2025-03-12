@@ -17,9 +17,9 @@
     </div>
     
     <div class="node-content">
-      <template v-if="node.type === 'CONDITION'">
-        <div class="condition-expression">
-          {{ node.context.conditionBlocks || '未设置条件' }}
+      <template v-if="node.type === 'CONDITION' && node.conditions">
+        <div v-for="condition in node.conditions" class="condition-expression">
+          {{ condition.hint }}
         </div>
       </template>
       <template v-else-if="node.type === 'FUNCTION'">
@@ -123,7 +123,7 @@ function onNodeClick(event: MouseEvent) {
   if (!isDragging) {
     store.selectNode(props.node.id);
 
-    console.log("store", store.selectedNode?.context)
+    console.log("NodeElem", store.selectedNode?.context)
   }
 }
 

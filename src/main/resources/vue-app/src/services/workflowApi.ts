@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import type { Workflow } from '../types/workflow';
+import type { ApiWorkflow } from '../types/workflow';
 
 /**
  * Workflow API Service
@@ -17,7 +17,7 @@ export class WorkflowApi {
   /**
    * Fetch a workflow by ID
    */
-  async getWorkflow(workflowId: string): Promise<Workflow> {
+  async getWorkflow(workflowId: string): Promise<ApiWorkflow> {
     const response = await fetch(`${this.baseUrl}/${workflowId}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch workflow: ${response.statusText}`);
@@ -28,7 +28,7 @@ export class WorkflowApi {
   /**
    * List all workflows
    */
-  async listWorkflows(): Promise<Workflow[]> {
+  async listWorkflows(): Promise<ApiWorkflow[]> {
     const response = await fetch(this.baseUrl);
     if (!response.ok) {
       throw new Error(`Failed to list workflows: ${response.statusText}`);
@@ -46,13 +46,8 @@ export class WorkflowApi {
   /**
    * Save a new workflow or update an existing one
    */
-  async saveWorkflow(workflow: Partial<Workflow>): Promise<Workflow> {
+  async saveWorkflow(workflow: Partial<ApiWorkflow>): Promise<ApiWorkflow> {
     // 剔除节点中的context
-    workflow.nodes = workflow.nodes?.map(node => {
-      const { context, ...rest } = node;
-      return rest;
-    });
-
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {

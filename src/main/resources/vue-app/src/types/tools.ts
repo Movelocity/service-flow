@@ -1,4 +1,4 @@
-import type { VariableType } from '@/types/workflow';
+import type { VariableType } from '@/types/fields';
 
 /**
  * Represents a tool field definition

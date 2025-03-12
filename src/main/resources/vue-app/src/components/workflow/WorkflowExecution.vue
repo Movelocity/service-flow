@@ -3,27 +3,27 @@
     <!-- Workflow Inputs -->
     <div v-if="workflow" class="workflow-inputs">
       <h3>Workflow Inputs</h3>
-      <div v-for="(def, key) in workflow.inputs" :key="key" class="input-field">
-        <label :for="`input-${key}`">{{ key }}</label>
+      <div v-for="def in workflow.inputs" :key="def.name" class="input-field">
+        <label :for="`input-${def.name}`">{{ def.name }}</label>
         <template v-if="def.type === VariableType.BOOLEAN">
           <input
-            :id="`input-${key}`"
+            :id="`input-${def.name}`"
             type="checkbox"
-            v-model="executionInputs[key]"
+            v-model="executionInputs[def.name]"
           />
         </template>
         <template v-else-if="def.type === VariableType.NUMBER">
           <input
-            :id="`input-${key}`"
+            :id="`input-${def.name}`"
             type="number"
-            v-model.number="executionInputs[key]"
+            v-model.number="executionInputs[def.name]"
           />
         </template>
         <template v-else>
           <input
-            :id="`input-${key}`"
+            :id="`input-${def.name}`"
             type="text"
-            v-model="executionInputs[key]"
+            v-model="executionInputs[def.name]"
           />
         </template>
         <div class="input-description">{{ def.description }}</div>
@@ -51,8 +51,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { Workflow, VariableDefinition } from '@/types/workflow';
-import { VariableType } from '@/types/workflow';
+import type { Workflow } from '@/types/workflow';
+import type { VariableDefinition } from '@/types/fields';
+import { VariableType } from '@/types/fields';
 // import { useWorkflowStore } from '@/stores/workflow';
 import { workflowApi } from '@/services/workflowApi';
 
@@ -70,8 +71,8 @@ const isExecuting = ref(false);
 // Initialize inputs with default values
 const initializeInputs = () => {
   if (props.workflow) {
-    Object.entries(props.workflow.inputs).forEach(([key, def]) => {
-      executionInputs.value[key] = def.defaultValue ?? getDefaultValue(def);
+    props.workflow.inputs.forEach(def => {
+      executionInputs.value[def.name] = def.defaultValue ?? getDefaultValue(def);
     });
   }
 };

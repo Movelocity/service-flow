@@ -1,4 +1,4 @@
-import type { ConditionCase } from './condition';
+import type { VariableType, VariableDefinition, ConditionCase } from '@/types/fields';
 /**
  * 工作流节点类型枚举
  */
@@ -9,26 +9,7 @@ export enum NodeType {
   END = 'END'
 }
 
-/**
- * 变量类型枚举
- */
-export enum VariableType {
-  STRING = 'string',
-  NUMBER = 'number',
-  BOOLEAN = 'boolean',
-  OBJECT = 'object',
-  ARRAY = 'array'
-}
 
-/**
- * 变量定义接口
- */
-export interface VariableDefinition {
-  type: VariableType;
-  description: string;
-  defaultValue?: any;
-  parent?: string;
-}
 
 /**
  * 工作流变量接口
@@ -83,7 +64,6 @@ export interface ApiNode {
     [key: string]: string;
   };
   toolName?: string;
-  context?: { [key: string]: any };
 }
 
 /**
@@ -93,9 +73,9 @@ export interface ApiWorkflow {
   id: string;
   name: string;
   description: string;
-  inputs: { [key: string]: VariableDefinition };
-  outputs: { [key: string]: VariableDefinition };
-  tools: { [name: string]: ToolDefinition };
+  inputs: { [key: string]: Omit<VariableDefinition, 'name'> };
+  outputs: { [key: string]: Omit<VariableDefinition, 'name'> };
+  tools: { [name: string]: Omit<ToolDefinition, 'name'> };
   globalVariables: { [key: string]: any };
   nodes: ApiNode[];
   startNodeId: string;
@@ -115,7 +95,7 @@ export interface Node {
     [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
   };
   toolName?: string;              // 仅用于 FUNCTION 类型节点
-  context?: { [key: string]: any }; // 新增：存储函数节点的输出
+  context?:VariableDefinition[]; // 新增：存储函数节点的输出
   conditions?: ConditionCase[];
 }
 
@@ -126,9 +106,9 @@ export interface Workflow {
   id: string;
   name: string;
   description: string;
-  inputs: { [key: string]: VariableDefinition };  // 新增：工作流级别输入
-  outputs: { [key: string]: VariableDefinition }; // 新增：工作流级别输出
-  tools: { [name: string]: ToolDefinition };      // 新增：工具定义移至工作流级别
+  inputs: VariableDefinition[];  // 新增：工作流级别输入
+  outputs: VariableDefinition[]; // 新增：工作流级别输出
+  tools: ToolDefinition[];      // 新增：工具定义移至工作流级别
   globalVariables: { [key: string]: any };        // 变更：现在为只读
   nodes: Node[];
   startNodeId: string;
@@ -160,15 +140,42 @@ export interface EditorState {
  * 将API工作流格式转换为Vue应用工作流格式
  */
 export function convertApiToAppWorkflow(apiWorkflow: ApiWorkflow): Workflow {
+  // Convert map to array for inputs
+  const inputs = Object.entries(apiWorkflow.inputs).map(([name, def]) => ({
+    name,
+    ...def
+  }));
+
+  // Convert map to array for outputs
+  const outputs = Object.entries(apiWorkflow.outputs).map(([name, def]) => ({
+    name,
+    ...def
+  }));
+
+  // Convert map to array for tools
+  const tools = Object.entries(apiWorkflow.tools).map(([name, def]) => ({
+    name,
+    ...def
+  }));
+
+  const nodes = apiWorkflow.nodes.map(node => {
+    // drop context
+    const newNode = {
+      ...node,
+      context: []
+    }
+    return newNode
+  })
+
   return {
     id: apiWorkflow.id,
     name: apiWorkflow.name,
     description: apiWorkflow.description,
-    inputs: apiWorkflow.inputs,
-    outputs: apiWorkflow.outputs,
-    tools: apiWorkflow.tools,
+    inputs,
+    outputs,
+    tools,
     globalVariables: apiWorkflow.globalVariables,
-    nodes: apiWorkflow.nodes,
+    nodes,
     startNodeId: apiWorkflow.startNodeId,
     isActive: apiWorkflow.isActive
   };
@@ -178,15 +185,41 @@ export function convertApiToAppWorkflow(apiWorkflow: ApiWorkflow): Workflow {
  * 将Vue应用工作流格式转换为API工作流格式
  */
 export function convertAppToApiWorkflow(workflow: Workflow): ApiWorkflow {
+  // Convert array to map for inputs
+  const inputs: { [key: string]: Omit<VariableDefinition, 'name'> } = {};
+  workflow.inputs.forEach(input => {
+    const { name, ...def } = input;
+    inputs[name] = def;
+  });
+
+  // Convert array to map for outputs
+  const outputs: { [key: string]: Omit<VariableDefinition, 'name'> } = {};
+  workflow.outputs.forEach(output => {
+    const { name, ...def } = output;
+    outputs[name] = def;
+  });
+
+  // Convert array to map for tools
+  const tools: { [name: string]: Omit<ToolDefinition, 'name'> } = {};
+  workflow.tools.forEach(tool => {
+    const { name } = tool;
+    tools[name] = tool;
+  });
+
+  const nodes: ApiNode[] = workflow.nodes.map(node => {
+    const { context, ...rest } = node
+    return rest
+  });
+
   return {
     id: workflow.id,
     name: workflow.name,
     description: workflow.description,
-    inputs: workflow.inputs,
-    outputs: workflow.outputs,
-    tools: workflow.tools,
+    inputs,
+    outputs,
+    tools,
     globalVariables: workflow.globalVariables,
-    nodes: workflow.nodes,
+    nodes,
     startNodeId: workflow.startNodeId,
     isActive: workflow.isActive
   };

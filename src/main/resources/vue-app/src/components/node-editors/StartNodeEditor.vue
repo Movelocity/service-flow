@@ -1,17 +1,26 @@
 <template>
   <div class="start-node-editor">
-    <h3>工作流输入变量</h3>
-    <div class="variables-list">
-      <div v-for="(def, key) in workflow?.inputs" :key="key" class="variable-row">
-        <span>{{ key }}</span>
-        <div>
-          <span>{{ def.type }}</span>
-          <span v-if="def.description" class="description">{{ def.description }}</span>
-          <el-button type="primary" link @click="editVariable(String(key))">编辑</el-button>
-          <el-button type="danger" link @click="deleteVariable(String(key))">删除</el-button>
+    <div class="row">
+      <h3>工作流输入变量</h3>
+      <el-button type="primary" @click="addVariable">新增</el-button>
+    </div>
+    <div class="variables">
+      <div v-for="def in workflow?.inputs" :key="def.name" class="variable-row">
+        <div class="row">
+          <span>{{ def.name }}</span>
+          <span class="variable-type">{{ def.type }}</span>
+        </div>
+        <div class="actions">
+          <!-- <span v-if="def.description" class="description">{{ def.description }}</span> -->
+          <el-icon @click="editVariable(def)" class="icon-btn">
+            <Edit />
+          </el-icon>
+          <el-icon @click="deleteVariable(def.name)" class="icon-btn">
+            <Delete />
+          </el-icon>
         </div>
       </div>
-      <el-button type="primary" @click="addVariable">添加输入变量</el-button>
+      
     </div>
 
     <VariableModal
@@ -26,9 +35,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
-import type { VariableDefinition } from '@/types/workflow';
-import { VariableType } from '@/types/workflow';
+import type { VariableDefinition } from '@/types/fields';
+import { VariableType } from '@/types/fields';
 import VariableModal from '../VariableModal.vue';
+import { Delete, Edit } from '@element-plus/icons-vue';
 
 interface EditingVariable extends VariableDefinition {
   name: string;
@@ -49,43 +59,29 @@ const addVariable = () => {
   showVariableModal.value = true;
 };
 
-const editVariable = (key: string) => {
-  const def = workflow.value?.inputs[key];
-  if (def) {
-    editingVariable.value = {
-      name: key,
-      ...def
-    };
-    showVariableModal.value = true;
-  }
+const editVariable = (variable: VariableDefinition) => {
+  editingVariable.value = { ...variable };
+  showVariableModal.value = true;
 };
 
-const deleteVariable = (key: string) => {
+const deleteVariable = (name: string) => {
   if (workflow.value) {
-    const { [key]: _, ...rest } = workflow.value.inputs;
-    workflow.value.inputs = rest;
+    workflow.value.inputs = workflow.value.inputs.filter(input => input.name !== name);
   }
 };
 
 const handleVariableSave = () => {
   if (!workflow.value || !editingVariable.value) return;
 
-  const { name, ...def } = editingVariable.value;
+  const newVariable = { ...editingVariable.value };
+  const existingIndex = workflow.value.inputs.findIndex(input => input.name === newVariable.name);
 
-  const oldName = editingVariable.value.name;
-  if (oldName && oldName !== name) {
-    // 如果是编辑现有变量，且名称改变了，需要删除旧的并添加新的
-    const { [oldName]: _, ...rest } = workflow.value.inputs;
-    workflow.value.inputs = {
-      ...rest,
-      [name]: def
-    };
+  if (existingIndex >= 0) {
+    // Update existing variable
+    workflow.value.inputs[existingIndex] = newVariable;
   } else {
-    // 添加新变量或更新现有变量
-    workflow.value.inputs = {
-      ...workflow.value.inputs,
-      [name]: def
-    };
+    // Add new variable
+    workflow.value.inputs.push(newVariable);
   }
 };
 
@@ -96,23 +92,16 @@ const handleModalClose = () => {
 
 <style scoped>
 .start-node-editor {
-  padding: 1rem;
-}
-
-.variables-list {
-  margin-top: 1rem;
+  padding: 1rem 0;
 }
 
 .variable-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.variable-row:last-child {
-  border-bottom: none;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
 }
 
 .description {
@@ -120,4 +109,13 @@ const handleModalClose = () => {
   font-size: 0.875rem;
   margin: 0 0.5rem;
 }
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
 </style> 

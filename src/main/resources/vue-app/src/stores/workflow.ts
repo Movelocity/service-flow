@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
-import type { Node, Workflow, Position, EditorState, VariableDefinition } from '../types/workflow';
+import type { Node, Workflow, Position, EditorState } from '@/types/workflow';
+import type { VariableDefinition } from '@/types/fields';
 import type { Tool } from '@/types/tools';
-import { NodeType } from '@/types/workflow';
+import { convertApiToAppWorkflow, convertAppToApiWorkflow, NodeType } from '@/types/workflow';
 import { WorkflowApi } from '@/services/workflowApi';
 const workflowApi = new WorkflowApi();
 
@@ -84,9 +85,9 @@ export const useWorkflowStore = defineStore('workflow', {
         id: uuidv4(),
         name,
         description,
-        inputs: {},
-        outputs: {},
-        tools: {},
+        inputs: [],
+        outputs: [],
+        tools: [],
         globalVariables: {},
         nodes: [],
         startNodeId: '',
@@ -96,12 +97,8 @@ export const useWorkflowStore = defineStore('workflow', {
 
     async loadWorkflow(id: string) {
       try {
-        const response = await fetch(`/api/workflows/${id}`);
-        if (!response.ok) {
-          throw new Error('Failed to load workflow');
-        }
-        const data = await response.json();
-        this.currentWorkflow = data;
+        const workflow = await workflowApi.getWorkflow(id);
+        this.currentWorkflow = convertApiToAppWorkflow(workflow);
         this.initializeWorkflowContext(); // Initialize context after loading
       } catch (error) {
         console.error('Error loading workflow:', error);
@@ -150,7 +147,7 @@ export const useWorkflowStore = defineStore('workflow', {
         position,
         nextNodes: {},
         toolName: type === NodeType.FUNCTION ? undefined : undefined,
-        context: {}
+        context: []
       };
 
       this.currentWorkflow!.nodes.push(node);
@@ -167,13 +164,13 @@ export const useWorkflowStore = defineStore('workflow', {
       this.updateNode(node.id, { toolName });
       
       // Add tool definition to workflow if not exists
-      if (!this.currentWorkflow!.tools[toolName]) {
-        this.currentWorkflow!.tools[toolName] = {
+      if (!this.currentWorkflow!.tools.find(t => t.name === toolName)) {
+        this.currentWorkflow!.tools.push({
           name: toolName,
           description: tool.description,
           inputs: tool.inputs,
           outputs: tool.outputs
-        };
+        });
       }
       
       console.log('addFunctionNode', this.currentWorkflow?.nodes);
@@ -213,7 +210,10 @@ export const useWorkflowStore = defineStore('workflow', {
       // 对于函数节点，如果该函数已经没有其它节点在用，则在 workflow.tools 中删除该函数
       if (toolName) {
         if (!this.currentWorkflow?.nodes.some(node => node.toolName === toolName)) {
-          delete this.currentWorkflow.tools[toolName];
+          const index = this.currentWorkflow.tools.findIndex(tool => tool.name === toolName);
+          if (index !== -1) {
+            this.currentWorkflow.tools.splice(index, 1);
+          }
         }
       }
 
@@ -230,24 +230,30 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     // 递归更新节点及其下游节点的context
-    updateNodeContextChain(nodeId: string, visitedNodes: Set<string> = new Set(), upstreamContext: Record<string, VariableDefinition> = {}) {
+    updateNodeContextChain(nodeId: string, visitedNodes: Set<string> = new Set(), upstreamContext?: VariableDefinition[]) {
       if (!this.currentWorkflow || visitedNodes.has(nodeId)) return;
       
       const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
       if (!node) return;
 
       visitedNodes.add(nodeId);
-      node.context = { ...node.context, ...upstreamContext };
-      const newContext: Record<string, VariableDefinition> = {}
+      node.context?.push(...upstreamContext||[]);
+      const newContext: VariableDefinition[] = []
       if (node.type === NodeType.FUNCTION && node.toolName) {
-        const tool = this.currentWorkflow.tools[node.toolName];
-        Object.entries(tool.outputs).forEach(([key, value]) => {
-          newContext[`${key}`] = {...value, parent: node.id};
-        });
+        const toolIndex = this.currentWorkflow.tools?.findIndex(tool => tool.name === node.toolName);
+        if (toolIndex !== -1) {
+          const tool = this.currentWorkflow.tools[toolIndex];
+          Object.entries(tool.outputs).forEach(([_key, value]) => {
+            newContext.push({...value, parent: node.id});
+          });
+        }
       }
-      console.log('updateNodeContextChain', nodeId, node.context, newContext);
+      if (Array.isArray(node.context)) {
+        newContext.push(...node.context);
+      }
+      console.log("forward", node.name);
       Object.values(node.nextNodes).forEach(nextNodeId => {
-        this.updateNodeContextChain(nextNodeId, visitedNodes, { ...node.context, ...newContext });
+        this.updateNodeContextChain(nextNodeId, visitedNodes, newContext);
       });
     },
 
@@ -325,10 +331,10 @@ export const useWorkflowStore = defineStore('workflow', {
         const workflowToSave = { ...this.currentWorkflow };
         
         // Save the workflow
-        const savedWorkflow = await workflowApi.saveWorkflow(workflowToSave);
+        const savedWorkflow = await workflowApi.saveWorkflow(convertAppToApiWorkflow(workflowToSave));
         
         // Reload the workflow to ensure consistency
-        this.updateWorkflow(savedWorkflow);
+        this.updateWorkflow(convertApiToAppWorkflow(savedWorkflow));
         this.isDirty = false;
         return savedWorkflow;
       } catch (error) {
@@ -351,7 +357,7 @@ export const useWorkflowStore = defineStore('workflow', {
       
       // Clear all nodes' context first
       this.currentWorkflow?.nodes.forEach(node => {
-        node.context = {};
+        node.context = [];
       });
 
       // 获取开始节点

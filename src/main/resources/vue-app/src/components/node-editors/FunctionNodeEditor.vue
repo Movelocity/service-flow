@@ -19,10 +19,10 @@
           class="input-selector"
           placeholder="选择输入来源">
           <el-option
-            v-for="(_value, contextKey) in availableContext"
-            :key="contextKey"
-            :label="contextKey"
-            :value="contextKey"
+            v-for="value in availableContext"
+            :key="value.name"
+            :label="value.name"
+            :value="value.name"
           />
         </el-select>
         <div class="param-description">{{ input.description }}</div>
@@ -46,6 +46,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useWorkflowStore } from '@/stores/workflow'
+import { useAvailableContext } from '@/composables/useAvailableContext'
 
 const props = defineProps<{
   nodeId: string
@@ -61,39 +62,18 @@ const currentNode = computed(() => {
 // Get the selected tool
 const selectedTool = computed(() => {
   if (!currentNode.value?.toolName || !workflowStore.currentWorkflow?.tools) return null
-  return workflowStore.currentWorkflow.tools[currentNode.value.toolName]
+  const toolIndex = workflowStore.currentWorkflow.tools.findIndex(tool => tool.name === currentNode.value?.toolName);
+  return workflowStore.currentWorkflow.tools[toolIndex]
 })
-
-// console.log(selectedTool.value?.outputs)
 
 // Available context for input selection
-const availableContext = computed(() => {
-  const context: Record<string, any> = {};
-  
-  // Add workflow inputs with 'global:' prefix
-  if (workflowStore.currentWorkflow?.inputs) {
-    Object.keys(workflowStore.currentWorkflow.inputs).forEach(key => {
-      context[`global.${key}`] = workflowStore.currentWorkflow!.inputs[key];
-    });
-  }
-  
-  // Add node context
-  const nodeContext = currentNode.value?.context || {};
-  Object.entries(nodeContext).forEach(([key, value]) => {
-    context[key] = value;
-  });
-  
-  return context;
-})
+const availableContext = useAvailableContext(props.nodeId)
 
 // Node inputs (for v-model binding)
 const nodeInputs = ref<Record<string, string>>({})
 </script>
 
 <style scoped>
-/* .function-node-editor {
-  padding: 16px;
-} */
 
 .tool-info {
   margin-bottom: 20px;

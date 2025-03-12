@@ -57,6 +57,16 @@ html.dark {
   transition: all 0.2s;
 }
 
+.icon-btn {
+  cursor: pointer;
+  margin: 4px;
+  border-radius: 4px;
+}
+
+.icon-btn:hover {
+  color: var(--el-color-primary);
+}
+
 .text-btn {
   background-color: transparent;
   color: var(--text-color);
@@ -134,3 +144,16 @@ html.dark {
 .fade-leave-active {
   animation: fadeIn 0.2s reverse;
 } 
+
+.variable-type {
+  margin-left: 8px;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+

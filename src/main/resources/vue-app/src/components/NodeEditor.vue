@@ -53,7 +53,7 @@
                 {{ getConnectionLabel(conn) }}
               </span>
               <el-icon 
-                class="btn-delete"
+                class="icon-btn"
                 @click="deleteConnection(conn.id)">
                 <Delete />
               </el-icon>
@@ -67,7 +67,7 @@
 
       <div class="editor-actions" v-if="selectedNode?.type !== 'START'">
         <button
-          class="btn btn-danger"
+          class="btn btn-delete"
           @click="deleteNode"
         >
           删除节点
@@ -303,15 +303,6 @@ function onClose() {
 .btn-sm {
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
-}
-
-.btn-delete {
-  cursor: pointer;
-  color: var(--text-color);
-}
-
-.btn-delete:hover {
-  color: var(--node-selected);
 }
 
 .variables-list {

@@ -4,9 +4,8 @@
       <div class="condition-case">
         <div class="case-header">
           <div class="case-type">
-            <span class="case-label">{{ index === 0 ? 'IF' : (isLastCase(index) ? 'ELSE' : 'ELIF') }}</span>
+            <span class="case-label">{{ index === 0 ? 'IF' : 'ELIF' }}</span>
             <button 
-              v-if="!isLastCase(index)"
               class="type-toggle-btn" 
               @click="toggleConditionType(index)"
               type="button"
@@ -15,7 +14,7 @@
             </button>
           </div>
           <el-icon 
-            v-if="canDeleteCase(index)"
+            v-if="index > 0"
             class="btn-delete"
             @click="removeCase(index)"
           >
@@ -24,49 +23,60 @@
         </div>
 
         <div class="case-content">
-          <template v-if="!isLastCase(index)">
-            <div v-for="(condition, conditionIndex) in caseData.conditions" :key="conditionIndex" class="condition-item">
-              <div class="condition-wrapper">
-                <ConditionBuilder
-                  :modelValue="condition"
-                  @update:modelValue="(updatedCondition) => updateSingleCondition(index, conditionIndex, updatedCondition)"
-                />
-                <el-icon 
-                  v-if="canDeleteCondition(caseData)"
-                  class="btn-delete"
-                  @click="() => removeCondition(index, conditionIndex)"
-                  title="删除条件"
-                >
-                  <Delete />
-                </el-icon>
-              </div>
+          <div v-for="(condition, conditionIndex) in caseData.conditions" :key="conditionIndex" class="condition-item">
+            <div class="condition-wrapper">
+              <ConditionBuilder
+                :modelValue="condition"
+                @update:modelValue="(updatedCondition) => updateSingleCondition(index, conditionIndex, updatedCondition)"
+              />
+              <el-icon 
+                v-if="canDeleteCondition(caseData)"
+                class="btn-delete"
+                @click="() => removeCondition(index, conditionIndex)"
+                title="删除条件"
+              >
+                <Delete />
+              </el-icon>
             </div>
-            <div
-              class="add-condition-btn" 
-              @click="() => addCondition(index)"
-              title="添加条件"
-            >
-              添加条件
-            </div>
-          </template>
-          <div v-else class="else-block">
-            <small class="form-text text-muted">
-              用于定义当所有条件不满足时应执行的逻辑。
-            </small>
+          </div>
+          <div
+            class="add-condition-btn" 
+            @click="() => addCondition(index)"
+            title="添加条件"
+          >
+            添加条件
           </div>
         </div>
       </div>
     </template>
 
-    <div class="add-case-wrapper" v-if="!hasElse">
+    <div class="add-case-wrapper">
       <button 
         class="add-case-btn" 
         @click="addCase"
         type="button"
       >
-        添加{{ conditionBlocks.length === 0 ? 'IF' : (conditionBlocks.length === 1 ? 'ELSE' : 'ELIF') }}条件分支
+        添加{{ conditionBlocks.length === 0 ? 'IF' : 'ELIF' }}条件分支
       </button>
     </div>
+  
+    <!-- ELSE branch -->
+    <div v-if="showElse" class="condition-case">
+      <div class="case-header">
+        <div class="case-type">
+          <span class="case-label">ELSE</span>
+        </div>
+      </div>
+      <div class="case-content">
+        <div class="else-block">
+          <small class="form-text text-muted">
+            所有条件不满足时执行的分支
+          </small>
+        </div>
+      </div>
+    </div>
+
+    
   </div>
 </template>
 
@@ -74,9 +84,10 @@
 import { computed, ref, watch } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
 import ConditionBuilder from '@/components/node-editors/ConditionBuilder.vue';
-import type { ConditionCase, Condition } from '@/types/condition';
+import type { ConditionCase, Condition } from '@/types/fields';
 import type { Node } from '@/types/workflow';
 import { Delete } from '@element-plus/icons-vue';
+import { VariableType } from '@/types/fields';
 
 interface WorkflowStore {
   selectedNode: Node | null;
@@ -90,11 +101,22 @@ const selectedNode = computed(() => store.selectedNode);
 const conditionBlocks = ref<ConditionCase[]>([]);
 
 // 创建默认条件块
-const createDefaultConditionBlock = (isElse: boolean = false): ConditionCase => ({
-  conditions: isElse ? [] : [{
-    leftOperand: '',
+const createDefaultConditionBlock = (): ConditionCase => ({
+  conditions: [{
+    leftOperand: {
+      name: '',
+      type: VariableType.STRING,
+      description: '',
+      parent: ''
+    },
     operator: '==',
-    rightOperand: '',
+    rightOperand: {
+      name: '',
+      type: VariableType.STRING,
+      description: '',
+      defaultValue: '',
+      parent: ''
+    },
     type: 'CONSTANT'
   }],
   type: 'and',
@@ -107,7 +129,7 @@ const updateCaseHint = (caseIndex: number) => {
     const caseData = conditionBlocks.value[caseIndex];
     const conditionTexts = caseData.conditions.map(condition => {
       const { leftOperand, operator, rightOperand, type } = condition;
-      return `${leftOperand} ${operator} ${type === 'CONSTANT' ? `"${rightOperand}"` : rightOperand}`;
+      return `${leftOperand.name} ${operator} ${type === 'CONSTANT' ? `"${rightOperand.defaultValue}"` : rightOperand.name}`;
     });
     
     // 使用条件组的类型（and/or）连接所有条件
@@ -124,10 +146,12 @@ const initializeConditionBlocks = () => {
   }
 
   if (Array.isArray(node.conditions) && node.conditions.length > 0) {
-    // 创建深拷贝以确保不直接修改原始数据
-    conditionBlocks.value = JSON.parse(JSON.stringify(node.conditions));
+    // 过滤掉ELSE分支，只保留IF和ELIF分支
+    conditionBlocks.value = JSON.parse(JSON.stringify(
+      node.conditions.filter(block => block.conditions.length > 0)
+    ));
   } else {
-    // 初始化时创建一个默认的 IF 条件块
+    // 初始化时只创建默认的 IF 条件块
     conditionBlocks.value = [createDefaultConditionBlock()];
   }
   
@@ -153,17 +177,25 @@ const updateNodeConditions = () => {
   const node = selectedNode.value;
   if (!node) return;
 
-  // 确保条件数组有效
-  const conditions = conditionBlocks.value.map(block => ({
-    conditions: block.conditions.map(condition => ({
-      leftOperand: condition.leftOperand,
-      operator: condition.operator,
-      rightOperand: condition.rightOperand,
-      type: condition.type
+  // 确保条件数组有效，并添加ELSE分支
+  const conditions = [
+    ...conditionBlocks.value.map(block => ({
+      conditions: block.conditions.map(condition => ({
+        leftOperand: condition.leftOperand,
+        operator: condition.operator,
+        rightOperand: condition.rightOperand,
+        type: condition.type
+      })),
+      type: block.type,
+      hint: block.hint
     })),
-    type: block.type,
-    hint: block.hint
-  }));
+    // 添加ELSE分支，确保type是 'and' | 'or'
+    {
+      conditions: [] as never[],
+      type: 'and' as const,
+      hint: ''
+    }
+  ];
 
   store.updateNode(node.id, {
     conditions
@@ -195,9 +227,21 @@ const updateSingleCondition = (caseIndex: number, conditionIndex: number, update
 function addCondition(index: number) {
   if (index < conditionBlocks.value.length) {
     conditionBlocks.value[index].conditions.push({
-      leftOperand: '',
+      leftOperand: {
+        name: '',
+        type: VariableType.STRING,
+        description: '',
+        defaultValue: '',
+        parent: ''
+      },
       operator: '==',
-      rightOperand: '',
+      rightOperand: {
+        name: '',
+        type: VariableType.STRING,
+        description: '',
+        defaultValue: '',
+        parent: ''
+      },
       type: 'CONSTANT'
     });
     
@@ -210,8 +254,8 @@ function addCondition(index: number) {
 
 // 添加新的条件分支
 function addCase() {
-  const isElse = conditionBlocks.value.length > 0;
-  conditionBlocks.value.push(createDefaultConditionBlock(isElse));
+  const newCase = createDefaultConditionBlock();
+  conditionBlocks.value.push(newCase);
   updateNodeConditions();
 }
 
@@ -227,14 +271,8 @@ function toggleConditionType(index: number) {
   }
 }
 
-// 判断是否为最后一个条件组（即ELSE分支）
-const hasElse = computed(() => {
-  return conditionBlocks.value.length > 1 && isLastCase(conditionBlocks.value.length - 1);
-});
-
-function isLastCase(index: number): boolean {
-  return index === conditionBlocks.value.length - 1 && index > 0;
-}
+// 显示ELSE分支的计算属性
+const showElse = computed(() => conditionBlocks.value.length > 0);
 
 // 删除单个条件
 function removeCondition(caseIndex: number, conditionIndex: number) {
@@ -259,19 +297,10 @@ function removeCondition(caseIndex: number, conditionIndex: number) {
 
 // 删除条件分支
 function removeCase(index: number) {
-  if (index < conditionBlocks.value.length) {
+  if (index > 0 && index < conditionBlocks.value.length) {
     conditionBlocks.value.splice(index, 1);
     updateNodeConditions();
   }
-}
-
-// 判断是否可以删除条件分支
-function canDeleteCase(index: number): boolean {
-  // 不能删除第一个IF分支
-  if (index === 0) return false;
-  // 不能删除ELSE分支
-  if (isLastCase(index)) return false;
-  return true;
 }
 
 // 判断是否可以删除条件
@@ -320,7 +349,7 @@ function canDeleteCondition(caseData: ConditionCase): boolean {
 .condition-editor {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   border-radius: 8px;
 }
 
@@ -376,13 +405,7 @@ function canDeleteCondition(caseData: ConditionCase): boolean {
   background-color: var(--hover-bg-color);
 }
 
-.btn-delete {
-  cursor: pointer;
-}
 
-.btn-delete:hover {
-  color: var(--node-end);
-}
 
 .add-condition-btn {
   display: flex;
@@ -403,7 +426,6 @@ function canDeleteCondition(caseData: ConditionCase): boolean {
 
 .add-case-wrapper {
   padding: 0.5rem;
-  /* background-color: var(--bg-secondary); */
   border-radius: 8px;
 }
 
@@ -428,7 +450,7 @@ function canDeleteCondition(caseData: ConditionCase): boolean {
 }
 
 .else-block {
-  padding: 1rem;
+  /* padding: 1rem; */
   background-color: var(--bg-primary);
   border-radius: 4px;
 }
