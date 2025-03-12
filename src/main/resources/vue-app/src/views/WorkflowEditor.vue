@@ -47,7 +47,13 @@
         >
           运行
         </button>
-
+        <button
+          class="btn btn-info btn-sm"
+          @click="debugWorkflow"
+          :disabled="!canTest || isDebugging"
+        >
+          调试
+        </button>
       </div>
     </div>
 
@@ -55,6 +61,14 @@
     <div class="editor-main">
       <WorkflowCanvas />
       <NodeEditor :is-visible="isEditorPanelOpen" @close="closeEditor" />
+      <DebugPanel
+        v-if="isDebugging"
+        :events="debugEvents"
+        :workflow-id="workflowId"
+        :required-inputs="workflowInputs"
+        @stop="stopDebug"
+        @debug-start="startDebug"
+      />
     </div>
   </div>
 </template>
@@ -67,6 +81,7 @@ import { workflowApi } from '@/services/workflowApi';
 import WorkflowCanvas from '@/components/workflow/WorkflowCanvas.vue';
 import NodeEditor from '@/components/NodeEditor.vue';
 import ThemeButton from '@/components/ThemeButton.vue';
+import DebugPanel from '@/components/DebugPanel.vue';
 const router = useRouter();
 const route = useRoute();
 const store = useWorkflowStore();
@@ -76,6 +91,15 @@ const workflowName = ref('');
 const workflowDescription = ref('');
 const isLoading = ref(true);
 const executionStatus = ref<string | null>(null);
+const isDebugging = ref(false);
+const debugEvents = ref<any[]>([]);
+const workflowId = computed(() => store.currentWorkflow?.id || '');
+const workflowInputs = ref<Record<string, any>>({});
+
+// 调试相关
+let eventSource: (() => void) | null = null;
+let handleNodeExecution: ((event: CustomEvent) => void) | null = null;
+let handleDebugError: ((event: CustomEvent) => void) | null = null;
 
 // 计算属性
 const isDirty = computed(() => store.isDirty);
@@ -159,6 +183,68 @@ async function testWorkflow() {
   }
 }
 
+// 调试工作流
+async function debugWorkflow() {
+  if (!workflowId.value) return;
+  
+  try {
+    // 获取工作流必填参数
+    workflowInputs.value = await workflowApi.getWorkflowInputs(workflowId.value);
+    isDebugging.value = true;
+    debugEvents.value = [];
+  } catch (error) {
+    console.error('Failed to get workflow inputs:', error);
+    alert('获取工作流参数失败');
+  }
+}
+
+// 开始调试
+async function startDebug(inputs: Record<string, any>) {
+  if (!workflowId.value) return;
+  
+  try {
+    // 注册事件监听器
+    handleNodeExecution = (event: CustomEvent) => {
+      debugEvents.value.push(event.detail);
+    };
+
+    handleDebugError = (event: CustomEvent) => {
+      console.error('Debug error:', event.detail);
+      stopDebug();
+      alert('调试过程中发生错误');
+    };
+
+    window.addEventListener('node-execution', handleNodeExecution as EventListener);
+    window.addEventListener('debug-error', handleDebugError as EventListener);
+
+    // 保存清理函数
+    eventSource = workflowApi.debugWorkflow(workflowId.value, inputs);
+  } catch (error) {
+    console.error('Failed to start workflow debug:', error);
+    alert('启动调试失败');
+    stopDebug();
+  }
+}
+
+// 停止调试
+function stopDebug() {
+  if (eventSource) {
+    // 移除事件监听器
+    if (handleNodeExecution) {
+      window.removeEventListener('node-execution', handleNodeExecution as EventListener);
+      handleNodeExecution = null;
+    }
+    if (handleDebugError) {
+      window.removeEventListener('debug-error', handleDebugError as EventListener);
+      handleDebugError = null;
+    }
+    // 调用清理函数关闭连接
+    eventSource();
+    eventSource = null;
+  }
+  isDebugging.value = false;
+}
+
 // 关闭编辑器面板
 function closeEditor() {
   store.selectNode(null);
@@ -203,6 +289,7 @@ onBeforeUnmount(() => {
       event.returnValue = '有未保存的更改，确定要离开吗？';
     }
   });
+  stopDebug();
 });
 
 // 加载工作流

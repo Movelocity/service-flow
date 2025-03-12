@@ -149,7 +149,7 @@ public class JsonFileHandler {
         try {
             byte[] bytes = Files.readAllBytes(filePath);
             String jsonString = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-            logger.debug("Loading workflow JSON: {}", jsonString);
+            // logger.debug("Loading workflow JSON: {}", jsonString);
             
             Workflow workflow = JSON.parseObject(jsonString, Workflow.class);
             

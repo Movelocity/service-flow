@@ -83,6 +83,7 @@ public class WorkflowManager {
      */
     public String startWorkflow(String workflowId, Map<String, Object> initialVariables) {
         try {
+			System.out.println("startWorkflow: " + workflowId);
             Workflow workflow = jsonFileHandler.loadWorkflow(workflowId);
             WorkflowContext context = new WorkflowContext(workflowId);
             

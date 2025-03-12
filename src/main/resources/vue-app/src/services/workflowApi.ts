@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import type { ApiWorkflow } from '../types/workflow';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 /**
  * Workflow API Service
@@ -115,26 +116,61 @@ export class WorkflowApi {
 
   /**
    * Start workflow execution in debug mode
-   * @returns EventSource for receiving debug events
+   * @returns A function to close the event source connection
    */
-  debugWorkflow(workflowId: string, input?: Record<string, any>): EventSource {
-    const params = new URLSearchParams();
-    if (input) {
-      Object.entries(input).forEach(([key, value]) => {
-        params.append(key, JSON.stringify(value));
-      });
-    }
-
-    const eventSource = new EventSource(
-      `${this.baseUrl}/${workflowId}/debug?${params.toString()}`
-    );
-
-    eventSource.addEventListener('node-execution', (event) => {
-      const data = JSON.parse(event.data);
-      // Event data will be handled by the caller
+  debugWorkflow(workflowId: string, input?: Record<string, any>): () => void {
+    let ctrl = new AbortController();
+    
+    fetchEventSource(`${this.baseUrl}/${workflowId}/debug`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+      },
+      body: JSON.stringify(input || {}),
+      signal: ctrl.signal,
+      onmessage(event) {
+        // 触发自定义事件
+        const customEvent = new CustomEvent('node-execution', {
+          detail: JSON.parse(event.data)
+        });
+        window.dispatchEvent(customEvent);
+      },
+      onclose() {
+        // 当连接关闭时
+        console.log('Debug connection closed');
+      },
+      onerror(err) {
+        // 当发生错误时
+        console.error('Debug connection error:', err);
+        // 触发错误事件
+        const errorEvent = new CustomEvent('debug-error', {
+          detail: err
+        });
+        window.dispatchEvent(errorEvent);
+      }
+    }).catch(err => {
+      console.error('Failed to start debug:', err);
+      throw err;
     });
 
-    return eventSource;
+    // 返回一个函数用于关闭连接
+    return () => {
+      ctrl.abort();
+    };
+  }
+
+  /**
+   * Get workflow required inputs
+   * @returns Required input parameters
+   */
+  async getWorkflowInputs(workflowId: string): Promise<Record<string, any>> {
+    const response = await fetch(`${this.baseUrl}/${workflowId}`);
+    if (!response.ok) {
+      throw new Error('Failed to get workflow inputs');
+    }
+    const workflow = await response.json();
+    return workflow.inputs || {};
   }
 }
 
