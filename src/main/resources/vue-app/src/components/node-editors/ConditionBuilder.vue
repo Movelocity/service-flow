@@ -48,9 +48,10 @@
                   <el-input
                     v-if="selectedVarType === VariableType.STRING"
                     :model-value="condition.rightOperand.value"
-                    @change="updateRightOperand"
+                    @input="updateRightOperand"
                     placeholder="输入文本"
                     class="operand-input"
+                    spellcheck="false"
                   />
                   <el-input-number
                     v-else-if="selectedVarType === VariableType.NUMBER"
@@ -105,14 +106,6 @@
         </div>
       </el-form>
     </div>
-    
-    <!-- <div class="condition-preview" v-if="showPreview">
-      <el-alert
-        :title="previewText"
-        type="info"
-        :closable="false"
-      />
-    </div> -->
   </div>
 </template>
 
@@ -283,19 +276,6 @@ function emitUpdate(updates: Partial<Condition>) {
 }
 
 const availableContext = useAvailableContext(store.selectedNode?.id || '')
-
-// 生成预览文本
-// const previewText = computed(() => {
-//   const { leftOperand, operator, rightOperand, type } = condition.value;
-//   if (operator === 'isEmpty') {
-//     return `${leftOperand} 为空`;
-//   }
-//   if (operator === 'isNotEmpty') {
-//     return `${leftOperand} 不为空`;
-//   }
-//   console.log("previewText", leftOperand, operator, rightOperand, type)
-//   return `${leftOperand.name} ${operator} ${type === 'CONSTANT' ? `"${rightOperand.value}"` : rightOperand.name}`;
-// });
 </script>
 
 <style scoped>

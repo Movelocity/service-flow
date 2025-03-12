@@ -131,7 +131,7 @@ const updateCaseHint = (caseIndex: number) => {
       const { leftOperand, operator, rightOperand, type } = condition;
       let hintString = `${leftOperand.name} ${operator} `
       if(type === 'CONSTANT') {
-        if(leftOperand.type === VariableType.STRING) {
+        if(leftOperand.type.toLowerCase() === VariableType.STRING) {
           hintString += `"${rightOperand.value}"`
         } else {
           hintString += `${rightOperand.value}`
