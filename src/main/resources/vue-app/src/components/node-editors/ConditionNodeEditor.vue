@@ -15,7 +15,7 @@
           </div>
           <el-icon 
             v-if="index > 0"
-            class="btn-delete"
+            class="icon-btn"
             @click="removeCase(index)"
           >
             <Delete />
@@ -31,7 +31,7 @@
               />
               <el-icon 
                 v-if="canDeleteCondition(caseData)"
-                class="btn-delete"
+                class="icon-btn"
                 @click="() => removeCondition(index, conditionIndex)"
                 title="删除条件"
               >
@@ -129,7 +129,17 @@ const updateCaseHint = (caseIndex: number) => {
     const caseData = conditionBlocks.value[caseIndex];
     const conditionTexts = caseData.conditions.map(condition => {
       const { leftOperand, operator, rightOperand, type } = condition;
-      return `${leftOperand.name} ${operator} ${type === 'CONSTANT' ? `"${rightOperand.defaultValue}"` : rightOperand.name}`;
+      let hintString = `${leftOperand.name} ${operator} `
+      if(type === 'CONSTANT') {
+        if(leftOperand.type === VariableType.STRING) {
+          hintString += `"${rightOperand.value}"`
+        } else {
+          hintString += `${rightOperand.value}`
+        }
+      } else {
+        hintString += `${rightOperand.name}`
+      }
+      return hintString;
     });
     
     // 使用条件组的类型（and/or）连接所有条件
@@ -404,8 +414,6 @@ function canDeleteCondition(caseData: ConditionCase): boolean {
 .type-toggle-btn:hover {
   background-color: var(--hover-bg-color);
 }
-
-
 
 .add-condition-btn {
   display: flex;

@@ -47,21 +47,21 @@
                 <template v-if="condition.type === 'CONSTANT'">
                   <el-input
                     v-if="selectedVarType === VariableType.STRING"
-                    :model-value="condition.rightOperand.name"
+                    :model-value="condition.rightOperand.value"
                     @change="updateRightOperand"
-                    placeholder="输入文本值"
+                    placeholder="输入文本"
                     class="operand-input"
                   />
                   <el-input-number
                     v-else-if="selectedVarType === VariableType.NUMBER"
-                    :model-value="Number(condition.rightOperand.name)"
+                    :model-value="Number(condition.rightOperand.value)"
                     @change="updateRightOperand"
                     :controls="false"
-                    placeholder="输入数值"
+                    placeholder="输入数字"
                   />
                   <el-select
                     v-else-if="selectedVarType === VariableType.BOOLEAN"
-                    :model-value="condition.rightOperand.name"
+                    :model-value="condition.rightOperand.value"
                     @change="updateRightOperand"
                     placeholder="选择布尔值"
                   >
@@ -70,7 +70,7 @@
                   </el-select>
                   <el-input
                     v-else
-                    :model-value="condition.rightOperand.name"
+                    :model-value="condition.rightOperand.value"
                     @change="updateRightOperand"
                     placeholder="输入比较值"
                   />
@@ -106,13 +106,13 @@
       </el-form>
     </div>
     
-    <div class="condition-preview" v-if="showPreview">
+    <!-- <div class="condition-preview" v-if="showPreview">
       <el-alert
         :title="previewText"
         type="info"
         :closable="false"
       />
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -143,13 +143,13 @@ const condition = computed(() => ({
 
 // 当前选中变量的类型
 const selectedVarType = computed(() => {
-  return condition.value.leftOperand.type;
+  const type = condition.value.leftOperand.type
+  return type.toLowerCase();
 });
 
 // 根据变量类型获取可用的操作符
 const availableOperators = computed(() => {
   const type = selectedVarType.value;
-  
   switch (type) {
     case VariableType.STRING:
       return [
@@ -188,13 +188,13 @@ const availableOperators = computed(() => {
   }
 });
 
-console.log("availableOperators", selectedVarType.value, availableOperators.value)
+// console.log("availableOperators", selectedVarType.value, availableOperators.value)
 
 function updateLeftOperand(value: string) {
   const selectedVar = availableContext.value.find(variable => variable.name === value)
   
   if (selectedVar) {
-    emitUpdate({ 
+    emitUpdate({
       leftOperand: {
         name: value,
         type: selectedVar.type || VariableType.STRING,
@@ -245,17 +245,29 @@ function updateType(value: 'VARIABLE' | 'CONSTANT') {
   });
 }
 
-function updateRightOperand(value: string) {
-  console.log("updateRightOperand", value)
-  emitUpdate({ 
-    rightOperand: {
-      name: value,
-      type: condition.value.leftOperand.type,
-      description: '',
-      defaultValue: value,
-      parent: ''
-    }
-  });
+function updateRightOperand(value: any) {
+  console.log("updateRightOperand", condition.value.type, value, typeof value)
+  if(condition.value.type === 'CONSTANT') {  // 常量模式
+    emitUpdate({ 
+      rightOperand: {
+        name: "",
+        type: condition.value.leftOperand.type,
+        description: '',
+        value: value,
+        parent: ''
+      }
+    });
+  } else {  // 变量模式
+    emitUpdate({ 
+      rightOperand: {
+        name: value,
+        type: condition.value.leftOperand.type,
+        description: '',
+        defaultValue: '',
+        parent: ''
+      }
+    });
+  }
 }
 
 // 更新处理函数
@@ -271,19 +283,19 @@ function emitUpdate(updates: Partial<Condition>) {
 }
 
 const availableContext = useAvailableContext(store.selectedNode?.id || '')
-console.log("condition builder", availableContext.value)
 
 // 生成预览文本
-const previewText = computed(() => {
-  const { leftOperand, operator, rightOperand, type } = condition.value;
-  if (operator === 'isEmpty') {
-    return `${leftOperand} 为空`;
-  }
-  if (operator === 'isNotEmpty') {
-    return `${leftOperand} 不为空`;
-  }
-  return `${leftOperand} ${operator} ${type === 'CONSTANT' ? `"${rightOperand}"` : rightOperand}`;
-});
+// const previewText = computed(() => {
+//   const { leftOperand, operator, rightOperand, type } = condition.value;
+//   if (operator === 'isEmpty') {
+//     return `${leftOperand} 为空`;
+//   }
+//   if (operator === 'isNotEmpty') {
+//     return `${leftOperand} 不为空`;
+//   }
+//   console.log("previewText", leftOperand, operator, rightOperand, type)
+//   return `${leftOperand.name} ${operator} ${type === 'CONSTANT' ? `"${rightOperand.value}"` : rightOperand.name}`;
+// });
 </script>
 
 <style scoped>

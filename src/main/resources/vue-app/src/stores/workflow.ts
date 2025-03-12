@@ -223,13 +223,13 @@ export const useWorkflowStore = defineStore('workflow', {
       }
     },
 
-    // 连接操作
+    /** 选中连接线 */
     selectConnection(sourceNodeId: string, condition: string) {
       this.editorState.selectedNodeId = sourceNodeId;
       this.editorState.selectedCondition = condition;
     },
 
-    // 递归更新节点及其下游节点的context
+    /** 传递更新节点及其下游节点的context */
     updateNodeContextChain(nodeId: string, visitedNodes: Set<string> = new Set(), upstreamContext?: VariableDefinition[]) {
       if (!this.currentWorkflow || visitedNodes.has(nodeId)) return;
       
@@ -237,7 +237,7 @@ export const useWorkflowStore = defineStore('workflow', {
       if (!node) return;
 
       visitedNodes.add(nodeId);
-      node.context?.push(...upstreamContext||[]);
+      node.context?.push(...upstreamContext||[]);  // 保留已有context，添加上游context
       const newContext: VariableDefinition[] = []
       if (node.type === NodeType.FUNCTION && node.toolName) {
         const toolIndex = this.currentWorkflow.tools?.findIndex(tool => tool.name === node.toolName);
@@ -257,6 +257,16 @@ export const useWorkflowStore = defineStore('workflow', {
       });
     },
 
+    /** 清除节点的context */
+    clearNodeContext(nodeId: string) {
+      if (!this.currentWorkflow) return;
+      const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
+      if (node) {
+        node.context = [];
+      }
+    },
+
+    /** 添加连接 */
     addConnection(sourceNodeId: string, targetNodeId: string, condition: string = 'default') {
       if (!this.currentWorkflow) return;
       
@@ -266,16 +276,24 @@ export const useWorkflowStore = defineStore('workflow', {
       // 检查是否已存在相同条件的连接
       if (sourceNode.nextNodes[condition]) return;
 
+      // 旧的后继节点先传播更新
+      const oldTargetNode = this.currentWorkflow.nodes.find(n => n.id === targetNodeId);
+      if (oldTargetNode) {
+        this.updateNodeContextChain(oldTargetNode.id);
+      }
+
       // 添加连接
       sourceNode.nextNodes = {
         ...sourceNode.nextNodes,
         [condition]: targetNodeId
       };
 
+
       // 更新目标节点及其下游节点的context
       this.updateNodeContextChain(sourceNodeId);
     },
 
+    /** 删除连接 */
     deleteConnection(sourceNodeId: string, condition: string) {
       console.log('deleteConnection', sourceNodeId, condition);
       if (!this.currentWorkflow) return;
@@ -291,7 +309,9 @@ export const useWorkflowStore = defineStore('workflow', {
       sourceNode.nextNodes = remainingConnections;
 
       // If there was a target node, update its and downstream nodes' context
+      console.log("deleteConnection", targetNodeId);
       if (targetNodeId) {
+        this.clearNodeContext(targetNodeId);
         this.updateNodeContextChain(targetNodeId);
       }
 
@@ -323,6 +343,7 @@ export const useWorkflowStore = defineStore('workflow', {
       }
     },
 
+    /** 保存工作流 */
     async saveWorkflow() {
       if (!this.currentWorkflow) return null;
       
@@ -343,6 +364,7 @@ export const useWorkflowStore = defineStore('workflow', {
       }
     },
 
+    /** 更新节点位置 */
     updateNodePosition(nodeId: string, position: Position) {
       if (!this.currentWorkflow) return;
       const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
