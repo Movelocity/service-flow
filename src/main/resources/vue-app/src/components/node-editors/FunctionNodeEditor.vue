@@ -10,9 +10,20 @@
     <div class="input-section" v-if="selectedTool?.inputs">
       <b>输入变量</b>
       <div v-for="(input, key) in selectedTool.inputs" :key="key" class="param-item">
-        <div class="param-label-container">
-          <div class="param-label">{{ key }}</div>
-          <div class="param-type">{{ input.type }}</div>
+        <div class="param-header">
+          <div class="param-info">
+            <span class="param-label">{{ key }}</span>
+            <span class="param-type">{{ input.type }}</span>
+          </div>
+          <div class="input-type-select">
+            <el-select 
+              v-model="inputTypeMap[key]"
+              class="type-selector"
+              size="small">
+              <el-option label="变量" value="VARIABLE" />
+              <el-option label="常量" value="CONSTANT" />
+            </el-select>
+          </div>
         </div>
         
         <div class="input-container">
@@ -37,6 +48,9 @@
                 v-if="input.type.toLowerCase() === 'string'"
                 v-model="constantInputs[key]"
                 placeholder="输入文本"
+                type="textarea"
+                :autosize="{ minRows: 1, maxRows: 5 }"
+                spellcheck="false"
               />
               <el-input-number
                 v-else-if="input.type.toLowerCase() === 'number'"
@@ -60,15 +74,7 @@
             </template>
           </div>
           
-          <!-- Input type selector -->
-          <div class="input-type-select">
-            <el-select 
-              v-model="inputTypeMap[key]"
-              class="type-selector">
-              <el-option label="变量" value="VARIABLE" />
-              <el-option label="常量" value="CONSTANT" />
-            </el-select>
-          </div>
+          
         </div>
         
         <div class="param-description">{{ input.description }}</div>
@@ -79,7 +85,7 @@
     <div class="output-section" v-if="selectedTool?.outputs">
       <b>输出变量</b>
       <div v-for="(output, key) in selectedTool.outputs" :key="key" class="param-item">
-        <div class="param-label-container">
+        <div class="row">
           <div class="param-label">{{ key }}</div>
           <div class="param-type">{{ output.type }}</div>
         </div>
@@ -170,7 +176,22 @@ watch(inputTypeMap, (newVal, oldVal) => {
 }
 
 .param-item {
-  margin: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  /* background-color: var(--el-fill-color-light); */
+}
+
+.param-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.param-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .input-selector {
@@ -181,7 +202,7 @@ watch(inputTypeMap, (newVal, oldVal) => {
 .input-container {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .input-field {
@@ -189,24 +210,22 @@ watch(inputTypeMap, (newVal, oldVal) => {
 }
 
 .input-type-select {
-  min-width: 80px;
+  min-width: 90px;
+}
+
+.type-selector {
+  width: 90px;
 }
 
 .param-description {
   font-size: 12px;
   color: var(--el-text-color-secondary);
-  margin-top: 4px;
-}
-
-.param-label-container {
-  display: flex;
-  justify-content: start;
-  align-items: center;
+  margin-top: 6px;
+  line-height: 1.4;
 }
 
 .param-label {
   font-weight: bold;
-  margin-right: 10px;
 }
 
 .param-type {
