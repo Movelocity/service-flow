@@ -20,12 +20,14 @@ public class WorkflowNode {
     private String toolName;        // Only used for FUNCTION type nodes
     private Map<String, Object> context; // Node context for function outputs
     private List<ConditionCase> conditions; // Only used for CONDITION type nodes
+    private Map<String, VariableDefinition> inputMap; // Input parameter mappings for FUNCTION type nodes
 
     public WorkflowNode() {
         this.nextNodes = new HashMap<>();
         this.position = new Position(0, 0);
         this.context = new HashMap<>();
         this.conditions = new ArrayList<>();
+        this.inputMap = new HashMap<>();
     }
 
     // Getters and setters
@@ -167,6 +169,42 @@ public class WorkflowNode {
 
     public void setConditions(List<ConditionCase> conditions) {
         this.conditions = conditions != null ? conditions : new ArrayList<>();
+    }
+
+    /**
+     * Get the input parameter mappings for this node
+     * @return Map of parameter name to variable definition
+     */
+    public Map<String, VariableDefinition> getInputMap() {
+        return inputMap;
+    }
+
+    /**
+     * Set the input parameter mappings for this node
+     * @param inputMap Map of parameter name to variable definition
+     */
+    public void setInputMap(Map<String, VariableDefinition> inputMap) {
+        this.inputMap = inputMap != null ? inputMap : new HashMap<>();
+    }
+
+    /**
+     * Add a parameter mapping to this node's inputMap
+     * @param paramName Parameter name
+     * @param variableDefinition Variable definition for the parameter
+     */
+    public void addInputMapping(String paramName, VariableDefinition variableDefinition) {
+        if (paramName != null && variableDefinition != null) {
+            this.inputMap.put(paramName, variableDefinition);
+        }
+    }
+
+    /**
+     * Get a parameter mapping from this node's inputMap
+     * @param paramName Parameter name
+     * @return Variable definition for the parameter or null if not found
+     */
+    public VariableDefinition getInputMapping(String paramName) {
+        return this.inputMap.get(paramName);
     }
 
     /**

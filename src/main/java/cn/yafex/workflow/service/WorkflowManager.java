@@ -195,8 +195,11 @@ public class WorkflowManager {
                     
                 case FUNCTION:
                     if (node.getToolName() != null) {
+                        // Prepare tool inputs based on inputMap if available
+                        Map<String, Object> toolInputs = prepareToolInputs(node, context);
+                        
                         // Execute the tool and get its outputs
-                        result = executeTool(node.getToolName(), context.getVariables());
+                        result = executeTool(node.getToolName(), toolInputs);
                         // Update context with tool outputs
                         context.getVariables().putAll(result);
                     }
@@ -219,6 +222,80 @@ public class WorkflowManager {
         }
         
         return result;
+    }
+
+    /**
+     * Prepare tool inputs based on inputMap if available
+     * @param node Function node with inputMap
+     * @param context Execution context
+     * @return Prepared inputs for the tool
+     */
+    private Map<String, Object> prepareToolInputs(WorkflowNode node, WorkflowContext context) {
+        Map<String, Object> toolInputs = new HashMap<>(context.getVariables());
+        
+        // If inputMap is not defined or empty, use all context variables as inputs
+        if (node.getInputMap() == null || node.getInputMap().isEmpty()) {
+            return toolInputs;
+        }
+        
+        // Create a new map for tool inputs
+        Map<String, Object> mappedInputs = new HashMap<>();
+        
+        // Process each input mapping
+        for (Map.Entry<String, VariableDefinition> entry : node.getInputMap().entrySet()) {
+            String paramName = entry.getKey();
+            VariableDefinition varDef = entry.getValue();
+            
+            if (varDef == null) {
+                continue;
+            }
+            
+            if ("CONSTANT".equals(varDef.getName())) {
+                // For constants, use the value directly
+                mappedInputs.put(paramName, varDef.getValue());
+            } else {
+                // For variables, look up the value in context
+                Object value = null;
+                
+                if (varDef.getParent() != null && !varDef.getParent().isEmpty()) {
+                    // If parent is specified, look up the value in the parent context
+                    // Parent could be a node ID or another context identifier
+                    Map<String, Object> parentContext = getParentContext(varDef.getParent(), context);
+                    if (parentContext != null && parentContext.containsKey(varDef.getName())) {
+                        value = parentContext.get(varDef.getName());
+                    }
+                } else {
+                    // No parent specified, look in global context
+                    value = context.getVariables().get(varDef.getName());
+                }
+                
+                if (value != null) {
+                    mappedInputs.put(paramName, value);
+                }
+            }
+        }
+        
+        return mappedInputs;
+    }
+    
+    /**
+     * Get parent context based on parent identifier
+     * @param parentId Parent identifier (usually a node ID)
+     * @param context Current workflow context
+     * @return Parent context map or null if not found
+     */
+    private Map<String, Object> getParentContext(String parentId, WorkflowContext context) {
+        // If parent is a node ID, get the node's context
+        if (context.getWorkflow() != null) {
+            for (WorkflowNode node : context.getWorkflow().getNodes()) {
+                if (parentId.equals(node.getId())) {
+                    return node.getContext();
+                }
+            }
+        }
+        
+        // If parent is not found or not a node ID, return global context
+        return context.getVariables();
     }
 
     /**
