@@ -72,7 +72,7 @@
         v-for="node in workflow?.nodes"
         :key="node.id"
         :node="node"
-        :is-selected="node.id === selectedNodeId"
+        :is-selected="selectedNodeId === node.id"
         @start-connection="startConnection"
         @end-connection="endConnection"
       />
@@ -110,6 +110,7 @@ const position = computed(() => store.editorState.canvasState.position);
 const tempConnection = ref({
   isCreating: false,
   sourceNodeId: '',
+  sourceCondition: '',
   sourcePosition: { x: 0, y: 0 },
   currentPosition: { x: 0, y: 0 }
 });
@@ -223,7 +224,7 @@ function handleGlobalMouseUp(event: MouseEvent) {
 }
 
 // 连接线操作
-function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent) {
+function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent, condition?: string) {
   if (!isOutput) return;
 
   const sourceNode = getNode(nodeId);
@@ -231,14 +232,34 @@ function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent) {
 
   const rect = canvasContainer.value?.getBoundingClientRect();
   if (!rect) return;
+  
+  // Calculate source position based on the connection point
+  let sourcePosition = {
+    x: sourceNode.position.x + 200, // Default node width
+    y: sourceNode.position.y + 40   // Default node height/2
+  };
+  
+  // For condition nodes, calculate position based on the condition index
+  if (sourceNode.type === NodeType.CONDITION && sourceNode.conditions && condition) {
+    let index = -1;
+    if (condition.startsWith('case')) {
+      index = parseInt(condition.slice(4)) - 1;
+    } else if (condition === 'else' && sourceNode.conditions.length > 0) {
+      // ELSE is the last condition
+      index = sourceNode.conditions.length - 1;
+    }
+    
+    if (index >= 0 && index < sourceNode.conditions.length) {
+      // Align with the appropriate connection point
+      sourcePosition.y = sourceNode.position.y + 40 + (index * 24);
+    }
+  }
 
   tempConnection.value = {
     isCreating: true,
     sourceNodeId: nodeId,
-    sourcePosition: {
-      x: sourceNode.position.x + 100, // 节点宽度
-      y: sourceNode.position.y + 30   // 节点高度的一半
-    },
+    sourceCondition: condition || 'default',
+    sourcePosition,
     currentPosition: {
       x: (event.clientX - rect.left) / scale.value - position.value.x,
       y: (event.clientY - rect.top) / scale.value - position.value.y
@@ -246,23 +267,19 @@ function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent) {
   };
 }
 
-function endConnection(nodeId: string, isOutput: boolean) {
+function endConnection(nodeId: string, isOutput: boolean, condition?: string) {
   if (isOutput || !tempConnection.value.isCreating) return;
 
   if (tempConnection.value.sourceNodeId !== nodeId) {
     const sourceNode = getNode(tempConnection.value.sourceNodeId);
     if (!sourceNode) return;
 
-    // 根据节点类型决定连接条件
-    if (sourceNode.type === NodeType.CONDITION) {
-      if (!Object.keys(sourceNode.nextNodes).includes('true')) {
-        store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'true');
-      } else if (!Object.keys(sourceNode.nextNodes).includes('false')) {
-        store.addConnection(tempConnection.value.sourceNodeId, nodeId, 'false');
-      }
-    } else {
-      store.addConnection(tempConnection.value.sourceNodeId, nodeId);
-    }
+    // Use the condition from the tempConnection that was set in startConnection
+    store.addConnection(
+      tempConnection.value.sourceNodeId, 
+      nodeId, 
+      tempConnection.value.sourceCondition || 'default'
+    );
   }
 
   tempConnection.value.isCreating = false;

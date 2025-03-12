@@ -30,11 +30,33 @@
     </div>
 
     <!-- 连接点 -->
+    <template v-if="node.type === 'CONDITION' && node.conditions">
+      <!-- Multiple output points for condition nodes - aligned with condition hints -->
+      <div 
+        v-for="(condition, index) in node.conditions" 
+        :key="index"
+        class="connection-point output"
+        :class="'case-' + (index + 1)"
+        :style="{
+          right: '-5px',
+          /* Position the connection point at the same vertical position as the condition hint */
+          top: `${40 + (index * 24)}px`, 
+          transform: 'translateY(-50%)'
+        }"
+        @mousedown.stop="(e) => onOutputPointMouseDown(e, isEmptyLastCondition(index) ? 'else' : 'case' + (index + 1))"
+        @mouseup.stop="(e) => onOutputPointMouseUp(e, isEmptyLastCondition(index) ? 'else' : 'case' + (index + 1))"
+      >
+        <!-- Add label to indicate which case this connection point represents -->
+        <div class="connection-point-label">
+          {{ isEmptyLastCondition(index) ? 'ELSE' : 'Case ' + (index + 1) }}
+        </div>
+      </div>
+    </template>
     <div
-      v-if="node.type !== 'END'"
+      v-else-if="node.type !== 'END'"
       class="connection-point output"
-      @mousedown.stop="onOutputPointMouseDown"
-      @mouseup.stop="onOutputPointMouseUp"
+      @mousedown.stop="(e) => onOutputPointMouseDown(e, 'default')"
+      @mouseup.stop="(e) => onOutputPointMouseUp(e, 'default')"
     />
     <div
       v-if="node.type !== 'START'"
@@ -57,8 +79,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'startConnection', nodeId: string, isOutput: boolean, event: MouseEvent): void;
-  (e: 'endConnection', nodeId: string, isOutput: boolean): void;
+  (e: 'startConnection', nodeId: string, isOutput: boolean, event: MouseEvent, condition?: string): void;
+  (e: 'endConnection', nodeId: string, isOutput: boolean, condition?: string): void;
 }>();
 
 const store = useWorkflowStore();
@@ -128,12 +150,12 @@ function onNodeClick(event: MouseEvent) {
 }
 
 // 连接点事件处理
-function onOutputPointMouseDown(e: MouseEvent) {
-  emit('startConnection', props.node.id, true, e);
+function onOutputPointMouseDown(e: MouseEvent, condition: string = 'default') {
+  emit('startConnection', props.node.id, true, e, condition);
 }
 
-function onOutputPointMouseUp(_e: MouseEvent) {
-  emit('endConnection', props.node.id, true);
+function onOutputPointMouseUp(e: MouseEvent, condition: string = 'default') {
+  emit('endConnection', props.node.id, true, condition);
 }
 
 function onInputPointMouseDown(e: MouseEvent) {
@@ -142,6 +164,13 @@ function onInputPointMouseDown(e: MouseEvent) {
 
 function onInputPointMouseUp(_e: MouseEvent) {
   emit('endConnection', props.node.id, false);
+}
+
+// Check if this is the last condition and if it's empty (for ELSE branch)
+function isEmptyLastCondition(index: number): boolean {
+  if (!props.node.conditions || props.node.conditions.length === 0) return false;
+  return index === props.node.conditions.length - 1 && 
+         (!props.node.conditions[index].conditions || props.node.conditions[index].conditions.length === 0);
 }
 </script>
 
@@ -222,16 +251,41 @@ function onInputPointMouseUp(_e: MouseEvent) {
 
 .connection-point.output {
   right: -5px;
+  /* Default position for non-condition nodes */
   top: 50%;
   transform: translateY(-50%);
 }
 
-.connection-point.output:hover {
-  transform: translateY(-50%) scale(1.2);
+/* Position for the label of connection points */
+.connection-point-label {
+  position: absolute;
+  right: 15px;
+  top: 0;
+  font-size: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
-.connection-point.input:hover {
-  transform: translateY(-50%) scale(1.2);
+.connection-point:hover .connection-point-label {
+  opacity: 1;
+}
+
+/* Hide color distinction between case types - as per requirement #1 */
+.connection-point.output.case-1,
+.connection-point.output.case-2,
+.connection-point.output.case-3,
+.connection-point.output.case-4 {
+  background-color: var(--connection-point);
+}
+
+.connection-point.output.case-1:hover,
+.connection-point.output.case-2:hover,
+.connection-point.output.case-3:hover,
+.connection-point.output.case-4:hover {
+  background-color: var(--connection-point-hover);
+  transform: scale(1.2);
 }
 
 .node-title {

@@ -276,6 +276,30 @@ export const useWorkflowStore = defineStore('workflow', {
       // 检查是否已存在相同条件的连接
       if (sourceNode.nextNodes[condition]) return;
 
+      // 对于条件节点，验证连接条件的有效性
+      if (sourceNode.type === NodeType.CONDITION && sourceNode.conditions) {
+        // Check if it's an empty last condition treated as ELSE
+        const lastIndex = sourceNode.conditions.length - 1;
+        const isEmptyLastCondition = sourceNode.conditions.length > 0 && 
+          condition.startsWith('case') && 
+          parseInt(condition.slice(4)) === sourceNode.conditions.length && 
+          lastIndex >= 0 &&
+          (!sourceNode.conditions[lastIndex].conditions ||
+           sourceNode.conditions[lastIndex].conditions.length === 0);
+        
+        // If it's an empty last condition, treat it as ELSE
+        if (isEmptyLastCondition) {
+          condition = 'else';
+        }
+        
+        // 检查是否是有效的条件连接
+        const isValidCondition = condition === 'else' || 
+          (condition.startsWith('case') && 
+           parseInt(condition.slice(4)) <= sourceNode.conditions.length);
+        
+        if (!isValidCondition) return;
+      }
+
       // 旧的后继节点先传播更新
       const oldTargetNode = this.currentWorkflow.nodes.find(n => n.id === targetNodeId);
       if (oldTargetNode) {
@@ -287,7 +311,6 @@ export const useWorkflowStore = defineStore('workflow', {
         ...sourceNode.nextNodes,
         [condition]: targetNodeId
       };
-
 
       // 更新目标节点及其下游节点的context
       this.updateNodeContextChain(sourceNodeId);

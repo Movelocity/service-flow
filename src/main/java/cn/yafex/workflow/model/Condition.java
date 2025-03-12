@@ -109,6 +109,7 @@ public class Condition {
         return value;
     }
 
+	@SuppressWarnings("unchecked")
     private boolean compareValues(Object left, Object right, String operator) {
         if (left == null || right == null) return false;
 
