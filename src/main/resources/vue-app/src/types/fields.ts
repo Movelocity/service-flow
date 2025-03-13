@@ -4,11 +4,11 @@
  * 变量类型枚举
  */
 export enum VariableType {
-  STRING = 'string',
-  NUMBER = 'number',
-  BOOLEAN = 'boolean',
-  OBJECT = 'object',
-  ARRAY = 'array'
+  STRING = 'STRING',
+  NUMBER = 'NUMBER',
+  BOOLEAN = 'BOOLEAN',
+  OBJECT = 'OBJECT',
+  ARRAY = 'ARRAY'
 }
 
 /**

@@ -48,7 +48,7 @@
             <!-- Constant input based on type -->
             <template v-else>
               <el-input
-                v-if="input.type.toLowerCase() === 'string'"
+                v-if="input.type === 'STRING'"
                 v-model="constantInputs[key]"
                 placeholder="输入文本"
                 type="textarea"
@@ -56,13 +56,13 @@
                 spellcheck="false"
               />
               <el-input-number
-                v-else-if="input.type.toLowerCase() === 'number'"
+                v-else-if="input.type === 'NUMBER'"
                 v-model="constantInputs[key]"
                 :controls="false"
                 placeholder="输入数字"
               />
               <el-select
-                v-else-if="input.type.toLowerCase() === 'boolean'"
+                v-else-if="input.type === 'BOOLEAN'"
                 v-model="constantInputs[key]"
                 placeholder="选择布尔值"
               >

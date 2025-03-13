@@ -137,7 +137,7 @@ const condition = computed(() => ({
 // 当前选中变量的类型
 const selectedVarType = computed(() => {
   const type = condition.value.leftOperand.type
-  return type.toLowerCase();
+  return type;
 });
 
 // 根据变量类型获取可用的操作符
