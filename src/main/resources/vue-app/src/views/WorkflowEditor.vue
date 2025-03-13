@@ -72,7 +72,7 @@ import { useWorkflowStore } from '@/stores/workflow';
 import { workflowApi } from '@/services/workflowApi';
 import WorkflowCanvas from '@/components/workflow/WorkflowCanvas.vue';
 import NodeEditor from '@/components/NodeEditor.vue';
-import ThemeButton from '@/components/ThemeButton.vue';
+import ThemeButton from '@/components/common/ThemeButton.vue';
 import DebugPanel from '@/components/DebugPanel.vue';
 import type { NodeExecutionEvent } from '@/types/debug';
 

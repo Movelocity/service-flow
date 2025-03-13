@@ -41,6 +41,7 @@ import { Delete, Edit } from '@element-plus/icons-vue';
 
 interface EditingVariable extends VariableDefinition {
   name: string;
+  originalName?: string;
 }
 
 const store = useWorkflowStore();
@@ -59,7 +60,10 @@ const addVariable = () => {
 };
 
 const editVariable = (variable: VariableDefinition) => {
-  editingVariable.value = { ...variable };
+  editingVariable.value = { 
+    ...variable,
+    originalName: variable.name 
+  };
   showVariableModal.value = true;
 };
 
@@ -73,7 +77,12 @@ const handleVariableSave = () => {
   if (!workflow.value || !editingVariable.value) return;
 
   const newVariable = { ...editingVariable.value };
-  const existingIndex = workflow.value.inputs.findIndex(input => input.name === newVariable.name);
+  const originalName = editingVariable.value.originalName;
+  delete newVariable.originalName;  // Remove originalName before saving
+  
+  const existingIndex = workflow.value.inputs.findIndex(
+    input => input.name === (originalName ?? newVariable.name)
+  );
 
   if (existingIndex >= 0) {
     // Update existing variable

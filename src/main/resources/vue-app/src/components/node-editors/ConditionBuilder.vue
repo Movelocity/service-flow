@@ -4,22 +4,13 @@
       <el-form :model="condition" label-position="top">
         <div class="condition-row">
           <div class="condition-field">
-            <el-select 
+            <VariableSelector
               :model-value="condition.leftOperand.name"
-              @change="updateLeftOperand"
+              @update:model-value="updateLeftOperand"
+              :available-context="availableContext"
               placeholder="选择变量"
-              class="full-width"
-            >
-              <el-option
-                v-for="variable in availableContext"
-                :key="variable.name"
-                :label="variable.name"
-                :value="variable.name"
-              >
-                <span>{{ variable.name }}</span>
-                <span class="variable-type">{{ variable.type }}</span>
-              </el-option>
-            </el-select>
+              :full-width="true"
+            />
           </div>
 
           <div class="condition-field operator-field">
@@ -76,23 +67,14 @@
                     placeholder="输入比较值"
                   />
                 </template>
-                <el-select
+                <VariableSelector
                   v-else
                   :model-value="condition.rightOperand.name"
-                  @change="updateRightOperand"
+                  @update:model-value="updateRightOperand"
+                  :available-context="availableContext"
                   placeholder="选择变量"
-                  class="full-width"
-                >
-                  <el-option
-                    v-for="variable in availableContext"
-                    :key="variable.name"
-                    :label="variable.name"
-                    :value="variable.name"
-                  >
-                    <span>{{ variable.name }}</span>
-                    <span class="variable-type">{{ variable.type }}</span>
-                  </el-option>
-                </el-select>
+                  :full-width="true"
+                />
               </div>
               
               <div class="type-select">
@@ -115,6 +97,8 @@ import { useWorkflowStore } from '@/stores/workflow';
 import type { Condition } from '@/types/fields';
 import { VariableType } from '@/types/fields';
 import { useAvailableContext } from '@/composables/useAvailableContext'
+import VariableSelector from '@/components/common/VariableSelector.vue'
+
 const props = defineProps<{
   modelValue: Condition;
   showPreview?: boolean;

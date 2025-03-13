@@ -29,21 +29,13 @@
         <div class="input-container">
           <div class="input-field">
             <!-- Variable selector -->
-            <el-select 
+            <VariableSelector
               v-if="inputTypeMap[key] === 'VARIABLE'"
-              v-model="variableInputs[key]" 
-              class="input-selector"
-              placeholder="选择输入来源">
-              <el-option
-                v-for="variable in availableContext"
-                :key="variable.name"
-                :label="variable.name"
-                :value="variable.name"
-              >
-                <span>{{ variable.name }}</span>
-                <span class="variable-type">{{ variable.type }}</span>
-              </el-option>
-            </el-select>
+              v-model="variableInputs[key]"
+              :available-context="availableContext"
+              placeholder="选择输入来源"
+              :full-width="true"
+            />
             
             <!-- Constant input based on type -->
             <template v-else>
@@ -100,6 +92,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useWorkflowStore } from '@/stores/workflow'
 import { useAvailableContext } from '@/composables/useAvailableContext'
+import VariableSelector from '@/components/common/VariableSelector.vue'
 
 const props = defineProps<{
   nodeId: string

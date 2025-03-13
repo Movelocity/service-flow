@@ -53,7 +53,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import NodeIcon from '@/components/NodeIcon.vue';
+import NodeIcon from '@/components/common/NodeIcon.vue';
 import type { NodeExecutionEvent } from '@/types/debug';
 
 const props = defineProps<{

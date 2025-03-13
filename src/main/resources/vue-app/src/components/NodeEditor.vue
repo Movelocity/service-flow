@@ -82,7 +82,7 @@
 import { computed } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
 import { Delete } from '@element-plus/icons-vue';
-import NodeIcon from '@/components/NodeIcon.vue';
+import NodeIcon from '@/components/common/NodeIcon.vue';
 import StartNodeEditor from '@/components/node-editors/StartNodeEditor.vue';
 import ConditionNodeEditor from '@/components/node-editors/ConditionNodeEditor.vue';
 import FunctionNodeEditor from '@/components/node-editors/FunctionNodeEditor.vue';

@@ -71,7 +71,7 @@
 import { computed } from 'vue';
 import type { Node } from '@/types/workflow';
 import { useWorkflowStore } from '@/stores/workflow';
-import NodeIcon from '@/components/NodeIcon.vue';
+import NodeIcon from '@/components/common/NodeIcon.vue';
 
 const props = defineProps<{
   node: Node;
