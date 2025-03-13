@@ -378,7 +378,7 @@ export const useWorkflowStore = defineStore('workflow', {
         const savedWorkflow = await workflowApi.saveWorkflow(convertAppToApiWorkflow(workflowToSave));
         
         // Reload the workflow to ensure consistency
-        this.updateWorkflow(convertApiToAppWorkflow(savedWorkflow));
+        // this.updateWorkflow(convertApiToAppWorkflow(savedWorkflow));
         this.isDirty = false;
         return savedWorkflow;
       } catch (error) {

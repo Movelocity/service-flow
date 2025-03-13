@@ -40,7 +40,7 @@
       </template>
 
       <!-- 连接信息 -->
-      <div class="outbound-connections">
+      <div class="outbound-connections" v-if="selectedNode?.type !== 'END'">
         <label class="form-label">下一步</label>
         <div class="connections-list">
           <template v-if="nodeConnections.length">

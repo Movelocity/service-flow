@@ -11,7 +11,6 @@
           <span class="variable-type">{{ def.type }}</span>
         </div>
         <div class="actions">
-          <!-- <span v-if="def.description" class="description">{{ def.description }}</span> -->
           <el-icon @click="editVariable(def)" class="icon-btn">
             <Edit />
           </el-icon>

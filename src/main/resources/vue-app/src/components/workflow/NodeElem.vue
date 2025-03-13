@@ -22,9 +22,9 @@
           {{ condition.hint || "ELSE" }}
         </div>
       </template>
-      <template v-else-if="node.type === 'FUNCTION'">
+      <template v-else>
         <div class="function-info">
-          {{ node.toolName || '未设置函数' }}
+          {{ node.description }}
         </div>
       </template>
     </div>
@@ -224,7 +224,7 @@ function isEmptyLastCondition(index: number): boolean {
   margin: 2px;
   border-radius: 4px;
   padding: 2px 4px;
-  background-color: var(--card-shadow);
+  background-color: var(--card-hint);
 }
 
 .function-info {

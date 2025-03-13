@@ -1,17 +1,14 @@
 package cn.yafex.tools.schema;
 
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.ArrayList;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.annotation.JSONType;
 
 /**
  * Defines the structure and constraints of a field in a tool's input or output
  */
-@JSONType(includes = {"name", "description", "type", "required", "defaultValue", "pattern", 
-                     "constraints", "enumValues", "properties", "itemDefinition"})
+@JSONType(includes = {"name", "description", "type", "required", "defaultValue", "constraints", "properties", "itemDefinition"})
 public class FieldDefinition {
     @JSONField(name = "name", ordinal = 1)
     private String name;
@@ -28,25 +25,18 @@ public class FieldDefinition {
     @JSONField(name = "defaultValue", ordinal = 5)
     private String defaultValue;
 
-    @JSONField(name = "pattern", ordinal = 6)
-    private String pattern;
-
-    @JSONField(name = "constraints", ordinal = 7)
+    @JSONField(name = "constraints", ordinal = 6)
     private Map<String, Object> constraints;
 
-    @JSONField(name = "enumValues", ordinal = 8)
-    private List<String> enumValues;
-
-    @JSONField(name = "properties", ordinal = 9)
+    @JSONField(name = "properties", ordinal = 7)
     private Map<String, FieldDefinition> properties;
 
-    @JSONField(name = "itemDefinition", ordinal = 10)
+    @JSONField(name = "itemDefinition", ordinal = 8)
     private FieldDefinition itemDefinition;
 
     public FieldDefinition() {
         // Default constructor for Fastjson
         this.properties = new HashMap<>();
-        this.enumValues = new ArrayList<>();
         this.constraints = new HashMap<>();
     }
 
@@ -63,9 +53,7 @@ public class FieldDefinition {
         this.type = type;
         this.required = required;
         this.defaultValue = defaultValue;
-        this.pattern = pattern;
         this.properties = new HashMap<>();
-        this.enumValues = new ArrayList<>();
         this.constraints = new HashMap<>();
     }
 
@@ -76,9 +64,8 @@ public class FieldDefinition {
         this.type = other.type;
         this.required = other.required;
         this.defaultValue = other.defaultValue;
-        this.pattern = other.pattern;
         this.constraints = other.constraints != null ? new HashMap<>(other.constraints) : new HashMap<>();
-        this.enumValues = other.enumValues != null ? new ArrayList<>(other.enumValues) : new ArrayList<>();
+        // this.enumValues = other.enumValues != null ? new ArrayList<>(other.enumValues) : new ArrayList<>();
         
         // Deep copy properties
         this.properties = new HashMap<>();
@@ -108,18 +95,15 @@ public class FieldDefinition {
     public String getDefaultValue() { return defaultValue; }
     public void setDefaultValue(String defaultValue) { this.defaultValue = defaultValue; }
 
-    public String getPattern() { return pattern; }
-    public void setPattern(String pattern) { this.pattern = pattern; }
-
     public Map<String, Object> getConstraints() { return constraints; }
     public void setConstraints(Map<String, Object> constraints) { 
         this.constraints = constraints != null ? constraints : new HashMap<>(); 
     }
 
-    public List<String> getEnumValues() { return enumValues; }
-    public void setEnumValues(List<String> enumValues) { 
-        this.enumValues = enumValues != null ? enumValues : new ArrayList<>(); 
-    }
+    // public List<String> getEnumValues() { return enumValues; }
+    // public void setEnumValues(List<String> enumValues) { 
+    //     this.enumValues = enumValues != null ? enumValues : new ArrayList<>(); 
+    // }
 
     public Map<String, FieldDefinition> getProperties() { return properties; }
     public void setProperties(Map<String, FieldDefinition> properties) { 

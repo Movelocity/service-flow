@@ -183,17 +183,6 @@ public class JsonFileHandler {
                     }
                     
                     logger.debug("Loaded tool: {}", toolName);
-                    // if (tool.getInputs() != null) {
-                    //     for (Map.Entry<String, FieldDefinition> fieldEntry : tool.getInputs().entrySet()) {
-                    //         logger.debug("Tool {} input field: {} = {}", toolName, fieldEntry.getKey(), fieldEntry.getValue());
-                    //     }
-                    // }
-                    
-                    // if (tool.getOutputs() != null) {
-                    //     for (Map.Entry<String, FieldDefinition> fieldEntry : tool.getOutputs().entrySet()) {
-                    //         logger.debug("Tool {} output field: {} = {}", toolName, fieldEntry.getKey(), fieldEntry.getValue());
-                    //     }
-                    // }
                 }
             }
             
@@ -257,17 +246,11 @@ public class JsonFileHandler {
             field.setType(parseFieldType(jsonObject.getString("type")));
             field.setRequired(jsonObject.getBooleanValue("required"));
             field.setDefaultValue(jsonObject.getString("defaultValue"));
-            field.setPattern(jsonObject.getString("pattern"));
             
             // Handle collections with proper initialization
             JSONObject constraints = jsonObject.getJSONObject("constraints");
             if (constraints != null) {
                 field.setConstraints(constraints.getInnerMap());
-            }
-            
-            JSONArray enumValues = jsonObject.getJSONArray("enumValues");
-            if (enumValues != null) {
-                field.setEnumValues(enumValues.toJavaList(String.class));
             }
             
             JSONObject properties = jsonObject.getJSONObject("properties");

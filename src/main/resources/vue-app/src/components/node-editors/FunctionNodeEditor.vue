@@ -35,11 +35,14 @@
               class="input-selector"
               placeholder="选择输入来源">
               <el-option
-                v-for="value in availableContext"
-                :key="value.name"
-                :label="value.name"
-                :value="value.name"
-              />
+                v-for="variable in availableContext"
+                :key="variable.name"
+                :label="variable.name"
+                :value="variable.name"
+              >
+                <span>{{ variable.name }}</span>
+                <span class="variable-type">{{ variable.type }}</span>
+              </el-option>
             </el-select>
             
             <!-- Constant input based on type -->
@@ -73,8 +76,6 @@
               />
             </template>
           </div>
-          
-          
         </div>
         
         <div class="param-description">{{ input.description }}</div>
