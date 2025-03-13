@@ -8,6 +8,7 @@ import cn.yafex.workflow.util.JsonFileHandler;
 import cn.yafex.tools.core.ToolDefinition;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
+import cn.yafex.tools.core.ToolRegistry;
 import cn.yafex.tools.exceptions.ToolException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,20 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.alibaba.fastjson.JSON;
+import java.util.List;
+
+/**
+ * 条件操作符枚举
+ */
+enum ConditionOperator {
+    EQUALS,
+    NOT_EQUALS,
+    GREATER_THAN,
+    LESS_THAN,
+    GREATER_THAN_OR_EQUALS,
+    LESS_THAN_OR_EQUALS
+}
 
 /**
  * Service for managing and executing workflows
@@ -28,9 +43,8 @@ public class WorkflowManager {
     private final WorkflowLogger workflowLogger;
     private final ExecutorService executorService;
     private final Map<String, WorkflowContext> activeWorkflows;
-    private final Map<String, ToolHandler> toolHandlers;
     private final WorkflowDebugService debugService;
-
+	
     @Autowired
     public WorkflowManager(JsonFileHandler jsonFileHandler, WorkflowLogger workflowLogger, WorkflowDebugService debugService) {
         this.jsonFileHandler = jsonFileHandler;
@@ -38,48 +52,13 @@ public class WorkflowManager {
         this.debugService = debugService;
         this.executorService = Executors.newCachedThreadPool();
         this.activeWorkflows = new ConcurrentHashMap<>();
-        this.toolHandlers = new ConcurrentHashMap<>();
     }
 
     /**
-     * Register a tool handler
-     * @param handler The tool handler to register
-     * @throws IllegalArgumentException if a handler with the same name already exists
-     */
-    public void registerToolHandler(ToolHandler handler) {
-        ToolDefinition definition = handler.getDefinition();
-        String toolName = definition.getName();
-        
-        if (toolHandlers.containsKey(toolName)) {
-            throw new IllegalArgumentException("工具已存在注册: " + toolName);
-        }
-        
-        toolHandlers.put(toolName, handler);
-    }
-
-    /**
-     * Check if a tool handler is registered
-     * @param toolName The name of the tool
-     * @return true if registered, false otherwise
-     */
-    public boolean hasToolHandler(String toolName) {
-        return toolHandlers.containsKey(toolName);
-    }
-
-    /**
-     * Get a tool handler by name
-     * @param toolName The name of the tool
-     * @return The tool handler, or null if not found
-     */
-    public ToolHandler getToolHandler(String toolName) {
-        return toolHandlers.get(toolName);
-    }
-
-    /**
-     * Start execution of a workflow
-     * @param workflowId ID of the workflow to execute
-     * @param initialVariables Initial global variables
-     * @return Execution ID
+     * 启动工作流执行
+     * @param workflowId 要执行的工作流ID
+     * @param initialVariables 初始全局变量
+     * @return 执行ID
      */
     public String startWorkflow(String workflowId, Map<String, Object> initialVariables) {
         try {
@@ -104,9 +83,9 @@ public class WorkflowManager {
     }
 
     /**
-     * Execute a workflow
-     * @param workflow Workflow to execute
-     * @param context Execution context
+     * 执行工作流
+     * @param workflow 要执行的工作流
+     * @param context 执行上下文
      */
     private void executeWorkflow(Workflow workflow, WorkflowContext context) {
         long startTime = System.currentTimeMillis();
@@ -125,26 +104,7 @@ public class WorkflowManager {
                 context.setCurrentNodeId(currentNodeId);
                 long nodeStartTime = System.currentTimeMillis();
                 
-                // Send node enter event
-                NodeExecutionEvent enterEvent = new NodeExecutionEvent(
-                    context.getExecutionId(),
-                    node.getId(),
-                    node.getName(),
-                    node.getType().toString(),
-                    "ENTER"
-                );
-                enterEvent.setGlobalVariables(new HashMap<>(context.getVariables()));
-                enterEvent.setNodeContext(node.getContext() != null ? new HashMap<>(node.getContext()) : new HashMap<>());
-                debugService.sendDebugEvent(enterEvent);
-                
-                // Execute node based on its type
-                Map<String, Object> nodeResult = executeNode(node, context);
-                
-                // Update node context for function nodes
-                if (node.getType() == NodeType.FUNCTION) {
-                    node.setContext(new HashMap<>(nodeResult));
-                }
-
+                // 收集节点执行参数信息
                 Map<String, Object> nodeParameters = new HashMap<>();
                 nodeParameters.put("toolName", node.getToolName());
                 if (node.getType() == NodeType.FUNCTION && workflow.hasTool(node.getToolName())) {
@@ -152,9 +112,29 @@ public class WorkflowManager {
                     nodeParameters.put("toolDescription", toolDef.getDescription());
                 }
 
+                // 设置节点进入事件
+                NodeExecutionEvent enterEvent = new NodeExecutionEvent(
+                    context.getExecutionId(),
+                    node.getId(),
+                    node.getName(),
+                    node.getType().toString(),
+                    "ENTER"
+                );
+                enterEvent.setContextVariables(new HashMap<>(context.getVariables()));
+                debugService.sendDebugEvent(enterEvent);
+                
+                // 根据节点类型执行节点
+                Map<String, Object> nodeResult = executeNode(node, context);
+                
+                // 更新节点上下文
+                // if (node.getType() == NodeType.FUNCTION) {
+                //     node.setContext(new HashMap<>(nodeResult));
+                // }
+
                 long nodeDuration = System.currentTimeMillis() - nodeStartTime;
                 workflowLogger.logNodeExecution(
                     context.getExecutionId(),
+                    workflow.getId(),
                     node.getName(),
                     node.getType().toString(),
                     nodeParameters,
@@ -162,29 +142,28 @@ public class WorkflowManager {
                     nodeDuration
                 );
 
-                // Send node complete event
+                // 发送节点完成事件
                 NodeExecutionEvent completeEvent = new NodeExecutionEvent(
                     context.getExecutionId(),
-                    node.getId(),
+                    node.getName(),
                     node.getName(),
                     node.getType().toString(),
                     "COMPLETE"
                 );
-                completeEvent.setGlobalVariables(new HashMap<>(context.getVariables()));
-                completeEvent.setNodeContext(node.getContext() != null ? new HashMap<>(node.getContext()) : new HashMap<>());
+                completeEvent.setNodeResult(nodeResult);
                 completeEvent.setDuration(nodeDuration);
                 debugService.sendDebugEvent(completeEvent);
 
-                // Determine next node
+                // 确定下一个节点
                 if (node.getType() == NodeType.END) {
-                    // Copy relevant context variables to workflow outputs
+                    // 将相关上下文变量复制到工作流输出
                     workflow.getOutputs().putAll(context.getVariables());
                     currentNodeId = null;
                 } else if (node.getType() == NodeType.CONDITION) {
-                    boolean condition = evaluateCondition(node, context);
-                    currentNodeId = condition ? 
-                        node.getNextNodes().get("true") : 
-                        node.getNextNodes().get("false");
+                    // 从节点执行结果中获取条件评估结果
+                    Map<String, Object> evaluationResult = nodeResult;
+                    String matchedCase = (String) evaluationResult.get("matchedCase");
+                    currentNodeId = node.getNextNodes().get(matchedCase);
                 } else {
                     currentNodeId = node.getNextNodes().get("default");
                 }
@@ -198,6 +177,7 @@ public class WorkflowManager {
             long duration = System.currentTimeMillis() - startTime;
             workflowLogger.logWorkflowComplete(
                 context.getExecutionId(),
+                workflow.getName(),
                 context.getStatus().toString(),
                 duration
             );
@@ -207,10 +187,10 @@ public class WorkflowManager {
     }
 
     /**
-     * Execute a single node
-     * @param node Node to execute
-     * @param context Execution context
-     * @return Node execution result
+     * 执行节点
+     * @param node 要执行的节点
+     * @param context 执行上下文
+     * @return 节点执行结果
      */
     private Map<String, Object> executeNode(WorkflowNode node, WorkflowContext context) {
         Map<String, Object> result = new HashMap<>();
@@ -218,29 +198,29 @@ public class WorkflowManager {
         try {
             switch (node.getType()) {
                 case START:
-                    // Start node initializes global variables
+                    // 开始节点初始化全局变量
                     result.putAll(context.getVariables());
                     break;
                     
                 case FUNCTION:
                     if (node.getToolName() != null) {
-                        // Prepare tool inputs based on inputMap if available
+                        // 准备工具输入
                         Map<String, Object> toolInputs = prepareToolInputs(node, context);
                         
-                        // Execute the tool and get its outputs
+                        // 执行工具并获取其输出
                         result = executeTool(node.getToolName(), toolInputs);
-                        // Update context with tool outputs
+                        // 更新上下文
                         context.getVariables().putAll(result);
                     }
                     break;
                     
                 case CONDITION:
-                    // Condition nodes don't modify the context
-                    result.put("evaluated", evaluateCondition(node, context));
+                    // 条件节点不修改上下文
+                    result.putAll(evaluateCondition(node, context));
                     break;
                     
                 case END:
-                    // End node captures final state
+                    // 结束节点捕获最终状态
                     result.putAll(context.getVariables());
                     break;
             }
@@ -334,8 +314,9 @@ public class WorkflowManager {
      * @return Tool execution results
      */
     private Map<String, Object> executeTool(String toolName, Map<String, Object> inputs) throws ToolException {
-        ToolHandler handler = toolHandlers.get(toolName);
+        ToolHandler handler = ToolRegistry.getHandler(toolName);
         if (handler == null) {
+			System.out.println("tools: " + JSON.toJSONString(ToolRegistry.getAllHandlers()));
             throw new ToolException("Tool not found: " + toolName, "TOOL_NOT_FOUND");
         }
 
@@ -353,55 +334,143 @@ public class WorkflowManager {
     }
 
     /**
-     * Evaluate a condition node
-     * @param node Condition node
-     * @param context Execution context
-     * @return Condition result
+     * 执行条件节点
+     * @param node 条件节点
+     * @param context 执行上下文
+     * @return 条件评估结果
      */
-    private boolean evaluateCondition(WorkflowNode node, WorkflowContext context) {
+    private Map<String, Object> evaluateCondition(WorkflowNode node, WorkflowContext context) {
+        Map<String, Object> result = new HashMap<>();
+        
         if (node.getType() != NodeType.CONDITION) {
-            return true;
+            result.put("evaluated", false);
+            result.put("error", "Not a condition node");
+            return result;
         }
 
-        // Update variable values from context
-        for (ConditionCase conditionCase : node.getConditions()) {
-            for (Condition condition : conditionCase.getConditions()) {
-                // Update left operand value if it's a variable
-                VariableDefinition leftOp = condition.getLeftOperand();
-                if (leftOp != null && leftOp.getParent() != null) {
-                    Object value = null;
-                    if ("global".equals(leftOp.getParent())) {
-                        value = context.getVariable(leftOp.getName());
-                    } else {
-                        // Get value from node context
-                        WorkflowNode parentNode = context.getWorkflow().getNodeById(leftOp.getParent());
-                        if (parentNode != null) {
-                            value = parentNode.getFromContext(leftOp.getName());
-                        }
-                    }
-                    leftOp.setValue(value);
+        try {
+            // 更新条件节点变量值
+            List<ConditionCase> cases = node.getConditions();
+            for (int i = 0; i < cases.size(); i++) {
+                ConditionCase conditionCase = cases.get(i);
+                if (conditionCase.getConditions().isEmpty()) {
+                    // 空条件组是ELSE分支
+                    continue;
                 }
+                
+                boolean caseResult = true;
+                for (Condition condition : conditionCase.getConditions()) {
+                    // 更新左操作数值
+                    VariableDefinition leftOp = condition.getLeftOperand();
+                    if (leftOp != null && leftOp.getParent() != null) {
+                        Object value = null;
+                        if ("global".equals(leftOp.getParent())) {
+                            value = context.getVariable(leftOp.getName());
+                        } else {
+                            // 从节点上下文获取值
+                            WorkflowNode parentNode = context.getWorkflow().getNodeById(leftOp.getParent());
+                            if (parentNode != null) {
+                                value = parentNode.getFromContext(leftOp.getName());
+                            }
+                        }
+                        leftOp.setValue(value);
+                    }
 
-                // Update right operand value if it's a variable
-                VariableDefinition rightOp = condition.getRightOperand();
-                if (rightOp != null && "VARIABLE".equals(condition.getType()) && rightOp.getParent() != null) {
-                    Object value = null;
-                    if ("global".equals(rightOp.getParent())) {
-                        value = context.getVariable(rightOp.getName());
-                    } else {
-                        // Get value from node context
-                        WorkflowNode parentNode = context.getWorkflow().getNodeById(rightOp.getParent());
-                        if (parentNode != null) {
-                            value = parentNode.getFromContext(rightOp.getName());
+                    // 更新右操作数值
+                    VariableDefinition rightOp = condition.getRightOperand();
+                    if (rightOp != null && "VARIABLE".equals(condition.getType()) && rightOp.getParent() != null) {
+                        Object value = null;
+                        if ("global".equals(rightOp.getParent())) {
+                            value = context.getVariable(rightOp.getName());
+                        } else {
+                            // 从节点上下文获取值
+                            WorkflowNode parentNode = context.getWorkflow().getNodeById(rightOp.getParent());
+                            if (parentNode != null) {
+                                value = parentNode.getFromContext(rightOp.getName());
+                            }
+                        }
+                        rightOp.setValue(value);
+                    }
+                    
+                    // 评估单个条件
+                    boolean conditionResult = evaluateSingleCondition(condition);
+                    if ("and".equalsIgnoreCase(conditionCase.getType())) {
+                        caseResult = caseResult && conditionResult;
+                        if (!caseResult) {
+                            // Short circuit for AND
+                            break;
+                        }
+                    } else if ("or".equalsIgnoreCase(conditionCase.getType())) {
+                        caseResult = caseResult || conditionResult;
+                        if (caseResult) {
+                            // Short circuit for OR
+                            break;
                         }
                     }
-                    rightOp.setValue(value);
+                }
+                
+                // 如果当前case的所有条件都满足，返回对应的case标识
+                if (caseResult) {
+                    result.put("evaluated", true);
+                    result.put("matchedCase", "case" + (i + 1));
+                    return result;
                 }
             }
+            
+            // 所有条件组合都为false，使用else分支
+            result.put("evaluated", false);
+            result.put("matchedCase", "else");
+        } catch (Exception e) {
+            result.put("evaluated", false);
+            result.put("error", e.getMessage());
+            result.put("matchedCase", "else");
         }
-
-        // Evaluate conditions
-        return node.evaluateConditions();
+        
+        return result;
+    }
+    
+    /**
+     * 评估单个条件
+     * @param condition 条件对象
+     * @return 条件评估结果
+     */
+    private boolean evaluateSingleCondition(Condition condition) {
+        Object leftValue = condition.getLeftOperand().getValue();
+        Object rightValue = condition.getRightOperand().getValue();
+        
+        if (leftValue == null || rightValue == null) {
+            return false;
+        }
+        
+        ConditionOperator operator = ConditionOperator.valueOf(condition.getOperator());
+        switch (operator) {
+            case EQUALS:
+                return leftValue.equals(rightValue);
+            case NOT_EQUALS:
+                return !leftValue.equals(rightValue);
+            case GREATER_THAN:
+                if (leftValue instanceof Number && rightValue instanceof Number) {
+                    return ((Number) leftValue).doubleValue() > ((Number) rightValue).doubleValue();
+                }
+                return false;
+            case LESS_THAN:
+                if (leftValue instanceof Number && rightValue instanceof Number) {
+                    return ((Number) leftValue).doubleValue() < ((Number) rightValue).doubleValue();
+                }
+                return false;
+            case GREATER_THAN_OR_EQUALS:
+                if (leftValue instanceof Number && rightValue instanceof Number) {
+                    return ((Number) leftValue).doubleValue() >= ((Number) rightValue).doubleValue();
+                }
+                return false;
+            case LESS_THAN_OR_EQUALS:
+                if (leftValue instanceof Number && rightValue instanceof Number) {
+                    return ((Number) leftValue).doubleValue() <= ((Number) rightValue).doubleValue();
+                }
+                return false;
+            default:
+                return false;
+        }
     }
 
     /**

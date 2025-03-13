@@ -12,8 +12,8 @@ public class NodeExecutionEvent {
     private String nodeName;
     private String nodeType;
     private String eventType; // ENTER or COMPLETE
-    private Map<String, Object> nodeContext;
-    private Map<String, Object> globalVariables;
+	private Map<String, Object> nodeResult;
+    private Map<String, Object> contextVariables;
     private LocalDateTime timestamp;
     private Long duration; // Only for COMPLETE events
 
@@ -47,20 +47,20 @@ public class NodeExecutionEvent {
         return eventType;
     }
 
-    public Map<String, Object> getNodeContext() {
-        return nodeContext;
+	public Map<String, Object> getNodeResult() {
+		return nodeResult;
+	}
+
+	public void setNodeResult(Map<String, Object> nodeResult) {
+		this.nodeResult = nodeResult;
+	}
+
+    public Map<String, Object> getContextVariables() {
+        return contextVariables;
     }
 
-    public void setNodeContext(Map<String, Object> nodeContext) {
-        this.nodeContext = nodeContext;
-    }
-
-    public Map<String, Object> getGlobalVariables() {
-        return globalVariables;
-    }
-
-    public void setGlobalVariables(Map<String, Object> globalVariables) {
-        this.globalVariables = globalVariables;
+    public void setContextVariables(Map<String, Object> contextVariables) {
+        this.contextVariables = contextVariables;
     }
 
     public LocalDateTime getTimestamp() {

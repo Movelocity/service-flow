@@ -40,6 +40,18 @@ public class WorkflowContext {
         return workflowId;
     }
 
+	/** 
+	 * 获取工作流执行上下文变量。
+	 * 
+	 * 此方法返回一个可以在工作流执行期间使用的变量映射。
+	 * 
+	 * 使用示例：
+	 * 
+	 *     result = executeTool(node.getToolName(), toolInputs);
+	 *     context.getVariables().putAll(result);
+	 * 
+	 * @return 一个包含工作流执行上下文变量的映射。
+	 */
     public Map<String, Object> getVariables() {
         return variables;
     }

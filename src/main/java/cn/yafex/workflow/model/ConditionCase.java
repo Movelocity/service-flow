@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Represents a group of conditions in a workflow condition node.
- * This class matches the frontend ConditionCase interface structure.
+ * 表示工作流条件节点中的一个条件组。
+ * 此类与前端 ConditionCase 接口结构匹配。
  */
 public class ConditionCase {
     @JSONField(name = "conditions")
@@ -53,8 +53,8 @@ public class ConditionCase {
     }
 
     /**
-     * Add a condition to this case
-     * @param condition The condition to add
+     * 添加条件到此组
+     * @param condition 要添加的条件
      */
     public void addCondition(Condition condition) {
         if (condition != null) {
@@ -63,8 +63,8 @@ public class ConditionCase {
     }
 
     /**
-     * Evaluates all conditions in this case according to the type (AND/OR)
-     * @return true if the conditions are satisfied according to the type, false otherwise
+     * 根据类型（AND/OR）评估所有条件
+     * @return 如果条件满足类型，则返回 true，否则返回 false
      */
     public boolean evaluate() {
         if (conditions.isEmpty()) {

@@ -31,7 +31,7 @@
         <div v-for="(event, index) in events" :key="index" class="debug-event">
           <div class="event-header">
             <div class="row">
-              <NodeIcon v-if="event.nodeType" :type="event.nodeType" :size="24" />
+              <NodeIcon v-if="event.nodeType" :type="event.nodeType as NodeType" :size="24" />
               <span class="node-name">{{ event.nodeName }}</span>
             </div>
             <span class="event-type" :class="event.eventType.toLowerCase()">
@@ -39,14 +39,14 @@
             </span>
             <span class="event-time">{{ new Date(event.timestamp).toLocaleTimeString() }}</span>
           </div>
-          <div v-if="event.nodeContext" class="event-context">
+          <div v-if="event.contextVariables" class="event-context">
             <strong>节点上下文：</strong>
-            <pre>{{ JSON.stringify(event.nodeContext, null, 2) }}</pre>
+            <pre>{{ JSON.stringify(event.contextVariables, null, 2) }}</pre>
           </div>
-          <div v-if="event.globalVariables" class="event-variables">
-            <strong>全局变量：</strong>
-            <pre>{{ JSON.stringify(event.globalVariables, null, 2) }}</pre>
-          </div>
+          <!-- <div v-if="event.nodeType === 'START'" class="event-variables">
+            <strong>全局变量：</strong>   && event.eventType === 'COMPLETE'
+            <pre>{{ JSON.stringify(event.contextVariables, null, 2) }}</pre>
+          </div> -->
         </div>
       </div>
     </div>
@@ -56,9 +56,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import NodeIcon from '@/components/NodeIcon.vue';
+import type { NodeExecutionEvent } from '@/types/debug';
+import type { NodeType } from '@/types/workflow';
 
 const props = defineProps<{
-  events: any[],
+  events: NodeExecutionEvent[],
   workflowId: string,
   requiredInputs?: Record<string, any>
 }>();

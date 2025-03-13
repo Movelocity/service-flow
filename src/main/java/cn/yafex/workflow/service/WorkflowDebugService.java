@@ -13,9 +13,9 @@ public class WorkflowDebugService {
     private final Map<String, SseEmitter> debugEmitters = new ConcurrentHashMap<>();
 
     /**
-     * Register a new SSE emitter for workflow debugging
-     * @param executionId The workflow execution ID
-     * @return SseEmitter for the client
+     * 注册一个新的 SSE Emitter 用于工作流调试。
+     * @param executionId 工作流执行ID
+     * @return SseEmitter 用于客户端
      */
     public SseEmitter registerDebugSession(String executionId) {
         SseEmitter emitter = new SseEmitter(0L); // No timeout
@@ -29,8 +29,8 @@ public class WorkflowDebugService {
     }
 
     /**
-     * Send a debug event to the client
-     * @param event The node execution event
+     * 发送调试事件到客户端。如果客户端不存在，则不会发送。
+     * @param event 节点执行事件
      */
     public void sendDebugEvent(NodeExecutionEvent event) {
         SseEmitter emitter = debugEmitters.get(event.getExecutionId());
@@ -47,8 +47,8 @@ public class WorkflowDebugService {
     }
 
     /**
-     * Complete a debug session
-     * @param executionId The workflow execution ID
+     * 完成调试会话。
+     * @param executionId 工作流执行ID
      */
     public void completeDebugSession(String executionId) {
         SseEmitter emitter = debugEmitters.get(executionId);

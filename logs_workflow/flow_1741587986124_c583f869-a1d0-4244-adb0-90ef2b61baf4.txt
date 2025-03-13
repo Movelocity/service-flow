@@ -1,0 +1,34 @@
+[2025-03-13 12:12:26] Workflow flow_1741587986124 started. Execution ID: c583f869-a1d0-4244-adb0-90ef2b61baf4
+
+[2025-03-13 12:12:26] Node: 售后咨询, Type: START, Duration: 0ms
+ Input: {toolName=}
+Output: {param1={
+	"description":"example",
+	"type":"string"
+}}
+
+[2025-03-13 12:12:26] Node: 文本处理, Type: FUNCTION, Duration: 0ms
+ Input: {toolDescription=Process text with basic operations, toolName=text_process}
+Output: {uppercase=HELLO, NICE TO MEET YOU.
+DO YOU LIKE TO HAVE SOME ORDER?, lowercase=hello, nice to meet you.
+do you like to have some order?, length=56, words=12, trimmed=hello, nice to meet you.
+Do you like to have some order?}
+
+[2025-03-13 12:12:26] Node: system_info, Type: FUNCTION, Duration: 2ms
+ Input: {toolDescription=Get system information, toolName=system_info}
+Output: {javaVersion=1.8.0_421, osArch=amd64, timeZone=GMT+08:00, processors=20, javaVendor=Oracle Corporation, osName=Windows 11, userName=yafex, maxMemory=3745513472, javaHome=C:\Program Files\Java\jre1.8.0_421, currentTime=Thu Mar 13 12:12:26 GMT+08:00 2025, userHome=C:\Users\yafex, totalMemory=374865920, osVersion=10.0, userDir=c:\projects\java\service-flows, freeMemory=328642008}
+
+[2025-03-13 12:12:26] Node: 是否AZ, Type: CONDITION, Duration: 2ms
+ Input: {toolName=}
+Output: {matchedCase=else, evaluated=false, error=null}
+
+[2025-03-13 12:12:26] Node: 继续处理, Type: END, Duration: 0ms
+ Input: {toolName=}
+Output: {uppercase=HELLO, NICE TO MEET YOU.
+DO YOU LIKE TO HAVE SOME ORDER?, lowercase=hello, nice to meet you.
+do you like to have some order?, javaVersion=1.8.0_421, osArch=amd64, length=56, words=12, timeZone=GMT+08:00, processors=20, javaVendor=Oracle Corporation, osName=Windows 11, userName=yafex, maxMemory=3745513472, param1={
+	"description":"example",
+	"type":"string"
+}, javaHome=C:\Program Files\Java\jre1.8.0_421, currentTime=Thu Mar 13 12:12:26 GMT+08:00 2025, userHome=C:\Users\yafex, totalMemory=374865920, osVersion=10.0, userDir=c:\projects\java\service-flows, trimmed=hello, nice to meet you.
+Do you like to have some order?, freeMemory=328642008}
+

@@ -165,17 +165,17 @@ public class JsonFileHandler {
                     }
                     
                     logger.debug("Loaded tool: {}", toolName);
-                    if (tool.getInputs() != null) {
-                        for (Map.Entry<String, FieldDefinition> fieldEntry : tool.getInputs().entrySet()) {
-                            logger.debug("Tool {} input field: {} = {}", toolName, fieldEntry.getKey(), fieldEntry.getValue());
-                        }
-                    }
+                    // if (tool.getInputs() != null) {
+                    //     for (Map.Entry<String, FieldDefinition> fieldEntry : tool.getInputs().entrySet()) {
+                    //         logger.debug("Tool {} input field: {} = {}", toolName, fieldEntry.getKey(), fieldEntry.getValue());
+                    //     }
+                    // }
                     
-                    if (tool.getOutputs() != null) {
-                        for (Map.Entry<String, FieldDefinition> fieldEntry : tool.getOutputs().entrySet()) {
-                            logger.debug("Tool {} output field: {} = {}", toolName, fieldEntry.getKey(), fieldEntry.getValue());
-                        }
-                    }
+                    // if (tool.getOutputs() != null) {
+                    //     for (Map.Entry<String, FieldDefinition> fieldEntry : tool.getOutputs().entrySet()) {
+                    //         logger.debug("Tool {} output field: {} = {}", toolName, fieldEntry.getKey(), fieldEntry.getValue());
+                    //     }
+                    // }
                 }
             }
             

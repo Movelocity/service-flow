@@ -82,6 +82,8 @@ import WorkflowCanvas from '@/components/workflow/WorkflowCanvas.vue';
 import NodeEditor from '@/components/NodeEditor.vue';
 import ThemeButton from '@/components/ThemeButton.vue';
 import DebugPanel from '@/components/DebugPanel.vue';
+import type { NodeExecutionEvent } from '@/types/debug';
+
 const router = useRouter();
 const route = useRoute();
 const store = useWorkflowStore();
@@ -92,7 +94,7 @@ const workflowDescription = ref('');
 const isLoading = ref(true);
 const executionStatus = ref<string | null>(null);
 const isDebugging = ref(false);
-const debugEvents = ref<any[]>([]);
+const debugEvents = ref<NodeExecutionEvent[]>([]);
 const workflowId = computed(() => store.currentWorkflow?.id || '');
 const workflowInputs = ref<Record<string, any>>({});
 
