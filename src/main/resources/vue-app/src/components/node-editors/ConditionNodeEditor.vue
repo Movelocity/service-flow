@@ -9,6 +9,7 @@
               class="type-toggle-btn" 
               @click="toggleConditionType(index)"
               type="button"
+              v-if="caseData.conditions.length > 1"
             >
               {{ caseData.type.toUpperCase() }}
             </button>
