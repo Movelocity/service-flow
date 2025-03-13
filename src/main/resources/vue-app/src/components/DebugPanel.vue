@@ -40,13 +40,13 @@
             <span class="event-time">{{ new Date(event.timestamp).toLocaleTimeString() }}</span>
           </div>
           <div v-if="event.contextVariables" class="event-context">
-            <strong>节点上下文：</strong>
+            <strong>Context: </strong>
             <pre>{{ JSON.stringify(event.contextVariables, null, 2) }}</pre>
           </div>
-          <!-- <div v-if="event.nodeType === 'START'" class="event-variables">
-            <strong>全局变量：</strong>   && event.eventType === 'COMPLETE'
-            <pre>{{ JSON.stringify(event.contextVariables, null, 2) }}</pre>
-          </div> -->
+          <div v-if="event.eventType === 'COMPLETE'" class="event-variables">
+            <strong>Outputs: </strong>
+            <pre>{{ JSON.stringify(event.nodeResult, null, 2) }}</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -220,19 +220,17 @@ onMounted(() => {
 }
 
 .event-type {
-  padding: 0.25rem 0.5rem;
+  padding: 0rem 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
 }
 
 .event-type.enter {
-  background: var(--primary-color);
-  color: white;
+  color: var(--el-color-primary);
 }
 
 .event-type.complete {
-  background: var(--success-color);
-  color: white;
+  color: var(--el-color-success);
 }
 
 .event-time {

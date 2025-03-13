@@ -95,6 +95,7 @@ public class WorkflowManager {
             // Initialize workflow inputs
             context.setVariables(new HashMap<>(workflow.getInputs()));
 
+			// 执行工作流，直到没有下一个节点
             while (currentNodeId != null) {
                 WorkflowNode node = workflow.getNodeById(currentNodeId);
                 if (node == null) {
