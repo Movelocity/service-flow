@@ -79,7 +79,7 @@ public class WorkflowLogger {
                 new FileOutputStream(logFileName, true), StandardCharsets.UTF_8);
              PrintWriter writer = new PrintWriter(fileWriter)) {
             writer.println(logEntry);
-            System.out.println("工作流执行日志："+logEntry);
+            System.out.println("工作流开始："+logFileName);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -102,6 +102,7 @@ public class WorkflowLogger {
                 new FileOutputStream(logFileName, true), StandardCharsets.UTF_8);
              PrintWriter writer = new PrintWriter(fileWriter)) {
             writer.println(logEntry);
+			System.out.println("工作流执行日志："+logFileName);
         } catch (IOException e) {
             e.printStackTrace();
         }

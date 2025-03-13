@@ -31,11 +31,11 @@
         <div v-for="(event, index) in events" :key="index" class="debug-event">
           <div class="event-header">
             <div class="row">
-              <NodeIcon v-if="event.nodeType" :type="event.nodeType as NodeType" :size="24" />
+              <NodeIcon v-if="event.nodeType" :type="event.nodeType" :size="24" />
               <span class="node-name">{{ event.nodeName }}</span>
             </div>
             <span class="event-type" :class="event.eventType.toLowerCase()">
-              {{ event.eventType === 'ENTER' ? '进入' : '完成' }}
+              {{ event.eventType === 'ENTER' ? '开始' : '完成' }}
             </span>
             <span class="event-time">{{ new Date(event.timestamp).toLocaleTimeString() }}</span>
           </div>

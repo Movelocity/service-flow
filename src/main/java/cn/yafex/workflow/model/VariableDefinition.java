@@ -26,7 +26,7 @@ public class VariableDefinition {
     private String parent;
 
     public VariableDefinition() {
-        // Default constructor for JSON serialization
+        // 默认构造函数，便于 JSON 序列化
     }
 
     public VariableDefinition(String name, String type, String description) {
@@ -86,7 +86,7 @@ public class VariableDefinition {
 
     @Override
     public String toString() {
-        return String.format("VariableDefinition{name='%s', type='%s', description='%s', value=%s}", 
-            name, type, description, value);
+        return String.format("变量定义{name:'%s', type:'%s', description:'%s', value:%s, defaultValue:%s, parent:%s}", 
+            name, type, description, value, defaultValue, parent);
     }
 } 

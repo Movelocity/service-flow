@@ -10,15 +10,23 @@ import java.util.ArrayList;
  * Class representing a complete workflow definition
  */
 public class Workflow {
+	/** Unique ID */
     private String id;
     private String name;
     private String description;
+	/** 工作流输入参数 */
     private Map<String, Object> inputs;  // Workflow level inputs
+	/** 工作流输出参数 */
     private Map<String, Object> outputs; // Workflow level outputs
+	/** 工作流内保存的工具名称和输入输出模式，用于判断工具是否发生不兼容的更新 */
     private Map<String, ToolDefinition> tools; // Map of tool name to tool definition
+	/** 工作流内全局变量，用于在同一个工作流 runtime 的节点之间传递数据 */
     private Map<String, Object> globalVariables;
+	/** 节点，用于描述工作流的执行流程 */
     private List<WorkflowNode> nodes;
+	/** 开始节点ID，用于描述工作流的执行流程 */
     private String startNodeId;
+	/** 工作流是否激活 */
     private boolean isActive;
 
     public Workflow() {

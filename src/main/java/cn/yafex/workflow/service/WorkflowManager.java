@@ -71,7 +71,7 @@ public class WorkflowManager {
             }
             
             activeWorkflows.put(context.getExecutionId(), context);
-            workflowLogger.logWorkflowStart(context.getExecutionId(), workflowId);
+            workflowLogger.logWorkflowStart(context.getExecutionId(), workflow.getName());
 
             // Start workflow execution in a separate thread
             executorService.submit(() -> executeWorkflow(workflow, context));

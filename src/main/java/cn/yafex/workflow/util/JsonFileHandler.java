@@ -16,6 +16,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.PatternLayout;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,6 +35,22 @@ import java.lang.reflect.Type;
 @Component
 public class JsonFileHandler {
     private static final Logger logger = LoggerFactory.getLogger(JsonFileHandler.class);
+    
+    static {
+        // Configure custom log format
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+        ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE");
+        
+        if (appender != null) {
+            PatternLayout layout = new PatternLayout();
+            layout.setContext(loggerContext);
+            // Simplified pattern: timestamp level class{without package} - message
+            layout.setPattern("%d{HH:mm:ss.SSS} %-5level %logger{0} - %msg%n");
+            layout.start();
+            appender.setLayout(layout);
+        }
+    }
     
     @Value("${workflow.definitions.path:workflow-definitions}")
     private String workflowPath;
@@ -149,8 +169,6 @@ public class JsonFileHandler {
         try {
             byte[] bytes = Files.readAllBytes(filePath);
             String jsonString = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-            // logger.debug("Loading workflow JSON: {}", jsonString);
-            
             Workflow workflow = JSON.parseObject(jsonString, Workflow.class);
             
             // Validate tool definitions after loading
