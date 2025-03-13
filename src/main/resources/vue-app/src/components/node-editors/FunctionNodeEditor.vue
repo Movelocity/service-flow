@@ -31,10 +31,11 @@
             <!-- Variable selector -->
             <VariableSelector
               v-if="inputTypeMap[key] === 'VARIABLE'"
-              v-model="variableInputs[key]"
+              :model-value="getVariableFullPath(key)"
               :available-context="availableContext"
               placeholder="选择输入来源"
               :full-width="true"
+              @update:model-value="(name, parent) => handleVariableUpdate(key.toString(), name, parent)"
             />
             
             <!-- Constant input based on type -->
@@ -206,6 +207,34 @@ const updateInputMap = (key: string) => {
     } else {
       // If no constant value, remove from inputMap
       delete currentNode.value.inputMap[key]
+    }
+  }
+}
+
+const getVariableFullPath = (key: string | number): string => {
+  const stringKey = key.toString();
+  if (!currentNode.value?.inputMap?.[stringKey]) return '';
+  const input = currentNode.value.inputMap[stringKey];
+  return input.parent ? `${input.parent}.${input.name}` : input.name;
+}
+
+// Handle variable selection from VariableSelector component
+const handleVariableUpdate = (key: string, variableName: string, parentId: string) => {
+  variableInputs.value[key] = variableName
+  
+  if (currentNode.value && selectedTool.value?.inputs) {
+    const toolInput = selectedTool.value.inputs[key]
+    
+    // Update inputMap directly with the parent ID received from the selector
+    if (!currentNode.value.inputMap) {
+      currentNode.value.inputMap = {}
+    }
+    
+    currentNode.value.inputMap[key] = {
+      name: variableName,
+      type: toolInput.type,
+      description: toolInput.description,
+      parent: parentId
     }
   }
 }

@@ -5,7 +5,7 @@
         <div class="condition-row">
           <div class="condition-field">
             <VariableSelector
-              :model-value="condition.leftOperand.name"
+              :model-value="condition.leftOperand.parent + '.' + condition.leftOperand.name"
               @update:model-value="updateLeftOperand"
               :available-context="availableContext"
               placeholder="选择变量"
@@ -69,7 +69,7 @@
                 </template>
                 <VariableSelector
                   v-else
-                  :model-value="condition.rightOperand.name"
+                  :model-value="condition.rightOperand.parent + '.' + condition.rightOperand.name"
                   @update:model-value="updateRightOperand"
                   :available-context="availableContext"
                   placeholder="选择变量"
@@ -167,8 +167,9 @@ const availableOperators = computed(() => {
 
 // console.log("availableOperators", selectedVarType.value, availableOperators.value)
 
-function updateLeftOperand(value: string) {
-  const selectedVar = availableContext.value.find(variable => variable.name === value)
+function updateLeftOperand(value: string, parent: string) {
+  const selectedVar = availableContext.value.find(variable => 
+    variable.name === value && variable.parent === parent)
   
   if (selectedVar) {
     emitUpdate({
@@ -177,7 +178,7 @@ function updateLeftOperand(value: string) {
         type: selectedVar.type || VariableType.STRING,
         description: selectedVar.description || '',
         defaultValue: selectedVar.defaultValue,
-        parent: selectedVar.parent || ''
+        parent: parent
       },
       operator: '==',
       rightOperand: {
@@ -222,7 +223,7 @@ function updateType(value: 'VARIABLE' | 'CONSTANT') {
   });
 }
 
-function updateRightOperand(value: any) {
+function updateRightOperand(value: any, parent?: string) {
   console.log("updateRightOperand", condition.value.type, value, typeof value)
   if(condition.value.type === 'CONSTANT') {  // 常量模式
     emitUpdate({ 
@@ -241,7 +242,7 @@ function updateRightOperand(value: any) {
         type: condition.value.leftOperand.type,
         description: '',
         defaultValue: '',
-        parent: ''
+        parent: parent || ''
       }
     });
   }
@@ -300,10 +301,6 @@ const availableContext = useAvailableContext(store.selectedNode?.id || '')
 .right-operand-container {
   display: flex;
   gap: 0.5rem;
-}
-
-.full-width {
-  width: 100%;
 }
 
 .operator-select {
