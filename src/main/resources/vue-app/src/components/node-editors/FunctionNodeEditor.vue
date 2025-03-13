@@ -222,6 +222,12 @@ watch(selectedTool, () => {
   initializeFromNodeInputMap()
 }, { immediate: true })
 
+// Watch for nodeId changes to reinitialize the component
+watch(() => props.nodeId, () => {
+  initializeInputTypes()
+  initializeFromNodeInputMap()
+})
+
 // Watch for input type changes to reset values and update inputMap
 watch(inputTypeMap, (newVal, oldVal) => {
   for (const key in newVal) {
