@@ -98,10 +98,6 @@ const emit = defineEmits<{
 const store = useWorkflowStore();
 const selectedNode = computed(() => store.selectedNode);
 
-// 在 script setup 部分添加以下代码
-// const editingVariableIndex = ref(-1);
-// const editingVariable = ref<any>(null);
-
 // 获取节点的连接
 const nodeConnections = computed(() => {
   if (!selectedNode.value) return [];

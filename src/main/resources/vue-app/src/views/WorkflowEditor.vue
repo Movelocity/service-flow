@@ -40,19 +40,11 @@
         >
           保存
         </button>
-        <!-- <button
-          class="btn btn-secondary btn-sm me-2"
-          @click="testWorkflow"
-          :disabled="!canTest || executionStatus === '执行中...'"
-        >
-          运行
-        </button> -->
         <button
           class="btn btn-secondary btn-sm me-2"
           @click="debugWorkflow"
-          :disabled="!canTest || isDebugging"
         >
-          调试
+          {{ isDebugging ? '终止调试' : '调试' }}
         </button>
       </div>
     </div>
@@ -134,7 +126,6 @@ function updateWorkflowInfo() {
   
   store.currentWorkflow.name = workflowName.value;
   store.currentWorkflow.description = workflowDescription.value;
-  // store.saveToHistory();
 }
 
 // 保存工作流
@@ -149,44 +140,26 @@ async function saveWorkflow() {
   }
 }
 
-// 测试工作流
-// async function testWorkflow() {
-//   if (!store.currentWorkflow?.id) return;
-  
-//   try {
-//     executionStatus.value = '执行中...';
-//     const executionId = await workflowApi.executeWorkflow(store.currentWorkflow.id);
-    
-//     // 轮询执行状态
-//     const checkStatus = async () => {
-//       const status = await workflowApi.getExecutionStatus(store.currentWorkflow!.id, executionId);
-//       executionStatus.value = status;
-      
-//       if (status !== 'COMPLETED' && status !== 'FAILED') {
-//         setTimeout(checkStatus, 1000);
-//       }
-//     };
-    
-//     checkStatus();
-//   } catch (error) {
-//     console.error('Failed to test workflow:', error);
-//     alert('测试工作流失败');
-//     executionStatus.value = null;
-//   }
-// }
-
 // 调试工作流
 async function debugWorkflow() {
   if (!workflowId.value) return;
-  
-  try {
-    // 获取工作流必填参数
-    workflowInputs.value = await workflowApi.getWorkflowInputs(workflowId.value);
-    isDebugging.value = true;
-    debugEvents.value = [];
-  } catch (error) {
-    console.error('Failed to get workflow inputs:', error);
-    alert('获取工作流参数失败');
+  console.log('debugWorkflow', isDebugging.value);
+  if(!isDebugging.value){
+    if(!canTest.value){
+      alert('请先添加开始和结束节点');
+      return;
+    }
+    try {
+      // 获取工作流必填参数
+      workflowInputs.value = await workflowApi.getWorkflowInputs(workflowId.value);
+      isDebugging.value = true;
+      debugEvents.value = [];
+    } catch (error) {
+      console.error('Failed to get workflow inputs:', error);
+      alert('获取工作流参数失败');
+    }
+  } else {
+    stopDebug();
   }
 }
 

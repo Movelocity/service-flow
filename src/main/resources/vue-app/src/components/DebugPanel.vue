@@ -3,13 +3,11 @@
     <div class="debug-panel-header">
       <div class="header-left">
         <button class="collapse-btn" @click="toggleCollapse">
-          <span class="collapse-icon" :class="{ 'collapsed': isCollapsed }">
-            {{ isCollapsed ? '>' : '<' }}
-          </span>
+          <span class="collapse-icon" :class="{ 'collapsed': isCollapsed }"> &gt; </span>
         </button>
         <h5>调试信息</h5>
       </div>
-      <button class="btn btn-sm btn-danger" @click="$emit('stop')">停止调试</button>
+      <!-- <button class="btn btn-sm btn-danger" @click="$emit('stop')">停止调试</button> -->
     </div>
     <div class="debug-panel-content">
       <div v-if="showInputForm" class="input-form">
@@ -57,7 +55,6 @@
 import { ref, onMounted } from 'vue';
 import NodeIcon from '@/components/NodeIcon.vue';
 import type { NodeExecutionEvent } from '@/types/debug';
-import type { NodeType } from '@/types/workflow';
 
 const props = defineProps<{
   events: NodeExecutionEvent[],
@@ -113,8 +110,7 @@ onMounted(() => {
 }
 
 .debug-panel-header {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
