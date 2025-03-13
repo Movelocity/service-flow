@@ -30,7 +30,10 @@
       <div v-else>
         <div v-for="(event, index) in events" :key="index" class="debug-event">
           <div class="event-header">
-            <span class="node-name">{{ event.nodeName }}</span>
+            <div class="row">
+              <NodeIcon v-if="event.nodeType" :type="event.nodeType" :size="24" />
+              <span class="node-name">{{ event.nodeName }}</span>
+            </div>
             <span class="event-type" :class="event.eventType.toLowerCase()">
               {{ event.eventType === 'ENTER' ? '进入' : '完成' }}
             </span>
@@ -52,6 +55,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import NodeIcon from '@/components/NodeIcon.vue';
 
 const props = defineProps<{
   events: any[],
@@ -210,6 +214,7 @@ onMounted(() => {
 .node-name {
   font-weight: bold;
   color: var(--text-color);
+  margin-left: 10px;
 }
 
 .event-type {

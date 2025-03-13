@@ -40,15 +40,15 @@
         >
           保存
         </button>
-        <button
+        <!-- <button
           class="btn btn-secondary btn-sm me-2"
           @click="testWorkflow"
           :disabled="!canTest || executionStatus === '执行中...'"
         >
           运行
-        </button>
+        </button> -->
         <button
-          class="btn btn-info btn-sm"
+          class="btn btn-secondary btn-sm me-2"
           @click="debugWorkflow"
           :disabled="!canTest || isDebugging"
         >
@@ -126,16 +126,6 @@ function onWorkflowChange() {
   }
 }
 
-// 监听工作流变化
-// watch(() => store.currentWorkflow, (newWorkflow, oldWorkflow) => {
-//   if (newWorkflow) {
-//     // 只有在非初始加载时才设置isDirty
-//     if (oldWorkflow && store.history.past.length > 0) {
-//       store.saveToHistory();
-//     }
-//   }
-// }, { deep: true });
-
 // 更新工作流信息
 function updateWorkflowInfo() {
   if (!store.currentWorkflow) return;
@@ -158,30 +148,30 @@ async function saveWorkflow() {
 }
 
 // 测试工作流
-async function testWorkflow() {
-  if (!store.currentWorkflow?.id) return;
+// async function testWorkflow() {
+//   if (!store.currentWorkflow?.id) return;
   
-  try {
-    executionStatus.value = '执行中...';
-    const executionId = await workflowApi.executeWorkflow(store.currentWorkflow.id);
+//   try {
+//     executionStatus.value = '执行中...';
+//     const executionId = await workflowApi.executeWorkflow(store.currentWorkflow.id);
     
-    // 轮询执行状态
-    const checkStatus = async () => {
-      const status = await workflowApi.getExecutionStatus(store.currentWorkflow!.id, executionId);
-      executionStatus.value = status;
+//     // 轮询执行状态
+//     const checkStatus = async () => {
+//       const status = await workflowApi.getExecutionStatus(store.currentWorkflow!.id, executionId);
+//       executionStatus.value = status;
       
-      if (status !== 'COMPLETED' && status !== 'FAILED') {
-        setTimeout(checkStatus, 1000);
-      }
-    };
+//       if (status !== 'COMPLETED' && status !== 'FAILED') {
+//         setTimeout(checkStatus, 1000);
+//       }
+//     };
     
-    checkStatus();
-  } catch (error) {
-    console.error('Failed to test workflow:', error);
-    alert('测试工作流失败');
-    executionStatus.value = null;
-  }
-}
+//     checkStatus();
+//   } catch (error) {
+//     console.error('Failed to test workflow:', error);
+//     alert('测试工作流失败');
+//     executionStatus.value = null;
+//   }
+// }
 
 // 调试工作流
 async function debugWorkflow() {
@@ -205,6 +195,7 @@ async function startDebug(inputs: Record<string, any>) {
   try {
     // 注册事件监听器
     handleNodeExecution = (event: CustomEvent) => {
+      console.log('handleNodeExecution', event.detail);
       debugEvents.value.push(event.detail);
     };
 
