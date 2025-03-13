@@ -233,24 +233,24 @@ function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent, c
   const rect = canvasContainer.value?.getBoundingClientRect();
   if (!rect) return;
   
-  // Calculate source position based on the connection point
+  // 根据连接点计算源位置
   let sourcePosition = {
-    x: sourceNode.position.x + 200, // Default node width
-    y: sourceNode.position.y + 40   // Default node height/2
+    x: sourceNode.position.x + 200, // 默认节点宽度
+    y: sourceNode.position.y + 40   // 默认节点高度/2
   };
   
-  // For condition nodes, calculate position based on the condition index
+  // 对于条件节点，根据条件索引计算位置
   if (sourceNode.type === NodeType.CONDITION && sourceNode.conditions && condition) {
     let index = -1;
     if (condition.startsWith('case')) {
       index = parseInt(condition.slice(4)) - 1;
     } else if (condition === 'else' && sourceNode.conditions.length > 0) {
-      // ELSE is the last condition
+      // ELSE 是最后一个条件
       index = sourceNode.conditions.length - 1;
     }
     
     if (index >= 0 && index < sourceNode.conditions.length) {
-      // Align with the appropriate connection point
+      // 与适当的连接点对齐
       sourcePosition.y = sourceNode.position.y + 40 + (index * 24);
     }
   }

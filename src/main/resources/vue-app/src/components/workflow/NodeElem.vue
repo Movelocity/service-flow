@@ -19,7 +19,7 @@
     <div class="node-content">
       <template v-if="node.type === 'CONDITION' && node.conditions">
         <div v-for="condition in node.conditions" class="condition-expression">
-          {{ condition.hint }}
+          {{ condition.hint || "ELSE" }}
         </div>
       </template>
       <template v-else-if="node.type === 'FUNCTION'">
@@ -31,7 +31,7 @@
 
     <!-- 连接点 -->
     <template v-if="node.type === 'CONDITION' && node.conditions">
-      <!-- Multiple output points for condition nodes - aligned with condition hints -->
+      <!-- 多个输出连接点，和条件提示对齐 -->
       <div 
         v-for="(_condition, index) in node.conditions" 
         :key="index"
@@ -39,14 +39,14 @@
         :class="'case-' + (index + 1)"
         :style="{
           right: '-5px',
-          /* Position the connection point at the same vertical position as the condition hint */
-          top: `${40 + (index * 24)}px`, 
+          /* 将连接点放在条件提示的同一垂直位置 */
+          top: `${70 + (index * 24)}px`, 
           transform: 'translateY(-50%)'
         }"
         @mousedown.stop="(e) => onOutputPointMouseDown(e, isEmptyLastCondition(index) ? 'else' : 'case' + (index + 1))"
         @mouseup.stop="(e) => onOutputPointMouseUp(e, isEmptyLastCondition(index) ? 'else' : 'case' + (index + 1))"
       >
-        <!-- Add label to indicate which case this connection point represents -->
+        <!-- 添加标签以指示此连接点表示哪个条件 -->
         <div class="connection-point-label">
           {{ isEmptyLastCondition(index) ? 'ELSE' : 'Case ' + (index + 1) }}
         </div>
@@ -221,6 +221,10 @@ function isEmptyLastCondition(index: number): boolean {
   color: var(--text-color);
   opacity: 0.8;
   font-style: italic;
+  margin: 2px;
+  border-radius: 4px;
+  padding: 2px 4px;
+  background-color: var(--card-shadow);
 }
 
 .function-info {

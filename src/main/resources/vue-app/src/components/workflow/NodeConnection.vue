@@ -98,21 +98,21 @@ const path = computed(() => {
     
     if (index >= 0 && index < props.sourceNode.conditions.length) {
       sourcePoint = {
-        x: props.sourceNode.position.x + 200, // Node width
-        y: props.sourceNode.position.y + 40 + (index * 24) // Align with connection point
+        x: props.sourceNode.position.x + 200, // 条件节点宽度
+        y: props.sourceNode.position.y + 70 + (index * 24) // 条件端点，往下移一段
       };
     } else {
-      // Fallback to default
+      // 默认端点
       sourcePoint = {
-        x: props.sourceNode.position.x + 200, // Node width
-        y: props.sourceNode.position.y + 40  // Default y position
+        x: props.sourceNode.position.x + 200, // 条件节点宽度
+        y: props.sourceNode.position.y + 40  // 普通端点
       };
     }
   } else {
-    // For non-condition nodes, use the standard calculation
+    // 非条件节点，使用标准计算
     sourcePoint = {
-      x: props.sourceNode.position.x + 200, // Node width
-      y: props.sourceNode.position.y + 40  // Node height / 2
+      x: props.sourceNode.position.x + 200, // 条件节点宽度
+      y: props.sourceNode.position.y + 40  // 普通端点
     };
   }
 
@@ -139,21 +139,21 @@ const labelPosition = computed(() => {
     
     if (index >= 0 && index < props.sourceNode.conditions.length) {
       sourcePoint = {
-        x: props.sourceNode.position.x + 200, // Node width
-        y: props.sourceNode.position.y + 40 + (index * 24) // Align with connection point
+        x: props.sourceNode.position.x + 200, // 条件节点宽度
+        y: props.sourceNode.position.y + 70 + (index * 24) // 条件端点，往下移一段
       };
     } else {
-      // Fallback to default
+      // 默认端点
       sourcePoint = {
-        x: props.sourceNode.position.x + 200, // Node width
-        y: props.sourceNode.position.y + 40  // Default y position
+        x: props.sourceNode.position.x + 200, // 条件节点宽度
+        y: props.sourceNode.position.y + 40  // 普通端点
       };
     }
   } else {
-    // For non-condition nodes, use the standard calculation
+    // 非条件节点，使用标准计算
     sourcePoint = {
-      x: props.sourceNode.position.x + 200, // Node width
-      y: props.sourceNode.position.y + 40  // Node height / 2
+      x: props.sourceNode.position.x + 200, // 条件节点宽度
+      y: props.sourceNode.position.y + 40  // 普通端点
     };
   }
 

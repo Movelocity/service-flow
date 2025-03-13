@@ -165,7 +165,7 @@ function onClose() {
   position: fixed;
   top: 70px;
   right: 0;
-  width: 360px;
+  width: 400px;
   border-radius: 1rem 0 0 1rem;
   height: calc(100vh - 70px);
   background: var(--card-bg);
