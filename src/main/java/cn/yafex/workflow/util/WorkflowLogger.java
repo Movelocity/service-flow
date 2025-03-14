@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Component;
+import cn.yafex.workflow.model.NodeExecutionEvent;
 
 /**
  * 工具类，用于记录工作流执行的详细信息
@@ -55,6 +56,31 @@ public class WorkflowLogger {
         String logEntry = String.format(
             "[%s] Node: %s, Type: %s, Duration: %dms%n Output: %s%n", 
             timestamp, nodeName, nodeType, duration, output);
+        try (OutputStreamWriter fileWriter = new OutputStreamWriter(
+                new FileOutputStream(logFileName, true), StandardCharsets.UTF_8);
+             PrintWriter writer = new PrintWriter(fileWriter)) {
+            writer.println(logEntry);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 记录节点执行事件，使用NodeExecutionEvent对象
+     * @param event 节点执行事件对象
+     * @param workflowName 工作流名称
+     */
+    public void logNodeExecution(NodeExecutionEvent event, String workflowName) {
+        String executionId = event.getExecutionId();
+        String logFileName = getLogFileName(workflowName, executionId);
+        String timestamp = LocalDateTime.now().format(DATE_FORMAT);
+        
+        String logEntry = String.format(
+            "[%s] Node: %s, Type: %s, Duration: %dms%n Output: %s%n", 
+            timestamp, event.getNodeName(), event.getNodeType(), 
+            event.getDuration() != null ? event.getDuration() : 0, 
+            event.getNodeResult());
+            
         try (OutputStreamWriter fileWriter = new OutputStreamWriter(
                 new FileOutputStream(logFileName, true), StandardCharsets.UTF_8);
              PrintWriter writer = new PrintWriter(fileWriter)) {

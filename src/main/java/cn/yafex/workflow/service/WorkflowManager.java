@@ -140,25 +140,8 @@ public class WorkflowManager {
 				}
 
                 long nodeExecutionTime = System.currentTimeMillis() - nodeStartTime;
-				
-				// 收集节点执行参数信息
-                // Map<String, Object> nodeParameters = new HashMap<>();
-                // nodeParameters.put("toolName", node.getToolName());
-                // if (node.getType() == NodeType.FUNCTION && workflow.hasTool(node.getToolName())) {
-                //     ToolDefinition toolDef = workflow.getToolDefinition(node.getToolName());
-                //     nodeParameters.put("toolDescription", toolDef.getDescription());
-                // }
-                // 记录节点执行情况
-                workflowLogger.logNodeExecution(
-                    context.getExecutionId(), 
-                    workflow.getName(),
-                    node.getName(), 
-                    node.getType().toString(), 
-                    nodeResult.getOutputs(),
-                    nodeExecutionTime
-                );
 
-                // 发送节点完成事件
+                // 创建节点完成事件
                 NodeExecutionEvent completeEvent = new NodeExecutionEvent(
                     context.getExecutionId(),
                     node.getId(),
@@ -166,8 +149,13 @@ public class WorkflowManager {
                     node.getType().toString(),
                     "COMPLETE"
                 );
-				completeEvent.setNodeResult(nodeResult.getOutputs());
+                completeEvent.setNodeResult(nodeResult.getOutputs());
                 completeEvent.setDuration(nodeExecutionTime);
+                
+                // 使用NodeExecutionEvent作为日志输入源
+                workflowLogger.logNodeExecution(completeEvent, workflow.getName());
+
+                // 发送节点完成事件到调试服务
                 debugService.sendDebugEvent(completeEvent);
 
                 // 确定下一个节点
