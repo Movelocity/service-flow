@@ -63,12 +63,10 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useWorkflowStore } from '@/stores/workflow';
 import { useDebugStore } from '@/stores/debug';
-import { workflowApi } from '@/services/workflowApi';
 import WorkflowCanvas from '@/components/workflow/WorkflowCanvas.vue';
 import NodeEditor from '@/components/NodeEditor.vue';
 import ThemeButton from '@/components/common/ThemeButton.vue';
 import DebugPanel from '@/components/DebugPanel.vue';
-import type { NodeExecutionEvent } from '@/types/debug';
 
 const router = useRouter();
 const route = useRoute();
@@ -85,8 +83,6 @@ const workflowId = computed(() => store.currentWorkflow?.id || '');
 // 计算属性
 const isDirty = computed(() => store.isDirty);
 const isDebugging = computed(() => debugStore.isDebugging);
-const debugEvents = computed(() => debugStore.debugEvents);
-const workflowInputs = computed(() => debugStore.workflowInputs);
 const canTest = computed(() => {
   const workflow = store.currentWorkflow;
   if (!workflow) return false;
@@ -149,22 +145,6 @@ async function debugWorkflow() {
   } else {
     debugStore.stopDebug();
   }
-}
-
-// 开始调试
-async function startDebug(inputs: Record<string, any>) {
-  if (!workflowId.value) return;
-  
-  try {
-    await debugStore.startDebug(inputs);
-  } catch (error) {
-    alert(error instanceof Error ? error.message : '启动调试失败');
-  }
-}
-
-// 停止调试
-function stopDebug() {
-  debugStore.stopDebug();
 }
 
 // 关闭编辑器面板
