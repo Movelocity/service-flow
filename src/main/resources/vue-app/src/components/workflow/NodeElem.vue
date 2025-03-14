@@ -90,7 +90,7 @@ const debugStore = useDebugStore();
 
 // 检查当前节点是否正在执行
 const isRunning = computed(() => {
-  console.log("NodeElem", debugStore.runningNodeId, props.node.id)
+  // console.log("NodeElem", debugStore.runningNodeId, props.node.id)
   return debugStore.runningNodeId === props.node.id;
 });
 

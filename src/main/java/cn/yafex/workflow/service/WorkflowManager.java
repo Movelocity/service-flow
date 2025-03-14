@@ -5,7 +5,6 @@ import cn.yafex.workflow.execution.WorkflowContext;
 import cn.yafex.workflow.execution.WorkflowStatus;
 import cn.yafex.workflow.util.WorkflowLogger;
 import cn.yafex.workflow.util.JsonFileHandler;
-import cn.yafex.tools.core.ToolDefinition;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.core.ToolRegistry;
@@ -24,17 +23,48 @@ import java.util.concurrent.Executors;
 import com.alibaba.fastjson.JSON;
 
 import java.util.List;
+import java.util.Collection;
 
 /**
  * 条件操作符枚举
  */
 enum ConditionOperator {
-    EQUALS,
-    NOT_EQUALS,
-    GREATER_THAN,
-    LESS_THAN,
-    GREATER_THAN_OR_EQUALS,
-    LESS_THAN_OR_EQUALS
+    EQUALS("=="),
+    NOT_EQUALS("!="),
+    GREATER_THAN(">"),
+    LESS_THAN("<"),
+    GREATER_THAN_OR_EQUALS(">="),
+    LESS_THAN_OR_EQUALS("<="),
+    CONTAINS("contains"),
+    NOT_CONTAINS("notContains"),
+    STARTS_WITH("startsWith"),
+    ENDS_WITH("endsWith"),
+    IS_EMPTY("isEmpty"),
+    IS_NOT_EMPTY("isNotEmpty");
+    
+    private final String symbol;
+    
+    ConditionOperator(String symbol) {
+        this.symbol = symbol;
+    }
+    
+    public String getSymbol() {
+        return symbol;
+    }
+    
+    /**
+     * 从操作符符号获取对应的枚举值
+     * @param symbol 操作符符号
+     * @return 对应的枚举值
+     */
+    public static ConditionOperator fromSymbol(String symbol) {
+        for (ConditionOperator operator : values()) {
+            if (operator.getSymbol().equals(symbol)) {
+                return operator;
+            }
+        }
+        throw new IllegalArgumentException("Unsupported operator: " + symbol);
+    }
 }
 
 /**
@@ -414,11 +444,25 @@ public class WorkflowManager {
         Object leftValue = condition.getLeftOperand().getValue();
         Object rightValue = condition.getRightOperand().getValue();
         
+        // Special case for isEmpty and isNotEmpty operators
+        ConditionOperator operator = ConditionOperator.fromSymbol(condition.getOperator());
+        if (operator == ConditionOperator.IS_EMPTY) {
+            return leftValue == null || 
+                   (leftValue instanceof String && ((String) leftValue).isEmpty()) ||
+                   (leftValue instanceof Collection && ((Collection<?>) leftValue).isEmpty());
+        }
+        
+        if (operator == ConditionOperator.IS_NOT_EMPTY) {
+            return leftValue != null && 
+                   !((leftValue instanceof String && ((String) leftValue).isEmpty()) ||
+                     (leftValue instanceof Collection && ((Collection<?>) leftValue).isEmpty()));
+        }
+        
+        // For other operators, both operands must have values
         if (leftValue == null || rightValue == null) {
             return false;
         }
         
-        ConditionOperator operator = ConditionOperator.valueOf(condition.getOperator());
         switch (operator) {
             case EQUALS:
                 return leftValue.equals(rightValue);
@@ -442,6 +486,26 @@ public class WorkflowManager {
             case LESS_THAN_OR_EQUALS:
                 if (leftValue instanceof Number && rightValue instanceof Number) {
                     return ((Number) leftValue).doubleValue() <= ((Number) rightValue).doubleValue();
+                }
+                return false;
+            case CONTAINS:
+                if (leftValue instanceof String && rightValue instanceof String) {
+                    return ((String) leftValue).contains((String) rightValue);
+                }
+                return false;
+            case NOT_CONTAINS:
+                if (leftValue instanceof String && rightValue instanceof String) {
+                    return !((String) leftValue).contains((String) rightValue);
+                }
+                return false;
+            case STARTS_WITH:
+                if (leftValue instanceof String && rightValue instanceof String) {
+                    return ((String) leftValue).startsWith((String) rightValue);
+                }
+                return false;
+            case ENDS_WITH:
+                if (leftValue instanceof String && rightValue instanceof String) {
+                    return ((String) leftValue).endsWith((String) rightValue);
                 }
                 return false;
             default:
