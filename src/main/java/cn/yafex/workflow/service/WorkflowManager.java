@@ -9,6 +9,8 @@ import cn.yafex.tools.core.ToolDefinition;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.core.ToolRegistry;
+import cn.yafex.tools.schema.FieldDefinition;
+import cn.yafex.tools.schema.VariableDefinition;
 import cn.yafex.tools.exceptions.ToolException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -58,18 +60,30 @@ public class WorkflowManager {
     /**
      * 启动工作流执行
      * @param workflowId 要执行的工作流ID
-     * @param initialVariables 初始全局变量
+     * @param inputs 初始全局变量
      * @return 执行ID
      */
-    public String startWorkflow(String workflowId, Map<String, Object> initialVariables) {
+    public String startWorkflow(String workflowId, Map<String, Object> inputs) {
         try {
 			System.out.println("startWorkflow: " + workflowId);
             Workflow workflow = jsonFileHandler.loadWorkflow(workflowId);
             WorkflowContext context = new WorkflowContext(workflowId);
             
-            if (initialVariables != null) {
-                context.setVariables(initialVariables);
-            }
+            // 设置初始变量
+			Map<String, VariableDefinition> initContext = new HashMap<>();
+			// 检查必填参数
+			Map<String, FieldDefinition> definedInputs = workflow.getInputs();
+			for (Map.Entry<String, FieldDefinition> entry : definedInputs.entrySet()) {
+				String key = entry.getKey();
+				FieldDefinition value = entry.getValue();
+				if (value.isRequired() && !inputs.containsKey(key)) {
+					throw new RuntimeException("Required input parameter not provided: " + key);
+				}
+				VariableDefinition varDef = VariableDefinition.fromFieldDefinition(value, "global");
+				varDef.setValue(inputs.get(key));
+				initContext.put(key, varDef);
+			}
+			context.setVariables(initContext);
             
             activeWorkflows.put(context.getExecutionId(), context);
             workflowLogger.logWorkflowStart(context.getExecutionId(), workflow.getName());
@@ -93,9 +107,6 @@ public class WorkflowManager {
         String currentNodeId = workflow.getStartNodeId();
 
         try {
-            // Initialize workflow inputs
-            context.setVariables(new HashMap<>(workflow.getInputs()));
-
 			// 执行工作流，直到没有下一个节点
             while (currentNodeId != null) {
                 WorkflowNode node = workflow.getNodeById(currentNodeId);
@@ -114,7 +125,7 @@ public class WorkflowManager {
                     node.getType().toString(),
                     "ENTER"
                 );
-                enterEvent.setContextVariables(new HashMap<>(context.getVariables()));
+                enterEvent.setContextVariables(context.getVariables());
                 debugService.sendDebugEvent(enterEvent);
                 
                 // 根据节点类型执行节点
@@ -135,11 +146,11 @@ public class WorkflowManager {
                     node.getType().toString(),
                     "EXIT"
                 );
-                exitEvent.setContextVariables(context.getVariables());
+                exitEvent.setNodeResult(nodeResult.getOutputs());
                 debugService.sendDebugEvent(exitEvent);
 
                 long nodeExecutionTime = System.currentTimeMillis() - nodeStartTime;
-
+				
 				// 收集节点执行参数信息
                 Map<String, Object> nodeParameters = new HashMap<>();
                 nodeParameters.put("toolName", node.getToolName());
@@ -155,7 +166,7 @@ public class WorkflowManager {
                     node.getType().toString(), 
                     nodeParameters,
                     nodeResult,
-                    nodeDuration
+                    nodeExecutionTime
                 );
 
                 // 发送节点完成事件
@@ -166,8 +177,7 @@ public class WorkflowManager {
                     node.getType().toString(),
                     "COMPLETE"
                 );
-                completeEvent.setNodeResult(nodeResult);
-                completeEvent.setDuration(nodeDuration);
+                completeEvent.setDuration(nodeExecutionTime);
                 debugService.sendDebugEvent(completeEvent);
 
                 // 确定下一个节点
@@ -239,16 +249,16 @@ public class WorkflowManager {
      * @param context Execution context
      * @return Prepared inputs for the tool
      */
-    private Map<String, Object> prepareToolInputs(WorkflowNode node, WorkflowContext context) {
-        Map<String, Object> toolInputs = new HashMap<>(context.getVariables());
+    private Map<String, VariableDefinition> prepareToolInputs(WorkflowNode node, WorkflowContext context) {
+        Map<String, VariableDefinition> toolInputs = context.getVariables();
         
         // If inputMap is not defined or empty, use all context variables as inputs
         if (node.getInputMap() == null || node.getInputMap().isEmpty()) {
             return toolInputs;
         }
-        
+        Map<String, FieldDefinition> toolOutputSchema = ToolRegistry.getHandler(node.getToolName()).getDefinition().getOutputs();
         // Create a new map for tool inputs
-        Map<String, Object> mappedInputs = new HashMap<>();
+        Map<String, VariableDefinition> filteredInputs = new HashMap<>();
         
         // Process each input mapping
         for (Map.Entry<String, VariableDefinition> entry : node.getInputMap().entrySet()) {
@@ -261,30 +271,19 @@ public class WorkflowManager {
             
             if ("CONSTANT".equals(varDef.getName())) {
                 // For constants, use the value directly
-                mappedInputs.put(paramName, varDef.getValue());
+                filteredInputs.put(paramName, varDef);
             } else {
-                // For variables, look up the value in context
-                Object value = null;
-                
-                if (varDef.getParent() != null && !varDef.getParent().isEmpty()) {
-                    // If parent is specified, look up the value in the parent context
-                    // Parent could be a node ID or another context identifier
-                    Map<String, Object> parentContext = getParentContext(varDef.getParent(), context);
-                    if (parentContext != null && parentContext.containsKey(varDef.getName())) {
-                        value = parentContext.get(varDef.getName());
-                    }
-                } else {
-                    // No parent specified, look in global context
-                    value = context.getVariables().get(varDef.getName());
-                }
-                
-                if (value != null) {
-                    mappedInputs.put(paramName, value);
-                }
+                String varName = varDef.getName();
+				String parent = varDef.getParent();
+				VariableDefinition var = context.getVariable(varName, parent); // 从 context 获取变量
+				if(var == null && toolOutputSchema.get(varName).isRequired()) {
+					throw new RuntimeException("未找到必填变量: " + varName);
+				}
+				filteredInputs.put(paramName, var);
             }
         }
         
-        return mappedInputs;
+        return filteredInputs;
     }
 
     /**
@@ -361,7 +360,7 @@ public class WorkflowManager {
     /**
      * 执行条件节点
      * @param node 条件节点
-     * @param context 执行上下文
+     * @param context 执行上下文，任何变量只能从这里获取，不能从节点上获取
      * @return 条件评估结果
      */
     private NodeResult evaluateCondition(WorkflowNode node, WorkflowContext context) {
@@ -383,35 +382,19 @@ public class WorkflowManager {
                 for (Condition condition : conditionCase.getConditions()) {
                     // 更新左操作数值
                     VariableDefinition leftOp = condition.getLeftOperand();
-                    if (leftOp != null && leftOp.getParent() != null) {
-                        Object value = null;
-                        if ("global".equals(leftOp.getParent())) {
-                            value = context.getVariable(leftOp.getName());
-                        } else {
-                            // 从节点上下文获取值
-                            WorkflowNode parentNode = context.getWorkflow().getNodeById(leftOp.getParent());
-                            if (parentNode != null) {
-                                value = parentNode.getFromContext(leftOp.getName());
-                            }
-                        }
-                        leftOp.setValue(value);
+                    if (leftOp != null) {
+						// 填充值
+                        VariableDefinition var = context.getVariable(leftOp.getName(), leftOp.getParent());
+                        leftOp.setValue(var.getValue());
                     }
 
                     // 更新右操作数值
                     VariableDefinition rightOp = condition.getRightOperand();
-                    if (rightOp != null && "VARIABLE".equals(condition.getType()) && rightOp.getParent() != null) {
-                        Object value = null;
-                        if ("global".equals(rightOp.getParent())) {
-                            value = context.getVariable(rightOp.getName());
-                        } else {
-                            // 从节点上下文获取值
-                            WorkflowNode parentNode = context.getWorkflow().getNodeById(rightOp.getParent());
-                            if (parentNode != null) {
-                                value = parentNode.getFromContext(rightOp.getName());
-                            }
-                        }
-                        rightOp.setValue(value);
-                    }
+                    if (rightOp != null && "VARIABLE".equals(condition.getType())) {
+						// 填充值
+                        VariableDefinition var = context.getVariable(rightOp.getName(), rightOp.getParent());
+                        rightOp.setValue(var.getValue());
+                    } 
                     
                     // 评估单个条件
                     boolean conditionResult = evaluateSingleCondition(condition);
@@ -432,16 +415,11 @@ public class WorkflowManager {
                 
                 // 如果当前case的所有条件都满足，返回对应的case标识
                 if (caseResult) {
-                    // result.put("evaluated", true);
-                    // result.put("matchedCase", "case" + (i + 1));
-                    // return result;
 					return new NodeResult(NodeType.CONDITION, "case" + (i + 1), true);
                 }
             }
             
             // 所有条件组合都为false，使用else分支
-            // result.put("evaluated", false);
-            // result.put("matchedCase", "else");
 			return new NodeResult(NodeType.CONDITION, "else", false);
         } catch (Exception e) {
             return NodeResult.error(NodeType.CONDITION, e.getClass().getSimpleName(), e.getMessage(), JSON.toJSONString(e.getStackTrace()));

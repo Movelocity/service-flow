@@ -1,5 +1,6 @@
 package cn.yafex.workflow.execution;
 
+import cn.yafex.tools.schema.VariableDefinition;
 import cn.yafex.workflow.model.Workflow;
 import java.util.Map;
 import java.util.HashMap;
@@ -13,7 +14,7 @@ public class WorkflowContext {
     private String executionId;
     private String workflowId;
     private Workflow workflow;
-    private Map<String, Object> variables;
+    private Map<String, VariableDefinition> variables;
     private String currentNodeId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -52,11 +53,11 @@ public class WorkflowContext {
 	 * 
 	 * @return 一个包含工作流执行上下文变量的映射。
 	 */
-    public Map<String, Object> getVariables() {
+    public Map<String, VariableDefinition> getVariables() {
         return variables;
     }
 
-    public void setVariables(Map<String, Object> variables) {
+    public void setVariables(Map<String, VariableDefinition> variables) {
         this.variables = variables;
     }
 
@@ -101,16 +102,33 @@ public class WorkflowContext {
      * @param key Variable name
      * @param value Variable value
      */
-    public void setVariable(String key, Object value) {
+    public void setVariable(String key, VariableDefinition value) {
         this.variables.put(key, value);
     }
 
     /**
-     * Get a variable from the context
-     * @param key Variable name
-     * @return Variable value
+     * 获取保存在工作流 context 中的变量，如果变量不存在，则返回 null。
+     * 
+     * @param key 变量名称
+     * @return 变量值
      */
-    public Object getVariable(String key) {
+    public VariableDefinition getVariable(String key) {
         return this.variables.get(key);
     }
+
+	/**
+	 * 获取保存在工作流 context 中的变量，如果变量不存在，则返回 null。
+	 * 
+	 * @param name 变量名称
+	 * @param parent 变量父级名称
+	 * @return 变量值
+	 */
+	public VariableDefinition getVariable(String name, String parent) {
+		for (VariableDefinition variable : this.variables.values()) {
+			if (variable.getName().equals(name) && variable.getParent().equals(parent)) {
+				return variable;
+			}
+		}
+		return null;
+	}
 } 

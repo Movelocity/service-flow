@@ -1,10 +1,10 @@
-package cn.yafex.workflow.model;
+package cn.yafex.tools.schema;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
 /**
- * Represents a variable definition in the workflow system.
- * This class matches the frontend VariableDefinition interface structure.
+ * 变量定义，用于描述变量的名称、类型、描述、默认值、父级等属性。
+ * 适用于在节点间传递变量
  */
 public class VariableDefinition {
     @JSONField(name = "name")
@@ -89,4 +89,14 @@ public class VariableDefinition {
         return String.format("变量定义{name:'%s', type:'%s', description:'%s', value:%s, defaultValue:%s, parent:%s}", 
             name, type, description, value, defaultValue, parent);
     }
+
+	public static VariableDefinition fromFieldDefinition(FieldDefinition fieldDefinition, String parent) {
+		VariableDefinition varDef = new VariableDefinition();
+		varDef.name = fieldDefinition.getName();
+		varDef.type = fieldDefinition.getType().toString();
+		varDef.description = fieldDefinition.getDescription();
+		varDef.defaultValue = fieldDefinition.getDefaultValue();
+		varDef.parent = parent;
+		return varDef;
+	}
 } 

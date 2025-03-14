@@ -1,6 +1,8 @@
 package cn.yafex.workflow.model;
 
 import cn.yafex.tools.core.ToolDefinition;
+import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.FieldDefinition;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -15,9 +17,9 @@ public class Workflow {
     private String name;
     private String description;
 	/** 工作流输入参数 */
-    private Map<String, Object> inputs;  // Workflow level inputs
+    private Map<String, FieldDefinition> inputs;  // Workflow level inputs
 	/** 工作流输出参数 */
-    private Map<String, Object> outputs; // Workflow level outputs
+    private Map<String, VariableDefinition> outputs; // Workflow level outputs
 	/** 工作流内保存的工具名称和输入输出模式，用于判断工具是否发生不兼容的更新 */
     private Map<String, ToolDefinition> tools; // Map of tool name to tool definition
 	/** 工作流内全局变量，用于在同一个工作流 runtime 的节点之间传递数据 */
@@ -63,19 +65,19 @@ public class Workflow {
         this.description = description;
     }
 
-    public Map<String, Object> getInputs() {
+    public Map<String, FieldDefinition> getInputs() {
         return inputs;
     }
 
-    public void setInputs(Map<String, Object> inputs) {
+    public void setInputs(Map<String, FieldDefinition> inputs) {
         this.inputs = inputs;
     }
 
-    public Map<String, Object> getOutputs() {
+    public Map<String, VariableDefinition> getOutputs() {
         return outputs;
     }
 
-    public void setOutputs(Map<String, Object> outputs) {
+    public void setOutputs(Map<String, VariableDefinition> outputs) {
         this.outputs = outputs;
     }
 

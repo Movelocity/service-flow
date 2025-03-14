@@ -1,7 +1,7 @@
 package cn.yafex.workflow;
 
 import cn.yafex.workflow.model.WorkflowNode;
-import cn.yafex.workflow.model.VariableDefinition;
+import cn.yafex.tools.schema.VariableDefinition;
 import cn.yafex.workflow.model.NodeType;
 import com.alibaba.fastjson.JSON;
 import org.junit.jupiter.api.Test;

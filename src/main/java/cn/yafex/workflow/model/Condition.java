@@ -1,5 +1,6 @@
 package cn.yafex.workflow.model;
 
+import cn.yafex.tools.schema.VariableDefinition;
 import com.alibaba.fastjson.annotation.JSONField;
 
 /**

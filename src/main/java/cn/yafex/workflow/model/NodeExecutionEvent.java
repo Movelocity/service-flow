@@ -3,6 +3,8 @@ package cn.yafex.workflow.model;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import cn.yafex.tools.schema.VariableDefinition;
+
 /**
  * Represents an event during node execution for debugging purposes
  */
@@ -12,8 +14,8 @@ public class NodeExecutionEvent {
     private String nodeName;
     private String nodeType;
     private String eventType; // ENTER or COMPLETE
-	private Map<String, Object> nodeResult;
-    private Map<String, Object> contextVariables;
+	private Map<String, VariableDefinition> nodeResult;
+    private Map<String, VariableDefinition> contextVariables;
     private LocalDateTime timestamp;
     private Long duration; // Only for COMPLETE events
 
@@ -47,19 +49,19 @@ public class NodeExecutionEvent {
         return eventType;
     }
 
-	public Map<String, Object> getNodeResult() {
+	public Map<String, VariableDefinition> getNodeResult() {
 		return nodeResult;
 	}
 
-	public void setNodeResult(Map<String, Object> nodeResult) {
+	public void setNodeResult(Map<String, VariableDefinition> nodeResult) {
 		this.nodeResult = nodeResult;
 	}
 
-    public Map<String, Object> getContextVariables() {
+    public Map<String, VariableDefinition> getContextVariables() {
         return contextVariables;
     }
 
-    public void setContextVariables(Map<String, Object> contextVariables) {
+    public void setContextVariables(Map<String, VariableDefinition> contextVariables) {
         this.contextVariables = contextVariables;
     }
 

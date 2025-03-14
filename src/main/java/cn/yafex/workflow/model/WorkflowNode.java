@@ -2,6 +2,7 @@ package cn.yafex.workflow.model;
 
 import com.alibaba.fastjson.annotation.JSONCreator;
 import com.alibaba.fastjson.annotation.JSONField;
+import cn.yafex.tools.schema.VariableDefinition;
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
@@ -24,7 +25,6 @@ public class WorkflowNode {
     public WorkflowNode() {
         this.nextNodes = new HashMap<>();
         this.position = new Position(0, 0);
-        this.context = new HashMap<>();
         this.conditions = new ArrayList<>();
         this.inputMap = new HashMap<>();
     }
@@ -127,39 +127,6 @@ public class WorkflowNode {
 
     public void setToolName(String toolName) {
         this.toolName = toolName;
-    }
-
-    public Map<String, Object> getContext() {
-        return context;
-    }
-
-    public void setContext(Map<String, Object> context) {
-        this.context = context;
-    }
-
-    /**
-     * Add a value to the node's context
-     * @param key Context variable name
-     * @param value Context variable value
-     */
-    public void addToContext(String key, Object value) {
-        this.context.put(key, value);
-    }
-
-    /**
-     * Get a value from the node's context
-     * @param key Context variable name
-     * @return Context variable value or null if not found
-     */
-    public Object getFromContext(String key) {
-        return this.context.get(key);
-    }
-
-    /**
-     * Clear the node's context
-     */
-    public void clearContext() {
-        this.context.clear();
     }
 
     public List<ConditionCase> getConditions() {

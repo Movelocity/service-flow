@@ -3,6 +3,7 @@ package cn.yafex.workflow.service;
 import cn.yafex.tools.core.ToolDefinition;
 import cn.yafex.tools.schema.FieldDefinition;
 import cn.yafex.tools.schema.FieldType;
+import cn.yafex.tools.schema.VariableDefinition;
 import cn.yafex.workflow.model.*;
 
 import java.util.*;
@@ -147,7 +148,7 @@ public class WorkflowChecker {
                     continue;
                 }
                 
-                VariableDefinition varDef = node.getInputMapping(paramName);
+                VariableDefinition varDef = node.getInputMap().get(paramName);
                 if (varDef == null) {
                     result.addError("Function node '" + node.getName() + "' (ID: " + node.getId() + 
                             ") is missing required parameter: " + paramName);
@@ -189,24 +190,24 @@ public class WorkflowChecker {
         }
         
         // Validate variables in each condition
-        for (ConditionCase conditionCase : conditionCases) {
-            List<Condition> conditions = conditionCase.getConditions();
-            if (conditions != null) {
-                for (Condition condition : conditions) {
-                    validateConditionVariable(workflow, node, condition.getLeftOperand(), "left operand", result);
-                    validateConditionVariable(workflow, node, condition.getRightOperand(), "right operand", result);
+        // for (ConditionCase conditionCase : conditionCases) {
+        //     List<Condition> conditions = conditionCase.getConditions();
+        //     if (conditions != null) {
+        //         for (Condition condition : conditions) {
+        //             validateConditionVariable(workflow, node, condition.getLeftOperand(), "left operand", result);
+        //             validateConditionVariable(workflow, node, condition.getRightOperand(), "right operand", result);
                     
-                    // Check if operands' types are compatible with each other
-                    if (condition.getLeftOperand() != null && condition.getRightOperand() != null) {
-                        if (!isTypeCompatible(condition.getLeftOperand().getType(), condition.getRightOperand().getType())) {
-                            result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
-                                    ") has incompatible operand types in condition: " + condition.getLeftOperand().getType() + 
-                                    " " + condition.getOperator() + " " + condition.getRightOperand().getType());
-                        }
-                    }
-                }
-            }
-        }
+        //             // Check if operands' types are compatible with each other
+        //             if (condition.getLeftOperand() != null && condition.getRightOperand() != null) {
+        //                 if (!isTypeCompatible(condition.getLeftOperand().getType(), condition.getRightOperand().getType())) {
+        //                     result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
+        //                             ") has incompatible operand types in condition: " + condition.getLeftOperand().getType() + 
+        //                             " " + condition.getOperator() + " " + condition.getRightOperand().getType());
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
         
         // Check for missing case branches
         Map<String, String> nextNodes = node.getNextNodes();
@@ -234,34 +235,34 @@ public class WorkflowChecker {
     /**
      * Validate a variable reference in a condition
      */
-    private void validateConditionVariable(Workflow workflow, WorkflowNode node, VariableDefinition varDef, String operandType, ValidationResult result) {
-        if (varDef == null) {
-            result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
-                    ") has null " + operandType);
-            return;
-        }
+    // private void validateConditionVariable(Workflow workflow, WorkflowNode node, VariableDefinition varDef, String operandType, ValidationResult result) {
+    //     if (varDef == null) {
+    //         result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
+    //                 ") has null " + operandType);
+    //         return;
+    //     }
         
-        if ("CONSTANT".equals(varDef.getType())) {
-            // Constants are directly in the condition, no need to check references
-            return;
-        }
+    //     if ("CONSTANT".equals(varDef.getType())) {
+    //         // Constants are directly in the condition, no need to check references
+    //         return;
+    //     }
         
-        // Check if variable reference exists
-        String parentNodeId = varDef.getParent();
-        if (parentNodeId == null || parentNodeId.isEmpty()) {
-            result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
-                    ") has " + operandType + " with no parent reference: " + varDef.getName());
-            return;
-        }
+    //     // Check if variable reference exists
+    //     String parentNodeId = varDef.getParent();
+    //     if (parentNodeId == null || parentNodeId.isEmpty()) {
+    //         result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
+    //                 ") has " + operandType + " with no parent reference: " + varDef.getName());
+    //         return;
+    //     }
         
-        if (!"global".equals(parentNodeId)) {
-            WorkflowNode parentNode = workflow.getNodeById(parentNodeId);
-            if (parentNode == null) {
-                result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
-                        ") references non-existent parent node in " + operandType + ": " + parentNodeId);
-            }
-        }
-    }
+    //     if (!"global".equals(parentNodeId)) {
+    //         WorkflowNode parentNode = workflow.getNodeById(parentNodeId);
+    //         if (parentNode == null) {
+    //             result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
+    //                     ") references non-existent parent node in " + operandType + ": " + parentNodeId);
+    //         }
+    //     }
+    // }
     
     /**
      * Validate all next nodes from a given node
@@ -320,20 +321,20 @@ public class WorkflowChecker {
     /**
      * Check if two types are compatible (String, String)
      */
-    private boolean isTypeCompatible(String type1, String type2) {
-        if (type1 == null || type2 == null) {
-            return false;
-        }
+    // private boolean isTypeCompatible(String type1, String type2) {
+    //     if (type1 == null || type2 == null) {
+    //         return false;
+    //     }
         
-        // If they're the same type, they're compatible
-        if (type1.equalsIgnoreCase(type2)) {
-            return true;
-        }
+    //     // If they're the same type, they're compatible
+    //     if (type1.equalsIgnoreCase(type2)) {
+    //         return true;
+    //     }
         
-        // Handle numeric types
-        boolean isType1Numeric = "NUMBER".equalsIgnoreCase(type1) || "INTEGER".equalsIgnoreCase(type1);
-        boolean isType2Numeric = "NUMBER".equalsIgnoreCase(type2) || "INTEGER".equalsIgnoreCase(type2);
+    //     // Handle numeric types
+    //     boolean isType1Numeric = "NUMBER".equalsIgnoreCase(type1) || "INTEGER".equalsIgnoreCase(type1);
+    //     boolean isType2Numeric = "NUMBER".equalsIgnoreCase(type2) || "INTEGER".equalsIgnoreCase(type2);
         
-        return isType1Numeric && isType2Numeric;
-    }
+    //     return isType1Numeric && isType2Numeric;
+    // }
 } 

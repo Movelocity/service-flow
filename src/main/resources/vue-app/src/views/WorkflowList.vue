@@ -64,8 +64,8 @@ import { useRouter } from 'vue-router';
 import type { Workflow } from '@/types/workflow';
 import { NodeType } from '@/types/workflow';
 import { workflowApi } from '@/services/workflowApi';
-import ThemeButton from '@/components/ThemeButton.vue';
-
+import ThemeButton from '@/components/common/ThemeButton.vue';
+import { convertAppToApiWorkflow, convertApiToAppWorkflow } from '@/types/workflow';
 const router = useRouter();
 const isLoading = ref(true);
 const workflows = ref<Workflow[]>([]);
@@ -73,7 +73,8 @@ const workflows = ref<Workflow[]>([]);
 // 加载工作流列表
 onMounted(async () => {
   try {
-    workflows.value = await workflowApi.listWorkflows();
+    const apiWorkflows = await workflowApi.listWorkflows();
+    workflows.value = apiWorkflows.map(convertApiToAppWorkflow);
   } catch (error) {
     console.error('Failed to load workflows:', error);
   } finally {
@@ -91,26 +92,22 @@ async function createWorkflow() {
       name: '开始',
       description: '',
       position: { x: 100, y: 100 },
-      inputs: {},
-      outputs: {},
-      config: {},
       nextNodes: {},
-      context: {}
     };
 
     const newWorkflow: Partial<Workflow> = {
       name: '新工作流',
       description: '',
-      inputs: {},
-      outputs: {},
-      tools: {},
-      globalVariables: {},
+      inputs: [],
+      outputs: [],
+      tools: [],
+      globalVariables: [],
       nodes: [startNode],
       startNodeId: 'start',
       isActive: true
     };
     
-    const createdWorkflow = await workflowApi.saveWorkflow(newWorkflow);
+    const createdWorkflow = await workflowApi.saveWorkflow(convertAppToApiWorkflow(newWorkflow as Workflow));
     router.push({
       name: 'workflow-editor',
       params: { id: createdWorkflow.id }
