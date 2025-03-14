@@ -6,7 +6,6 @@ import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.exceptions.ToolException;
 import cn.yafex.tools.schema.FieldType;
-
 import java.util.HashMap;
 import java.util.Map;
 
