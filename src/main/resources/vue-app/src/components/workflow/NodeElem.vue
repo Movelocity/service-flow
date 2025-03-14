@@ -3,7 +3,8 @@
     :class="[
       'workflow-node',
       node.type.toLowerCase(),
-      { selected: isSelected }
+      { selected: isSelected },
+      { 'running': isRunning }
     ]"
     :style="nodeStyle"
     @mousedown="onNodeMouseDown"
@@ -71,6 +72,7 @@
 import { computed } from 'vue';
 import type { Node } from '@/types/workflow';
 import { useWorkflowStore } from '@/stores/workflow';
+import { useDebugStore } from '@/stores/debug';
 import NodeIcon from '@/components/common/NodeIcon.vue';
 
 const props = defineProps<{
@@ -84,6 +86,13 @@ const emit = defineEmits<{
 }>();
 
 const store = useWorkflowStore();
+const debugStore = useDebugStore();
+
+// 检查当前节点是否正在执行
+const isRunning = computed(() => {
+  console.log("NodeElem", debugStore.runningNodeId, props.node.id)
+  return debugStore.runningNodeId === props.node.id;
+});
 
 // 添加拖拽状态标记
 let isDragging = false;
@@ -196,6 +205,44 @@ function isEmptyLastCondition(index: number): boolean {
 
 .workflow-node:hover {
   box-shadow: 0 0 18px var(--card-shadow);
+}
+
+/* 运行中的节点样式 */
+.workflow-node.running {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 12px var(--el-color-primary-light-3);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 8px var(--el-color-primary-light-5);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--el-color-primary);
+  }
+  100% {
+    box-shadow: 0 0 8px var(--el-color-primary-light-5);
+  }
+}
+
+/* 运行中的选中节点样式 */
+.workflow-node.selected.running {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 12px var(--el-color-primary);
+  animation: pulse-selected 1.5s infinite;
+}
+
+@keyframes pulse-selected {
+  0% {
+    box-shadow: 0 0 8px var(--el-color-primary);
+  }
+  50% {
+    box-shadow: 0 0 18px var(--el-color-primary);
+  }
+  100% {
+    box-shadow: 0 0 8px var(--el-color-primary);
+  }
 }
 
 .node-header {

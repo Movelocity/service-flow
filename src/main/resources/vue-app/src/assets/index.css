@@ -7,6 +7,7 @@
   --node-end: #dc3545;
   --node-condition: #ffc107;
   --node-function: #17a2b8;
+  --node-running: #8af5ae;
   --connection-line: #6c757d;
   --connection-point: #6c757d;
   --connection-point-hover: #007bff;
@@ -33,6 +34,7 @@ html.dark {
   --node-end: #d63031;
   --node-condition: #fdcb6e;
   --node-function: #00cec9;
+  --node-running: #8af5ae;
   --connection-line: #636e72;
   --connection-point: #636e72;
   --connection-point-hover: #0984e3;

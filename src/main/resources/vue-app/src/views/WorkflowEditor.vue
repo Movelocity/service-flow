@@ -53,14 +53,7 @@
     <div class="editor-main">
       <WorkflowCanvas />
       <NodeEditor :is-visible="isEditorPanelOpen" @close="closeEditor" />
-      <DebugPanel
-        v-if="isDebugging"
-        :events="debugEvents"
-        :workflow-id="workflowId"
-        :required-inputs="workflowInputs"
-        @stop="stopDebug"
-        @debug-start="startDebug"
-      />
+      <DebugPanel v-if="isDebugging" />
     </div>
   </div>
 </template>
@@ -69,6 +62,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useWorkflowStore } from '@/stores/workflow';
+import { useDebugStore } from '@/stores/debug';
 import { workflowApi } from '@/services/workflowApi';
 import WorkflowCanvas from '@/components/workflow/WorkflowCanvas.vue';
 import NodeEditor from '@/components/NodeEditor.vue';
@@ -79,24 +73,20 @@ import type { NodeExecutionEvent } from '@/types/debug';
 const router = useRouter();
 const route = useRoute();
 const store = useWorkflowStore();
+const debugStore = useDebugStore();
 
 // 工作流信息
 const workflowName = ref('');
 const workflowDescription = ref('');
 const isLoading = ref(true);
 const executionStatus = ref<string | null>(null);
-const isDebugging = ref(false);
-const debugEvents = ref<NodeExecutionEvent[]>([]);
 const workflowId = computed(() => store.currentWorkflow?.id || '');
-const workflowInputs = ref<Record<string, any>>({});
-
-// 调试相关
-let eventSource: (() => void) | null = null;
-let handleNodeExecution: ((event: CustomEvent) => void) | null = null;
-let handleDebugError: ((event: CustomEvent) => void) | null = null;
 
 // 计算属性
 const isDirty = computed(() => store.isDirty);
+const isDebugging = computed(() => debugStore.isDebugging);
+const debugEvents = computed(() => debugStore.debugEvents);
+const workflowInputs = computed(() => debugStore.workflowInputs);
 const canTest = computed(() => {
   const workflow = store.currentWorkflow;
   if (!workflow) return false;
@@ -143,23 +133,21 @@ async function saveWorkflow() {
 // 调试工作流
 async function debugWorkflow() {
   if (!workflowId.value) return;
+  
   console.log('debugWorkflow', isDebugging.value);
-  if(!isDebugging.value){
+  
+  if(!isDebugging.value) {
     if(!canTest.value){
       alert('请先添加开始和结束节点');
       return;
     }
     try {
-      // 获取工作流必填参数
-      workflowInputs.value = await workflowApi.getWorkflowInputs(workflowId.value);
-      isDebugging.value = true;
-      debugEvents.value = [];
+      await debugStore.initDebug(workflowId.value);
     } catch (error) {
-      console.error('Failed to get workflow inputs:', error);
-      alert('获取工作流参数失败');
+      alert(error instanceof Error ? error.message : '获取工作流参数失败');
     }
   } else {
-    stopDebug();
+    debugStore.stopDebug();
   }
 }
 
@@ -168,47 +156,15 @@ async function startDebug(inputs: Record<string, any>) {
   if (!workflowId.value) return;
   
   try {
-    // 注册事件监听器
-    handleNodeExecution = (event: CustomEvent) => {
-      console.log('handleNodeExecution', event.detail);
-      debugEvents.value.push(event.detail);
-    };
-
-    handleDebugError = (event: CustomEvent) => {
-      console.error('Debug error:', event.detail);
-      stopDebug();
-      alert('调试过程中发生错误');
-    };
-
-    window.addEventListener('node-execution', handleNodeExecution as EventListener);
-    window.addEventListener('debug-error', handleDebugError as EventListener);
-
-    // 保存清理函数
-    eventSource = workflowApi.debugWorkflow(workflowId.value, inputs);
+    await debugStore.startDebug(inputs);
   } catch (error) {
-    console.error('Failed to start workflow debug:', error);
-    alert('启动调试失败');
-    stopDebug();
+    alert(error instanceof Error ? error.message : '启动调试失败');
   }
 }
 
 // 停止调试
 function stopDebug() {
-  if (eventSource) {
-    // 移除事件监听器
-    if (handleNodeExecution) {
-      window.removeEventListener('node-execution', handleNodeExecution as EventListener);
-      handleNodeExecution = null;
-    }
-    if (handleDebugError) {
-      window.removeEventListener('debug-error', handleDebugError as EventListener);
-      handleDebugError = null;
-    }
-    // 调用清理函数关闭连接
-    eventSource();
-    eventSource = null;
-  }
-  isDebugging.value = false;
+  debugStore.stopDebug();
 }
 
 // 关闭编辑器面板
@@ -220,11 +176,6 @@ function closeEditor() {
 function navigateBack() {
   router.back();
 }
-
-// 离开页面前确认
-onBeforeUnmount(() => {
-  // 不需要在这里处理，因为 Vue Router 的导航守卫会处理
-});
 
 // 添加全局 beforeunload 事件处理
 onMounted(() => {
@@ -255,7 +206,9 @@ onBeforeUnmount(() => {
       event.returnValue = '有未保存的更改，确定要离开吗？';
     }
   });
-  stopDebug();
+  // 确保停止调试并清除状态
+  debugStore.stopDebug();
+  debugStore.resetDebug();
 });
 
 // 加载工作流
@@ -267,6 +220,9 @@ async function loadWorkflow(id: string) {
     if (workflow) {
       workflowName.value = workflow.name;
       workflowDescription.value = workflow.description;
+      
+      // 重置调试状态
+      debugStore.resetDebug();
     }
   } catch (error) {
     console.error('Failed to load workflow:', error);

@@ -52,20 +52,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useDebugStore } from '@/stores/debug';
 import NodeIcon from '@/components/common/NodeIcon.vue';
-import type { NodeExecutionEvent } from '@/types/debug';
 
-const props = defineProps<{
-  events: NodeExecutionEvent[],
-  workflowId: string,
-  requiredInputs?: Record<string, any>
-}>();
+// Use the debug store instead of props
+const debugStore = useDebugStore();
 
-const emit = defineEmits<{
-  (e: 'stop'): void,
-  (e: 'debug-start', inputs: Record<string, any>): void
-}>();
+// Compute properties from the store
+const events = computed(() => debugStore.debugEvents);
+const requiredInputs = computed(() => debugStore.workflowInputs);
 
 const isCollapsed = ref(false);
 const showInputForm = ref(true);
@@ -75,15 +71,20 @@ const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value;
 };
 
-const startDebug = () => {
-  showInputForm.value = false;
-  emit('debug-start', inputValues.value);
+const startDebug = async () => {
+  try {
+    showInputForm.value = false;
+    await debugStore.startDebug(inputValues.value);
+  } catch (error) {
+    console.error('Debug start error:', error);
+    alert(error instanceof Error ? error.message : '启动调试失败');
+  }
 };
 
 onMounted(() => {
   // 初始化输入值
-  if (props.requiredInputs) {
-    Object.keys(props.requiredInputs).forEach(key => {
+  if (requiredInputs.value) {
+    Object.keys(requiredInputs.value).forEach(key => {
       inputValues.value[key] = '';
     });
   }
