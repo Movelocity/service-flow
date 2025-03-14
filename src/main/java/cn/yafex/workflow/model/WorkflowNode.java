@@ -18,7 +18,6 @@ public class WorkflowNode {
     private Map<String, String> nextNodes; // key: condition/default, value: next node id
     private Position position;      // 节点在画布上的位置，用于编辑器
     private String toolName;        // Only used for FUNCTION type nodes
-    private Map<String, Object> context; // Node context for function outputs
     private List<ConditionCase> conditions; // Only used for CONDITION type nodes
     private Map<String, VariableDefinition> inputMap; // Input parameter mappings for FUNCTION type nodes
 

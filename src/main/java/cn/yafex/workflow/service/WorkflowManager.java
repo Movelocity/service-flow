@@ -105,8 +105,6 @@ public class WorkflowManager {
 
                 context.setCurrentNodeId(currentNodeId);
                 long nodeStartTime = System.currentTimeMillis();
-                
-                
 
                 // 设置节点进入事件
                 NodeExecutionEvent enterEvent = new NodeExecutionEvent(

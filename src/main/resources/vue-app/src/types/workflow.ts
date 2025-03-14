@@ -189,8 +189,8 @@ export function convertAppToApiWorkflow(workflow: Workflow): ApiWorkflow {
   // Convert array to map for inputs
   const inputs: { [key: string]: Omit<VariableDefinition, 'name'> } = {};
   workflow.inputs.forEach(input => {
-    const { name, ...def } = input;
-    inputs[name] = def;
+    const { name } = input;
+    inputs[name] = input;
   });
 
   // Convert array to map for outputs
