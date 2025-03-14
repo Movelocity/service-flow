@@ -41,7 +41,7 @@
             <strong>Context: </strong>
             <pre>{{ JSON.stringify(event.contextVariables, null, 2) }}</pre>
           </div>
-          <div v-if="event.eventType === 'COMPLETE'" class="event-variables">
+          <div v-if="event.eventType === 'COMPLETE' && event.nodeResult" class="event-variables">
             <strong>Outputs: </strong>
             <pre>{{ JSON.stringify(event.nodeResult, null, 2) }}</pre>
           </div>

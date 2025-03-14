@@ -148,7 +148,10 @@ export class WorkflowApi {
           detail: err
         });
         window.dispatchEvent(errorEvent);
-      }
+        // 禁止重试
+        ctrl.abort();
+      },
+      openWhenHidden: true // 在页面隐藏时保持连接，避免切换回来重新发起
     }).catch(err => {
       console.error('Failed to start debug:', err);
       throw err;

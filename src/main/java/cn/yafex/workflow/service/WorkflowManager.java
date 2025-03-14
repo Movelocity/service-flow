@@ -138,16 +138,6 @@ public class WorkflowManager {
 				if(nodeResult.getOutputs() != null) {
 					context.getVariables().putAll(nodeResult.getOutputs());
 				}
-                // 设置节点退出事件
-                NodeExecutionEvent exitEvent = new NodeExecutionEvent(
-                    context.getExecutionId(),
-                    node.getId(),
-                    node.getName(),
-                    node.getType().toString(),
-                    "EXIT"
-                );
-                exitEvent.setNodeResult(nodeResult.getOutputs());
-                debugService.sendDebugEvent(exitEvent);
 
                 long nodeExecutionTime = System.currentTimeMillis() - nodeStartTime;
 				
@@ -165,7 +155,7 @@ public class WorkflowManager {
                     node.getName(), 
                     node.getType().toString(), 
                     nodeParameters,
-                    nodeResult,
+                    nodeResult.getOutputs(),
                     nodeExecutionTime
                 );
 
@@ -177,6 +167,7 @@ public class WorkflowManager {
                     node.getType().toString(),
                     "COMPLETE"
                 );
+				completeEvent.setNodeResult(nodeResult.getOutputs());
                 completeEvent.setDuration(nodeExecutionTime);
                 debugService.sendDebugEvent(completeEvent);
 
@@ -217,11 +208,6 @@ public class WorkflowManager {
 		NodeResult result = null;
         try {
             switch (node.getType()) {
-                case START:
-                    // 开始节点的工作已在 startWorkflow 中完成
-					result = new NodeResult(NodeType.START);
-                    break;
-                    
                 case FUNCTION:
 					result = executeToolNode(node, context);
                     break;
@@ -229,10 +215,10 @@ public class WorkflowManager {
                 case CONDITION:
 					result = evaluateCondition(node, context);
                     break;
-                    
+                
+				case START:
                 case END:
-                    // 结束节点捕获最终状态
-                    result = new NodeResult(NodeType.END);
+                    result = new NodeResult(node.getType());
                     break;
             }
         } catch (Exception e) {
@@ -319,7 +305,13 @@ public class WorkflowManager {
             throw new ToolException("Tool execution failed: " + e.getMessage(), "EXECUTION_ERROR");
         }
     }
-
+	
+	/**
+	 * 执行工具节点
+	 * @param node 工具节点
+	 * @param context 执行上下文
+	 * @return 节点执行结果
+	 */
 	private NodeResult executeToolNode(WorkflowNode node, WorkflowContext context) {
 		NodeResult result = null;
 		try {
