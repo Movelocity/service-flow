@@ -48,13 +48,13 @@ public class WorkflowLogger {
      */
     public void logNodeExecution(
         String executionId, String workflowId, String nodeName, String nodeType, 
-        Object input, Object output, long duration
+        Object output, long duration
     ) {
         String logFileName = getLogFileName(workflowId, executionId);
         String timestamp = LocalDateTime.now().format(DATE_FORMAT);
         String logEntry = String.format(
-            "[%s] Node: %s, Type: %s, Duration: %dms%n Input: %s%nOutput: %s%n", 
-            timestamp, nodeName, nodeType, duration, input, output);
+            "[%s] Node: %s, Type: %s, Duration: %dms%n Output: %s%n", 
+            timestamp, nodeName, nodeType, duration, output);
         try (OutputStreamWriter fileWriter = new OutputStreamWriter(
                 new FileOutputStream(logFileName, true), StandardCharsets.UTF_8);
              PrintWriter writer = new PrintWriter(fileWriter)) {

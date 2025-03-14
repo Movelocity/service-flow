@@ -142,19 +142,18 @@ public class WorkflowManager {
                 long nodeExecutionTime = System.currentTimeMillis() - nodeStartTime;
 				
 				// 收集节点执行参数信息
-                Map<String, Object> nodeParameters = new HashMap<>();
-                nodeParameters.put("toolName", node.getToolName());
-                if (node.getType() == NodeType.FUNCTION && workflow.hasTool(node.getToolName())) {
-                    ToolDefinition toolDef = workflow.getToolDefinition(node.getToolName());
-                    nodeParameters.put("toolDescription", toolDef.getDescription());
-                }
+                // Map<String, Object> nodeParameters = new HashMap<>();
+                // nodeParameters.put("toolName", node.getToolName());
+                // if (node.getType() == NodeType.FUNCTION && workflow.hasTool(node.getToolName())) {
+                //     ToolDefinition toolDef = workflow.getToolDefinition(node.getToolName());
+                //     nodeParameters.put("toolDescription", toolDef.getDescription());
+                // }
                 // 记录节点执行情况
                 workflowLogger.logNodeExecution(
                     context.getExecutionId(), 
                     workflow.getName(),
                     node.getName(), 
                     node.getType().toString(), 
-                    nodeParameters,
                     nodeResult.getOutputs(),
                     nodeExecutionTime
                 );
@@ -162,7 +161,7 @@ public class WorkflowManager {
                 // 发送节点完成事件
                 NodeExecutionEvent completeEvent = new NodeExecutionEvent(
                     context.getExecutionId(),
-                    node.getName(),
+                    node.getId(),
                     node.getName(),
                     node.getType().toString(),
                     "COMPLETE"
