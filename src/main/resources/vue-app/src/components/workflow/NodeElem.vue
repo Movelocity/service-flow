@@ -164,11 +164,27 @@ function onOutputPointMouseUp(_e: MouseEvent, condition: string = 'default') {
 }
 
 function onInputPointMouseDown(e: MouseEvent) {
-  emit('startConnection', props.node.id, false, e);
+  // Check if this node already has input connections
+  const inputConnections = store.nodeInputConnections(props.node.id);
+  
+  // If we have existing connections, break them and start a new connection from the source
+  if (inputConnections.length > 0) {
+    // Get the first connection (assuming single-input nodes)
+    const sourceConnection = inputConnections[0];
+    
+    // Delete the existing connection
+    store.deleteConnection(sourceConnection.sourceId, sourceConnection.condition);
+    
+    // Start a new temporary connection from the source node
+    emit('startConnection', sourceConnection.sourceId, true, e, sourceConnection.condition);
+  } else {
+    // Normal behavior - start a connection to this input
+    emit('startConnection', props.node.id, false, e);
+  }
 }
 
 function onInputPointMouseUp(_e: MouseEvent) {
-  emit('endConnection', props.node.id, false);
+  emit('endConnection', props.node.id, false, 'default');
 }
 
 // Check if this is the last condition and if it's empty (for ELSE branch)
@@ -304,6 +320,13 @@ function getConditionPortStyle(index: number): Record<string, string> {
   left: -5px;
   top: 50%;
   transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.connection-point.input:hover {
+  transform: translateY(-50%) scale(1.5);
+  background-color: var(--connection-point-hover);
+  box-shadow: 0 0 5px var(--connection-point-hover);
 }
 
 .connection-point.output {

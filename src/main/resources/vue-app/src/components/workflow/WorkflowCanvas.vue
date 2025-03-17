@@ -242,16 +242,15 @@ function handleGlobalMouseUp(event: MouseEvent) {
 
 // 连接线操作
 function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent, condition?: string) {
-  if (!isOutput) return;
-
   const sourceNode = getNode(nodeId);
   if (!sourceNode) return;
 
   const rect = canvasContainer.value?.getBoundingClientRect();
   if (!rect) return;
   
-  // Use PositionManager to get source position
-  const sourcePosition = PositionManager.getPortPosition(sourceNode, PortType.OUTPUT, condition || 'default');
+  // Get the appropriate port position
+  const portType = isOutput ? PortType.OUTPUT : PortType.INPUT;
+  const sourcePosition = PositionManager.getPortPosition(sourceNode, portType, condition || 'default');
   
   tempConnection.value = {
     isCreating: true,
@@ -266,8 +265,16 @@ function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent, c
   };
 }
 
-function endConnection(nodeId: string, isOutput: boolean) {
-  if (isOutput || !tempConnection.value.isCreating) return;
+function endConnection(nodeId: string, isOutput: boolean, condition: string = 'default') {
+  if (!tempConnection.value.isCreating) return;
+  
+  // For output ports, we don't connect when released on the same port
+  if (isOutput && nodeId === tempConnection.value.sourceNodeId && 
+      condition === tempConnection.value.sourceCondition) {
+    tempConnection.value.isCreating = false;
+    tempConnection.value.nearestPort = null;
+    return;
+  }
 
   // If we have a nearest port and mouse is released near a node, use that node instead
   const targetNodeId = tempConnection.value.nearestPort?.nodeId || nodeId;
