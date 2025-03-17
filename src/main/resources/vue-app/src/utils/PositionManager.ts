@@ -45,7 +45,7 @@ export class PositionManager {
    * Get position for a specific port on a node
    */
   static getPortPosition(node: Node, portType: PortType, condition?: string): Point {
-    console.log(node, portType, condition);
+    // console.log(node, portType, condition);
     const basePosition = {
       [PortType.INPUT]: {
         x: node.position.x + NODE_LAYOUT.INPUT_PORT_X,

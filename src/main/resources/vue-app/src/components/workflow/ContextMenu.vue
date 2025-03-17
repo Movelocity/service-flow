@@ -64,6 +64,8 @@ const nodeTypeLabels = {
 function handleNodeAdd(type: NodeType) {
   if (type === NodeType.FUNCTION) {
     showToolSelector.value = true;
+  } else if (type === NodeType.CONDITION) {
+    store.addConditionNode(props.clickPosition);
   } else {
     store.addNode(type, props.clickPosition);
   }

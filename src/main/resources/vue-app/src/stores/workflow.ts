@@ -5,6 +5,7 @@ import type { VariableDefinition } from '@/types/fields';
 import type { Tool } from '@/types/tools';
 import { convertApiToAppWorkflow, convertAppToApiWorkflow, NodeType } from '@/types/workflow';
 import { WorkflowApi } from '@/services/workflowApi';
+import { VariableType } from '@/types/fields';
 const workflowApi = new WorkflowApi();
 
 interface WorkflowState {
@@ -137,11 +138,18 @@ export const useWorkflowStore = defineStore('workflow', {
       if (!this.currentWorkflow) {
         this.createWorkflow('New Workflow', 'Created automatically');
       }
-      
+
+      const defaultName = {
+        [NodeType.START]: '开始',
+        [NodeType.CONDITION]: '条件分支',
+        [NodeType.FUNCTION]: '函数',
+        [NodeType.END]: '结束'
+      }[type];
+
       const node: Node = {
         id: uuidv4(),
         type,
-        name: name || type === NodeType.CONDITION ? '条件分支' : `${type} Node`,
+        name: name || defaultName,
         description: '',
         position,
         nextNodes: {},
@@ -155,6 +163,37 @@ export const useWorkflowStore = defineStore('workflow', {
       }
       this.selectNode(node.id);
       return node;
+    },
+
+    addConditionNode(position: Position, name: string = '') {
+      const node = this.addNode(NodeType.CONDITION, position, name);
+      this.updateNode(node.id, { 
+        conditions:  [{
+          conditions: [{
+            leftOperand: {
+              name: '',
+              type: VariableType.STRING,
+              description: '',
+              parent: ''
+            },
+            operator: '==',
+            rightOperand: {
+              name: '',
+              type: VariableType.STRING,
+              description: '',
+              defaultValue: '',
+              parent: ''
+            },
+            type: 'CONSTANT'
+          }],
+          type: 'and',
+          hint: '待编辑'
+        }, {
+          conditions: [] as never[],
+          type: 'and' as const,
+          hint: 'ELSE'
+        }]
+      });
     },
 
     // Add function node with a specific tool
