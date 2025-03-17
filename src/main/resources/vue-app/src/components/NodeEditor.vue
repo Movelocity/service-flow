@@ -23,7 +23,6 @@
         @change="updateNodeDescription"
       >
       
-
       <!-- 开始节点的全局变量定义 -->
       <template v-if="selectedNode.type === 'START'">
         <StartNodeEditor />

@@ -38,12 +38,7 @@
         :key="index"
         class="connection-point output"
         :class="'case-' + (index + 1)"
-        :style="{
-          right: '-5px',
-          /* 将连接点放在条件提示的同一垂直位置 */
-          top: `${70 + (index * 24)}px`, 
-          transform: 'translateY(-50%)'
-        }"
+        :style="getConditionPortStyle(index)"
         @mousedown.stop="(e) => onOutputPointMouseDown(e, isEmptyLastCondition(index) ? 'else' : 'case' + (index + 1))"
         @mouseup.stop="(e) => onOutputPointMouseUp(e, isEmptyLastCondition(index) ? 'else' : 'case' + (index + 1))"
       >
@@ -56,12 +51,14 @@
     <div
       v-else-if="node.type !== 'END'"
       class="connection-point output"
+      :style="getPortStyle(PortType.OUTPUT)"
       @mousedown.stop="(e) => onOutputPointMouseDown(e, 'default')"
       @mouseup.stop="(e) => onOutputPointMouseUp(e, 'default')"
     />
     <div
       v-if="node.type !== 'START'"
       class="connection-point input"
+      :style="getPortStyle(PortType.INPUT)"
       @mousedown.stop="onInputPointMouseDown"
       @mouseup.stop="onInputPointMouseUp"
     />
@@ -74,6 +71,7 @@ import type { Node } from '@/types/workflow';
 import { useWorkflowStore } from '@/stores/workflow';
 import { useDebugStore } from '@/stores/debug';
 import NodeIcon from '@/components/common/NodeIcon.vue';
+import { PositionManager, PortType } from '@/utils/PositionManager';
 
 const props = defineProps<{
   node: Node;
@@ -97,9 +95,7 @@ const isRunning = computed(() => {
 // 添加拖拽状态标记
 let isDragging = false;
 
-const nodeStyle = computed(() => ({
-  transform: `translate(${props.node.position.x}px, ${props.node.position.y}px)`
-}));
+const nodeStyle = computed(() => PositionManager.getNodeStyle(props.node));
 
 // 节点拖拽
 function onNodeMouseDown(event: MouseEvent) {
@@ -181,13 +177,23 @@ function isEmptyLastCondition(index: number): boolean {
   return index === props.node.conditions.length - 1 && 
          (!props.node.conditions[index].conditions || props.node.conditions[index].conditions.length === 0);
 }
+
+// 计算连接点样式
+function getPortStyle(portType: PortType): Record<string, string> {
+  return PositionManager.getPortStyle(props.node, portType);
+}
+
+// 专门为条件节点的端口计算样式
+function getConditionPortStyle(index: number): Record<string, string> {
+  const condition = isEmptyLastCondition(index) ? 'else' : 'case' + (index + 1);
+  return PositionManager.getPortStyle(props.node, PortType.OUTPUT, condition);
+}
 </script>
 
 <style scoped>
 .workflow-node {
   position: absolute;
-  width: 200px;
-  min-height: 80px;
+  /* Width and min-height now set via inline style using NODE_DIMENSIONS */
   background: var(--node-bg);
   box-shadow: 0 0 4px var(--card-shadow);
   border-radius: 6px;

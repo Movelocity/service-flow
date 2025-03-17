@@ -141,7 +141,7 @@ export const useWorkflowStore = defineStore('workflow', {
       const node: Node = {
         id: uuidv4(),
         type,
-        name: name || `${type} Node`,
+        name: name || type === NodeType.CONDITION ? '条件分支' : `${type} Node`,
         description: '',
         position,
         nextNodes: {},

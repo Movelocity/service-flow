@@ -91,12 +91,13 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import type { Node } from '@/types/workflow';
-import { NodeType } from '@/types/workflow';
 import { useWorkflowStore } from '@/stores/workflow';
 import NodeElem from './NodeElem.vue';
 import NodeConnection from './NodeConnection.vue';
 import ContextMenu from './ContextMenu.vue';
 import { generateBezierPath } from '@/utils/canvas';
+import { getNodeColor } from '@/utils/nodeColors';
+import { PositionManager, PortType } from '@/utils/PositionManager';
 
 const store = useWorkflowStore();
 const canvasContainer = ref<HTMLElement | null>(null);
@@ -134,19 +135,8 @@ function isConnectionSelected(sourceNodeId: string, condition: string): boolean 
 const tempConnectionColor = computed(() => {
   const sourceNode = getNode(tempConnection.value.sourceNodeId);
   if (!sourceNode) return '#757575';
-
-  switch (sourceNode.type) {
-    case NodeType.START:
-      return '#4CAF50';
-    case NodeType.FUNCTION:
-      return '#2196F3';
-    case NodeType.CONDITION:
-      return '#FF9800';
-    case NodeType.END:
-      return '#F44336';
-    default:
-      return '#757575';
-  }
+  
+  return getNodeColor(sourceNode.type);
 });
 
 // 画布缩放
@@ -233,28 +223,9 @@ function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent, c
   const rect = canvasContainer.value?.getBoundingClientRect();
   if (!rect) return;
   
-  // 根据连接点计算源位置
-  let sourcePosition = {
-    x: sourceNode.position.x + 200, // 默认节点宽度
-    y: sourceNode.position.y + 40   // 默认节点高度/2
-  };
+  // Use PositionManager to get source position
+  const sourcePosition = PositionManager.getPortPosition(sourceNode, PortType.OUTPUT, condition || 'default');
   
-  // 对于条件节点，根据条件索引计算位置
-  if (sourceNode.type === NodeType.CONDITION && sourceNode.conditions && condition) {
-    let index = -1;
-    if (condition.startsWith('case')) {
-      index = parseInt(condition.slice(4)) - 1;
-    } else if (condition === 'else' && sourceNode.conditions.length > 0) {
-      // ELSE 是最后一个条件
-      index = sourceNode.conditions.length - 1;
-    }
-    
-    if (index >= 0 && index < sourceNode.conditions.length) {
-      // 与适当的连接点对齐
-      sourcePosition.y = sourceNode.position.y + 40 + (index * 24);
-    }
-  }
-
   tempConnection.value = {
     isCreating: true,
     sourceNodeId: nodeId,

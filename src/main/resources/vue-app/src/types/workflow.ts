@@ -91,9 +91,9 @@ export interface Node {
   description: string;
   position: Position;
   nextNodes: {
-    [key: string]: string; // key可以是'default'/'true'/'false', value是目标节点id
+    [key: string]: string; // key可以是'default'/'case1'/'case2'/'else', value是目标节点id
   };
-  toolName?: string;              // 仅用于 FUNCTION 类型节点
+  toolName?: string;             // 仅用于 FUNCTION 类型节点
   context?:VariableDefinition[]; // 新增：存储函数节点的输出
   conditions?: ConditionCase[];
   inputMap?: Record<string, VariableDefinition>;
