@@ -6,18 +6,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to mark a class as a tool handler
+ * 标记一个类为工具 handler 的注解
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Tool {
     /**
-     * The name of the tool
+     * 工具名称
      */
     String name();
     
     /**
-     * Description of what the tool does
+     * 工具描述
      */
     String description();
 } 

@@ -6,7 +6,7 @@ import java.util.Map;
 import cn.yafex.tools.schema.VariableDefinition;
 
 /**
- * Represents an event during node execution for debugging purposes
+ * 工作流执行过程中的调试信息，可以用于前端调试和后端存日志
  */
 public class NodeExecutionEvent {
     private String executionId;
@@ -17,7 +17,7 @@ public class NodeExecutionEvent {
 	private Map<String, VariableDefinition> nodeResult;
     private Map<String, VariableDefinition> contextVariables;
     private LocalDateTime timestamp;
-    private Long duration; // Only for COMPLETE events
+    private Long duration; // 仅在COMPLETE事件中使用
 
     public NodeExecutionEvent(String executionId, String nodeId, String nodeName, String nodeType, String eventType) {
         this.executionId = executionId;

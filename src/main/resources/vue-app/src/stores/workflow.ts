@@ -88,7 +88,6 @@ export const useWorkflowStore = defineStore('workflow', {
         inputs: [],
         outputs: [],
         tools: [],
-        globalVariables: {},
         nodes: [],
         startNodeId: '',
         isActive: true

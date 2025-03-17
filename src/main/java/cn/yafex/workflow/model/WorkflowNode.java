@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 
 /**
- * Base class for all workflow nodes
+ * 工作流节点的基本类型
  */
 public class WorkflowNode {
     private String id;
@@ -17,10 +17,10 @@ public class WorkflowNode {
     private String description;
     private NodeType type;
     private Map<String, String> nextNodes; // key: condition/default, value: next node id
-    private Position position;      // 节点在画布上的位置，用于编辑器
-    private String toolName;        // Only used for FUNCTION type nodes
-    private List<ConditionCase> conditions; // Only used for CONDITION type nodes
-    private Map<String, VariableDefinition> inputMap; // Input parameter mappings for FUNCTION type nodes
+    private Position position;      // 节点在画布上的位置，用于可视化
+    private String toolName;        // 仅用于FUNCTION类型节点
+    private List<ConditionCase> conditions; // 仅用于CONDITION类型节点
+    private Map<String, VariableDefinition> inputMap; // 用于FUNCTION类型节点的输入参数映射
 
     public WorkflowNode() {
         this.nextNodes = new HashMap<>();
@@ -88,7 +88,7 @@ public class WorkflowNode {
     }
 
     /**
-     * Inner class representing a node's position on the canvas
+     * 内部类，表示节点在画布上的位置
      */
     public static class Position {
         private double x;
@@ -138,25 +138,25 @@ public class WorkflowNode {
     }
 
     /**
-     * Get the input parameter mappings for this node
-     * @return Map of parameter name to variable definition
+     * 获取此节点的输入参数映射
+     * @return 参数名称到变量定义的映射
      */
     public Map<String, VariableDefinition> getInputMap() {
         return inputMap;
     }
 
     /**
-     * Set the input parameter mappings for this node
-     * @param inputMap Map of parameter name to variable definition
+     * 设置此节点的输入参数映射
+     * @param inputMap 参数名称到变量定义的映射
      */
     public void setInputMap(Map<String, VariableDefinition> inputMap) {
         this.inputMap = inputMap != null ? inputMap : new HashMap<>();
     }
 
     /**
-     * Add a parameter mapping to this node's inputMap
-     * @param paramName Parameter name
-     * @param variableDefinition Variable definition for the parameter
+     * 添加一个参数映射到此节点的inputMap
+     * @param paramName 参数名称
+     * @param variableDefinition 参数的变量定义
      */
     public void addInputMapping(String paramName, VariableDefinition variableDefinition) {
         if (paramName != null && variableDefinition != null) {
@@ -165,17 +165,17 @@ public class WorkflowNode {
     }
 
     /**
-     * Get a parameter mapping from this node's inputMap
-     * @param paramName Parameter name
-     * @return Variable definition for the parameter or null if not found
+     * 从此节点的inputMap获取一个参数映射
+     * @param paramName 参数名称
+     * @return 参数的变量定义或null如果未找到
      */
     public VariableDefinition getInputMapping(String paramName) {
         return this.inputMap.get(paramName);
     }
 
     /**
-     * Add a condition case to this node
-     * @param conditionCase The condition case to add
+     * 添加一个条件案例到此节点
+     * @param conditionCase 要添加的条件案例
      */
     public void addConditionCase(ConditionCase conditionCase) {
         if (conditionCase != null) {
@@ -184,15 +184,15 @@ public class WorkflowNode {
     }
 
     /**
-     * Evaluates all condition cases for this node
-     * @return true if any condition case evaluates to true, false otherwise
+     * 评估此节点的所有条件案例
+     * @return 如果任何条件案例评估为true，则返回true，否则返回false
      */
     public boolean evaluateConditions() {
         if (type != NodeType.CONDITION || conditions.isEmpty()) {
             return true;
         }
 
-        // For condition nodes, evaluate each case
+        // 对于条件节点，评估每个案例
         for (ConditionCase conditionCase : conditions) {
             if (conditionCase.evaluate()) {
                 return true;

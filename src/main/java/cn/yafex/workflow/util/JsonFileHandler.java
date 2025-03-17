@@ -30,14 +30,14 @@ import java.util.HashMap;
 import java.lang.reflect.Type;
 
 /**
- * Utility class for handling JSON workflow definition files
+ * 用于处理JSON工作流定义
  */
 @Component
 public class JsonFileHandler {
     private static final Logger logger = LoggerFactory.getLogger(JsonFileHandler.class);
     
     static {
-        // Configure custom log format
+        // 配置自定义日志格式
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
         ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE");
@@ -58,35 +58,35 @@ public class JsonFileHandler {
     private Path workflowDir;
 
     public JsonFileHandler() {
-        // Configure Fastjson global settings
+        // 配置Fastjson全局设置
         JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.PrettyFormat.getMask();
         JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.WriteMapNullValue.getMask();
         JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.WriteNullListAsEmpty.getMask();
         JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.WriteNullStringAsEmpty.getMask();
         JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.DisableCircularReferenceDetect.getMask();
         
-        // Configure auto-type support for nested objects
+        // 配置自动类型支持嵌套对象
         ParserConfig globalConfig = ParserConfig.getGlobalInstance();
         globalConfig.setAutoTypeSupport(true);
         
-        // Add type mappings for our classes
+        // 添加类型映射为我们自己的类
         globalConfig.putDeserializer(FieldDefinition.class, new FieldDefinitionDeserializer());
     }
 
     @PostConstruct
     public void init() throws IOException {
-        // Convert relative path to absolute path if necessary
+        // 如果必要，将相对路径转换为绝对路径
         workflowDir = Paths.get(workflowPath).toAbsolutePath();
         
-        // Create workflow directory if it doesn't exist
+        // 如果目录不存在，则创建目录
         Files.createDirectories(workflowDir);
-        logger.info("Using workflow directory: {}", workflowDir);
+        logger.info("使用工作流目录: {}", workflowDir);
     }
 
     /**
-     * Save workflow definition to JSON file
-     * @param workflow Workflow to save
-     * @throws IOException If file operations fail
+     * 保存工作流定义到JSON文件
+     * @param workflow 要保存的工作流
+     * @throws IOException 如果文件操作失败
      */
     public void saveWorkflow(Workflow workflow) throws IOException {
         if (workflow == null || workflow.getId() == null) {
@@ -95,7 +95,7 @@ public class JsonFileHandler {
 
         Path filePath = workflowDir.resolve(workflow.getId() + ".json");
         try {
-            // Create a clean JSON string without Java type information
+            // 创建一个没有Java类型信息的干净JSON字符串
             String jsonString = JSON.toJSONString(
                 workflow, 
                 SerializerFeature.PrettyFormat,
@@ -103,11 +103,11 @@ public class JsonFileHandler {
                 SerializerFeature.WriteNullListAsEmpty,
                 SerializerFeature.WriteNullStringAsEmpty,
                 SerializerFeature.DisableCircularReferenceDetect,
-                SerializerFeature.NotWriteRootClassName,  // Don't write root class name
-                SerializerFeature.DisableCircularReferenceDetect  // Prevent @ref usage
+                SerializerFeature.NotWriteRootClassName,  // 不要写根类名
+                SerializerFeature.DisableCircularReferenceDetect  // 防止@ref使用
             );
 
-            // Clean up any remaining type information
+            // 清理任何剩余的类型信息
             JSONObject jsonObj = JSON.parseObject(jsonString);
             cleanupTypeInfo(jsonObj);
             jsonString = JSON.toJSONString(
@@ -127,12 +127,12 @@ public class JsonFileHandler {
     }
 
     /**
-     * Recursively remove type information from JSON objects
+     * 递归地从JSON对象中删除类型信息
      */
     private void cleanupTypeInfo(JSONObject json) {
         if (json == null) return;
 
-        // Remove type information
+        // 删除类型信息
         json.remove("@type");
 
         // Process all nested objects
@@ -151,10 +151,10 @@ public class JsonFileHandler {
     }
 
     /**
-     * Load workflow definition from JSON file
-     * @param workflowId ID of the workflow to load
-     * @return Loaded workflow
-     * @throws IOException If file operations fail
+     * 从JSON文件加载工作流定义
+     * @param workflowId 要加载的工作流ID
+     * @return 加载的工作流
+     * @throws IOException 如果文件操作失败
      */
     public Workflow loadWorkflow(String workflowId) throws IOException {
         if (workflowId == null) {
@@ -171,7 +171,7 @@ public class JsonFileHandler {
             String jsonString = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
             Workflow workflow = JSON.parseObject(jsonString, Workflow.class);
             
-            // Validate tool definitions after loading
+            // 加载后验证工具定义
             if (workflow.getTools() != null) {
                 for (Map.Entry<String, ToolDefinition> entry : workflow.getTools().entrySet()) {
                     String toolName = entry.getKey();
@@ -195,8 +195,8 @@ public class JsonFileHandler {
     }
 
     /**
-     * List all available workflow definitions
-     * @return Array of workflow IDs
+     * 列出所有可用的工作流定义
+     * @return 工作流ID数组
      */
     public String[] listWorkflows() {
         try {
@@ -212,9 +212,9 @@ public class JsonFileHandler {
     }
 
     /**
-     * Delete a workflow definition
-     * @param workflowId ID of the workflow to delete
-     * @return true if deletion was successful
+     * 删除一个工作流定义
+     * @param workflowId 要删除的工作流ID
+     * @return 如果删除成功则返回true
      */
     public boolean deleteWorkflow(String workflowId) {
         if (workflowId == null) {
@@ -231,7 +231,7 @@ public class JsonFileHandler {
     }
 
     /**
-     * Custom deserializer for FieldDefinition to ensure proper initialization
+     * 自定义FieldDefinition反序列化器以确保正确初始化
      */
     private static class FieldDefinitionDeserializer implements ObjectDeserializer {
         @Override
@@ -240,14 +240,14 @@ public class JsonFileHandler {
             JSONObject jsonObject = parser.parseObject();
             FieldDefinition field = new FieldDefinition();
             
-            // Set basic fields
+            // 设置基本字段
             field.setName(jsonObject.getString("name"));
             field.setDescription(jsonObject.getString("description"));
             field.setType(parseFieldType(jsonObject.getString("type")));
             field.setRequired(jsonObject.getBooleanValue("required"));
             field.setDefaultValue(jsonObject.getString("defaultValue"));
             
-            // Handle collections with proper initialization
+            // 处理集合，确保正确初始化
             JSONObject constraints = jsonObject.getJSONObject("constraints");
             if (constraints != null) {
                 field.setConstraints(constraints.getInnerMap());

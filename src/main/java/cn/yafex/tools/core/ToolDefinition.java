@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Defines a tool's properties, input parameters, and output format
+ * 定义工具的属性、输入参数和输出格式
  */
 public class ToolDefinition {
     @JSONField(name = "name")
@@ -27,7 +27,7 @@ public class ToolDefinition {
     private List<Class<? extends ToolException>> possibleExceptions;
 
     public ToolDefinition() {
-        // Default constructor for Fastjson
+        // Fastjson 默认构造函数
     }
 
     public ToolDefinition(String name, String description,

@@ -1,11 +1,11 @@
 package cn.yafex.workflow.model;
 
 /**
- * Enum representing different types of nodes in a workflow
+ * 工作流节点类型枚举
  */
 public enum NodeType {
-    START,      // Starting node of the workflow
-    CONDITION,  // Node for conditional branching
-    FUNCTION,   // Node for function execution
-    END        // End node of the workflow
+    START,      // 工作流开始节点
+    CONDITION,  // 条件分支节点
+    FUNCTION,   // 函数执行节点
+    END        // 工作流结束节点
 } 

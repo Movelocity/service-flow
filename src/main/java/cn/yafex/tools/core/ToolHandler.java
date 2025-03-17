@@ -11,11 +11,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Interface that all tool implementations must implement
+ * 所有工具实现必须实现的接口
  */
 public interface ToolHandler {
     /**
-     * Get the unique name of the tool
+     * 获取工具的唯一名称
      */
     default String getName() {
         Tool annotation = getClass().getAnnotation(Tool.class);
@@ -26,7 +26,7 @@ public interface ToolHandler {
     }
 
     /**
-     * Get the tool's definition including parameters and return type
+     * 获取工具的定义，包括参数和返回类型
      */
     default ToolDefinition getDefinition() {
         Tool annotation = getClass().getAnnotation(Tool.class);
@@ -47,7 +47,7 @@ public interface ToolHandler {
             throw new IllegalStateException("No execute method found");
         }
         
-        // Build input fields from parameters
+        // 从参数构建输入字段
         Map<String, FieldDefinition> inputFields = new HashMap<>();
         for (Parameter param : executeMethod.getParameters()) {
             ToolField field = param.getAnnotation(ToolField.class);
@@ -63,10 +63,10 @@ public interface ToolHandler {
             }
         }
         
-        // Build output fields from method
+        // 从方法构建输出字段
         Map<String, FieldDefinition> outputFields = new HashMap<>();
         
-        // First try to get repeatable annotations
+        // 首先尝试获取可重复的注解
         ToolField[] fields = executeMethod.getAnnotationsByType(ToolField.class);
         if (fields.length > 0) {
             for (ToolField field : fields) {
@@ -91,23 +91,23 @@ public interface ToolHandler {
     }
 
     /**
-     * Execute the tool with the given parameters
-     * @param params Map of parameter names to values
-     * @return Response containing the execution result
-     * @throws ToolException if execution fails
+     * 使用给定的参数执行工具
+     * @param params 参数名称到值的映射
+     * @return 包含执行结果的响应
+     * @throws ToolException 如果执行失败
      */
     <T> ToolResponse<T> execute(Map<String, Object> params) throws ToolException;
 
     /**
-     * Validate the input parameters against the tool's definition
-     * @param params Map of parameter names to values
-     * @throws ValidationException if validation fails
+     * 验证输入参数是否符合工具的定义
+     * @param params 参数名称到值的映射
+     * @throws ValidationException 如果验证失败
      */
     default void validateParams(Map<String, Object> params) throws ValidationException {
         ToolDefinition definition = getDefinition();
         Map<String, FieldDefinition> inputFields = definition.getInputs();
 
-        // Check required fields
+        // 检查必填字段
         for (Map.Entry<String, FieldDefinition> entry : inputFields.entrySet()) {
             String fieldName = entry.getKey();
             FieldDefinition field = entry.getValue();
@@ -117,6 +117,6 @@ public interface ToolHandler {
             }
         }
 
-        // Additional validation can be implemented here or in concrete classes
+        // 可以在类中实现或重写此方法
     }
 } 

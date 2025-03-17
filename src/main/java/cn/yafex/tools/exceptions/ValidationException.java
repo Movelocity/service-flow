@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Exception thrown when tool parameter validation fails
+ * 当工具参数验证失败时抛出的异常
  */
 public class ValidationException extends ToolException {
     private List<String> validationErrors;

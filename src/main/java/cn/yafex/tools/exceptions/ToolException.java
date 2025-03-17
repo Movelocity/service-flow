@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * Base exception class for all tool-related errors
+ * 所有工具相关错误的基类
  */
 public class ToolException extends Exception {
     private String errorCode;

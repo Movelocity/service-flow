@@ -1,7 +1,7 @@
 package cn.yafex.workflow.execution;
 
 /**
- * Enum representing the status of a workflow execution
+ * 工作流执行状态枚举
  */
 public enum WorkflowStatus {
     RUNNING,

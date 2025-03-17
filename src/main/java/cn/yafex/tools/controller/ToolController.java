@@ -13,13 +13,14 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+/** 工具相关 API */
 @RestController
 @RequestMapping("/api/tools")
 public class ToolController {
 
     /**
-     * List all available tools
-     * @return List of tool names and their descriptions
+     * 列出所有可用工具
+     * @return 工具名称和描述列表
      */
     @GetMapping
     public ResponseEntity<List<Map<String, String>>> listTools() {
@@ -36,9 +37,9 @@ public class ToolController {
     }
 
     /**
-     * Get detailed information about a specific tool
-     * @param toolName Name of the tool
-     * @return Tool definition including input/output parameters
+     * 获取特定工具的详细信息
+     * @param toolName 工具名称
+     * @return 工具定义，包括输入/输出参数
      */
     @GetMapping("/{toolName}")
     public ResponseEntity<ToolDefinition> getToolDetails(@PathVariable String toolName) {
@@ -51,10 +52,10 @@ public class ToolController {
     }
 
     /**
-     * Execute a tool with the provided parameters
-     * @param toolName Name of the tool to execute
-     * @param params Tool parameters
-     * @return Tool execution response
+     * 提供参数并执行一个工具
+     * @param toolName 要执行的工具名称
+     * @param params 工具参数
+     * @return 工具执行响应
      */
     @PostMapping("/{toolName}/execute")
     public ResponseEntity<ToolResponse<?>> executeTool(

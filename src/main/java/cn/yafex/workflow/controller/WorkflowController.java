@@ -30,9 +30,9 @@ public class WorkflowController {
     }
 
     /**
-     * Create a new workflow
-     * @param workflow The workflow to create
-     * @return The created workflow with ID
+     * 创建新工作流
+     * @param workflow 要创建工作流包含的初始信息
+     * @return 创建后的工作流，包含ID
      */
     @PostMapping
     public ResponseEntity<?> createWorkflow(@RequestBody Workflow workflow) {
@@ -51,10 +51,10 @@ public class WorkflowController {
     }
 
     /**
-     * Update an existing workflow
-     * @param workflowId The ID of the workflow to update
-     * @param workflow The updated workflow data
-     * @return The updated workflow
+     * 更新现有工作流
+     * @param workflowId 要更新的工作流ID
+     * @param workflow 更新后的工作流数据
+     * @return 更新后的工作流
      */
     @PutMapping("/{workflowId}")
     public ResponseEntity<?> updateWorkflow(
@@ -73,9 +73,9 @@ public class WorkflowController {
     }
 
     /**
-     * Get a workflow by ID
-     * @param workflowId The ID of the workflow to retrieve
-     * @return The workflow if found
+     * 根据ID获取工作流
+     * @param workflowId 要获取的工作流ID
+     * @return 获取的工作流
      */
     @GetMapping("/{workflowId}")
     public ResponseEntity<?> getWorkflow(@PathVariable String workflowId) {
@@ -88,8 +88,8 @@ public class WorkflowController {
     }
 
     /**
-     * List all workflows
-     * @return Array of workflow IDs
+     * 获取所有工作流
+     * @return 工作流ID列表
      */
     @GetMapping
     public ResponseEntity<?> listWorkflows() {
@@ -97,9 +97,9 @@ public class WorkflowController {
     }
 
     /**
-     * Delete a workflow
-     * @param workflowId The ID of the workflow to delete
-     * @return Success status
+     * 删除工作流
+     * @param workflowId 要删除的工作流ID
+     * @return 成功状态
      */
     @DeleteMapping("/{workflowId}")
     public ResponseEntity<?> deleteWorkflow(@PathVariable String workflowId) {
@@ -110,10 +110,10 @@ public class WorkflowController {
     }
 
     /**
-     * Start a workflow execution
-     * @param workflowId The ID of the workflow to execute
-     * @param input The input variables for execution
-     * @return The execution ID
+     * 启动工作流执行
+     * @param workflowId 要执行的工作流ID
+     * @param input 执行输入变量
+     * @return 执行ID
      */
     @PostMapping("/{workflowId}/execute")
     public ResponseEntity<?> executeWorkflow(
@@ -132,10 +132,10 @@ public class WorkflowController {
     }
 
     /**
-     * Get workflow execution status
-     * @param workflowId The ID of the workflow
-     * @param executionId The ID of the execution
-     * @return The execution status
+     * 获取工作流执行状态
+     * @param workflowId 要获取的工作流ID
+     * @param executionId 要获取的执行ID
+     * @return 执行状态
      */
     @GetMapping("/{workflowId}/executions/{executionId}")
     public ResponseEntity<?> getExecutionStatus(
@@ -153,10 +153,10 @@ public class WorkflowController {
     }
 
     /**
-     * Start a workflow execution in debug mode
-     * @param workflowId The ID of the workflow to execute
-     * @param input The input variables for execution
-     * @return SSE stream of execution events
+     * 启动工作流执行（调试模式）
+     * @param workflowId 要执行的工作流ID
+     * @param input 执行输入变量
+     * @return SSE流
      */
     @PostMapping("/{workflowId}/debug")
     public SseEmitter debugWorkflow(

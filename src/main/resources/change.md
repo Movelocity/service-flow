@@ -24,7 +24,6 @@ interface Workflow {
   inputs: { [key: string]: any };        // 新增：工作流级别输入
   outputs: { [key: string]: any };       // 新增：工作流级别输出
   tools: { [name: string]: ToolDefinition }; // 变更：工具定义移至工作流级别
-  globalVariables: { [key: string]: any };   // 变更：现在为只读
   nodes: WorkflowNode[];
   startNodeId: string;
   isActive: boolean;

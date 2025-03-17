@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.List;
 
 /**
- * Utility class for collection operations
+ * 集合操作的实用类
  */
 public class CollectionUtils {
     
     /**
-     * Create an immutable Map with a single entry
+     * 创建一个包含单个条目的不可变 Map
      */
     public static <K, V> Map<K, V> mapOf(K key, V value) {
         Map<K, V> map = new HashMap<>();
@@ -20,7 +20,7 @@ public class CollectionUtils {
     }
 
     /**
-     * Create an immutable List with a single element
+     * 创建一个包含单个元素的不可变 List
      */
     public static <T> List<T> listOf(T element) {
         List<T> list = new ArrayList<>();

@@ -8,39 +8,39 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare tool input/output fields
+ * 声明工具输入/输出字段的注解
  */
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(ToolFields.class)
 public @interface ToolField {
     /**
-     * Field name
+     * 字段名称
      */
     String name();
     
     /**
-     * Field description
+     * 字段描述
      */
     String description();
     
     /**
-     * Field type
+     * 字段类型
      */
     FieldType type();
     
     /**
-     * Whether the field is required
+     * 是否必填
      */
     boolean required() default true;
     
     /**
-     * Default value for the field
+     * 字段默认值
      */
     String defaultValue() default "";
     
     /**
-     * Field validation pattern if any
+     * 字段验证模式（如果存在）
      */
     String pattern() default "";
 } 

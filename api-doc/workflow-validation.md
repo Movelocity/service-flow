@@ -42,8 +42,7 @@
      "startNodeId": "start",
      "nodes": [...],
      "inputs": {...},
-     "outputs": {...},
-     "globalVariables": {...}
+     "outputs": {...}
    }
    ```
 

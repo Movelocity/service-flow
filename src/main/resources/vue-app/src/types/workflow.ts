@@ -76,7 +76,6 @@ export interface ApiWorkflow {
   inputs: { [key: string]: Omit<VariableDefinition, 'name'> };
   outputs: { [key: string]: Omit<VariableDefinition, 'name'> };
   tools: { [name: string]: Omit<ToolDefinition, 'name'> };
-  globalVariables: { [key: string]: any };
   nodes: ApiNode[];
   startNodeId: string;
   isActive: boolean;
@@ -110,7 +109,6 @@ export interface Workflow {
   inputs: VariableDefinition[];  // 新增：工作流级别输入
   outputs: VariableDefinition[]; // 新增：工作流级别输出
   tools: ToolDefinition[];      // 新增：工具定义移至工作流级别
-  globalVariables: { [key: string]: any };        // 变更：现在为只读
   nodes: Node[];
   startNodeId: string;
   isActive: boolean;
@@ -175,7 +173,6 @@ export function convertApiToAppWorkflow(apiWorkflow: ApiWorkflow): Workflow {
     inputs,
     outputs,
     tools,
-    globalVariables: apiWorkflow.globalVariables,
     nodes,
     startNodeId: apiWorkflow.startNodeId,
     isActive: apiWorkflow.isActive
@@ -219,7 +216,6 @@ export function convertAppToApiWorkflow(workflow: Workflow): ApiWorkflow {
     inputs,
     outputs,
     tools,
-    globalVariables: workflow.globalVariables,
     nodes,
     startNodeId: workflow.startNodeId,
     isActive: workflow.isActive

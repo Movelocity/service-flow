@@ -118,9 +118,6 @@
     "nodeContext": {
         // 节点上下文数据
     },
-    "globalVariables": {
-        // 全局变量
-    },
     "timestamp": "string",
     "duration": number // 仅在 COMPLETE 事件中存在
 }

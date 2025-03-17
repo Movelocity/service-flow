@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Scanner for finding and registering tool handlers using annotations
+ * 用于查找和注册工具 handler 的扫描器
  */
 public class ToolScanner {
     
     /**
-     * Scan packages for tool handlers and register them
-     * @param basePackage The base package to scan
+     * 扫描包以查找工具 handler 并注册它们
+     * @param basePackage 要扫描的基包
      */
     public static void scanAndRegister(String basePackage) {
 		System.out.println("扫描工具: " + basePackage);
@@ -27,14 +27,14 @@ public class ToolScanner {
             Scanners.SubTypes.filterResultsBy(s -> true),
             Scanners.TypesAnnotated);
             
-        // Find all classes annotated with @Tool
+        // 查找所有带有 @Tool 注解的类
         Set<Class<?>> toolClasses = reflections.getTypesAnnotatedWith(Tool.class);
         
         for (Class<?> toolClass : toolClasses) {
             try {
                 registerToolClass(toolClass);
             } catch (Exception e) {
-                // Log error but continue with other tools
+                // 记录错误但继续处理其他工具
                 System.err.println("注册工具失败: " + toolClass.getName() + " - " + e.getMessage());
             }
         }
@@ -43,10 +43,10 @@ public class ToolScanner {
     private static void registerToolClass(Class<?> toolClass) throws Exception {
         // Tool toolAnnotation = toolClass.getAnnotation(Tool.class);
         
-        // Create tool instance
+        // 创建工具实例
         ToolHandler handler = (ToolHandler) toolClass.getDeclaredConstructor().newInstance();
         
-        // Find execute method
+        // 查找 execute 方法
         Method executeMethod = null;
         for (Method method : toolClass.getMethods()) {
             if (method.getName().equals("execute")) {
@@ -59,7 +59,7 @@ public class ToolScanner {
             throw new IllegalStateException("工具类中没有找到 execute 方法: " + toolClass.getName());
         }
         
-        // Build input fields from parameters
+        // 从参数构建输入字段
         Map<String, FieldDefinition> inputFields = new HashMap<>();
         for (Parameter param : executeMethod.getParameters()) {
             ToolField field = param.getAnnotation(ToolField.class);
@@ -75,7 +75,7 @@ public class ToolScanner {
             }
         }
         
-        // Build output fields from method
+        // 从方法构建输出字段
         Map<String, FieldDefinition> outputFields = new HashMap<>();
         ToolField returnField = executeMethod.getAnnotation(ToolField.class);
         if (returnField != null) {

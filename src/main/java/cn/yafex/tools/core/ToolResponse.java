@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * Standardized response format for tool execution results
- * @param <T> The type of data returned by the tool
+ * 标准化的工具执行结果响应格式
+ * @param <T> 工具返回的数据类型
  */
 public class ToolResponse<T> {
     private boolean success;
@@ -26,7 +26,7 @@ public class ToolResponse<T> {
         this.metadata = metadata != null ? metadata : new HashMap<>();
     }
 
-    // Static factory methods for common responses
+    // 静态工厂方法用于常见响应
     public static <T> ToolResponse<T> success(T data) {
         return new ToolResponse<>(true, data, "Operation successful", null);
     }

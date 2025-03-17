@@ -101,7 +101,6 @@ async function createWorkflow() {
       inputs: [],
       outputs: [],
       tools: [],
-      globalVariables: [],
       nodes: [startNode],
       startNodeId: 'start',
       isActive: true

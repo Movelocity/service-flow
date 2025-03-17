@@ -6,7 +6,7 @@ import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.annotation.JSONType;
 
 /**
- * Defines the structure and constraints of a field in a tool's input or output
+ * 定义工具输入或输出字段的结构和约束
  */
 @JSONType(includes = {"name", "description", "type", "required", "defaultValue", "constraints", "properties", "itemDefinition"})
 public class FieldDefinition {

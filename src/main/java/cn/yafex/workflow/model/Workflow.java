@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Class representing a complete workflow definition
+ * 工作流定义类
  */
 public class Workflow {
 	/** Unique ID */
@@ -22,8 +22,6 @@ public class Workflow {
     private Map<String, VariableDefinition> outputs; // Workflow level outputs
 	/** 工作流内保存的工具名称和输入输出模式，用于判断工具是否发生不兼容的更新 */
     private Map<String, ToolDefinition> tools; // Map of tool name to tool definition
-	/** 工作流内全局变量，用于在同一个工作流 runtime 的节点之间传递数据 */
-    private Map<String, Object> globalVariables;
 	/** 节点，用于描述工作流的执行流程 */
     private List<WorkflowNode> nodes;
 	/** 开始节点ID，用于描述工作流的执行流程 */
@@ -35,7 +33,6 @@ public class Workflow {
         this.inputs = new HashMap<>();
         this.outputs = new HashMap<>();
         this.tools = new HashMap<>();
-        this.globalVariables = new HashMap<>();
         this.nodes = new ArrayList<>();
         this.isActive = true;
     }
@@ -87,14 +84,6 @@ public class Workflow {
 
     public void setTools(Map<String, ToolDefinition> tools) {
         this.tools = tools;
-    }
-
-    public Map<String, Object> getGlobalVariables() {
-        return globalVariables;
-    }
-
-    public void setGlobalVariables(Map<String, Object> globalVariables) {
-        this.globalVariables = globalVariables;
     }
 
     public List<WorkflowNode> getNodes() {

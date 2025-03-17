@@ -247,23 +247,23 @@ public class WorkflowManager {
     }
 
     /**
-     * Prepare tool inputs based on inputMap if available
-     * @param node Function node with inputMap
-     * @param context Execution context
-     * @return Prepared inputs for the tool
+     * 预先从上下文过滤出一批和工作流输入参数有关的变量
+     * @param node 函数节点，带有inputMap表示变量映射
+     * @param context 执行上下文
+     * @return 准备好的工具输入
      */
     private Map<String, VariableDefinition> prepareToolInputs(WorkflowNode node, WorkflowContext context) {
         Map<String, VariableDefinition> toolInputs = context.getVariables();
         
-        // If inputMap is not defined or empty, use all context variables as inputs
+        // 如果inputMap没有定义或为空，则使用所有上下文变量作为输入
         if (node.getInputMap() == null || node.getInputMap().isEmpty()) {
             return toolInputs;
         }
         Map<String, FieldDefinition> toolOutputSchema = ToolRegistry.getHandler(node.getToolName()).getDefinition().getOutputs();
-        // Create a new map for tool inputs
+        // 创建一个新的工具输入映射
         Map<String, VariableDefinition> filteredInputs = new HashMap<>();
         
-        // Process each input mapping
+        // 处理每个输入映射
         for (Map.Entry<String, VariableDefinition> entry : node.getInputMap().entrySet()) {
             String paramName = entry.getKey();
             VariableDefinition varDef = entry.getValue();
@@ -273,7 +273,7 @@ public class WorkflowManager {
             }
             
             if ("CONSTANT".equals(varDef.getName())) {
-                // For constants, use the value directly
+                // 对于常量，直接使用值
                 filteredInputs.put(paramName, varDef);
             } else {
                 String varName = varDef.getName();
@@ -290,10 +290,10 @@ public class WorkflowManager {
     }
 
     /**
-     * Execute a tool with given inputs
-     * @param toolName Name of the tool to execute
-     * @param inputs Tool input parameters
-     * @return Tool execution results
+     * 执行一个工具，给定输入
+     * @param toolName 要执行的工具名称
+     * @param inputs 工具输入参数
+     * @return 工具执行结果
      */
     private Map<String, Object> executeTool(String toolName, Map<String, VariableDefinition> inputs) throws ToolException {
         ToolHandler handler = ToolRegistry.getHandler(toolName);
@@ -303,7 +303,7 @@ public class WorkflowManager {
         }
 
         try {
-            // Convert Map<String, VariableDefinition> to Map<String, Object>
+            // 将Map<String, VariableDefinition>转换为Map<String, Object>
             Map<String, Object> inputValues = new HashMap<>();
             inputs.forEach((key, varDef) -> {
                 if (varDef != null) {
@@ -514,9 +514,9 @@ public class WorkflowManager {
     }
 
     /**
-     * Get the status of a workflow execution
-     * @param executionId Execution ID
-     * @return Current status or null if not found
+     * 获取工作流执行状态
+     * @param executionId 执行ID
+     * @return 当前状态或null如果未找到
      */
     public WorkflowStatus getWorkflowStatus(String executionId) {
         WorkflowContext context = activeWorkflows.get(executionId);
@@ -524,9 +524,9 @@ public class WorkflowManager {
     }
 
     /**
-     * Stop a running workflow
-     * @param executionId Execution ID
-     * @return true if workflow was stopped
+     * 停止一个正在运行的工作流
+     * @param executionId 执行ID
+     * @return 如果工作流被停止则返回true
      */
     public boolean stopWorkflow(String executionId) {
         WorkflowContext context = activeWorkflows.get(executionId);

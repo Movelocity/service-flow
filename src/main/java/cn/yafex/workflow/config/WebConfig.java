@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Web configuration for static resources and CORS
+ * 静态资源和CORS配置
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -36,7 +36,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
     
     /**
-     * Configure content negotiation to set proper MIME types for module scripts
+     * 配置内容协商以设置适当的MIME类型
      */
     @Override
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {

@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST controller for workflow validation
+ * 工作流验证控制器
  */
 @RestController
 @RequestMapping("/api/workflow/validation")
@@ -22,11 +22,11 @@ public class WorkflowValidationController {
     }
 
     /**
-     * Validate a workflow for errors
+     * 验证工作流错误
      * 
-     * @param workflow The workflow to validate
-     * @param startNodeId Optional start node ID to begin validation from
-     * @return Validation result with any errors
+     * @param workflow 要验证的工作流
+     * @param startNodeId 可选的开始节点ID
+     * @return 验证结果，包含任何错误
      */
     @PostMapping("/validate")
     public ResponseEntity<ValidationResult> validateWorkflow(
