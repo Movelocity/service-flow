@@ -94,9 +94,9 @@ async function createWorkflow() {
       position: { x: 100, y: 100 },
       nextNodes: {},
     };
-
+    
     const newWorkflow: Partial<Workflow> = {
-      name: '新工作流',
+      name: '',
       description: '',
       inputs: [],
       outputs: [],

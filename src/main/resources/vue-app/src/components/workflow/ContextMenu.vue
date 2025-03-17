@@ -80,8 +80,8 @@ function onToolSelected(tool: Tool) {
 <style scoped>
 .context-menu {
   position: fixed;
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: var(--node-bg);
+  /* border: 1px solid var(--node-border); */
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   padding: 4px 0;
@@ -93,12 +93,12 @@ function onToolSelected(tool: Tool) {
   padding: 8px 16px;
   cursor: pointer;
   user-select: none;
-  color: #333;
+  color: var(--text-color);
   font-size: 14px;
   transition: background-color 0.2s;
 }
 
 .menu-item:hover {
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
 }
 </style> 

@@ -14,6 +14,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 
 @RestController
 @RequestMapping("/api/workflows")
@@ -37,10 +40,19 @@ public class WorkflowController {
     @PostMapping
     public ResponseEntity<?> createWorkflow(@RequestBody Workflow workflow) {
         try {
-            // Generate ID for new workflow
+            // 时间戳组成ID
             if (workflow.getId() == null || workflow.getId().isEmpty()) {
                 workflow.setId("flow_" + System.currentTimeMillis());
             }
+
+			// 当前时间标记可以作为默认名称
+			if (workflow.getName() == null || workflow.getName().isEmpty()) {	
+				Date date = new Date();
+				SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmmss");
+				String dateStr = sdf.format(date);
+				workflow.setName("工作流" + dateStr);
+			}
+
             jsonFileHandler.saveWorkflow(workflow);
             return ResponseEntity.ok(workflow);
         } catch (IOException e) {
