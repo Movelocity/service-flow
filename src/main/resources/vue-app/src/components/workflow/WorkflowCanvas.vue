@@ -92,12 +92,12 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import type { Node } from '@/types/workflow';
+import type { Node, Position } from '@/types/workflow';
 import { useWorkflowStore } from '@/stores/workflow';
 import NodeElem from './NodeElem.vue';
 import NodeConnection from './NodeConnection.vue';
 import ContextMenu from './ContextMenu.vue';
-import { generateBezierPath } from '@/utils/canvas';
+import { generateBezierPath, calculateDistance } from '@/utils/canvas';
 import { getNodeColor } from '@/utils/nodeColors';
 import { PositionManager, PortType } from '@/utils/PositionManager';
 
@@ -115,9 +115,10 @@ const position = computed(() => store.editorState.canvasState.position);
 const tempConnection = ref({
   isCreating: false,
   sourceNodeId: '',
-  sourceCondition: '',
+  sourceCondition: 'default',
   sourcePosition: { x: 0, y: 0 },
-  currentPosition: { x: 0, y: 0 }
+  currentPosition: { x: 0, y: 0 },
+  nearestPort: null as { nodeId: string, position: Position } | null
 });
 
 // 右键菜单状态
@@ -190,10 +191,18 @@ function onMouseMove(event: MouseEvent) {
   if (tempConnection.value.isCreating) {
     const rect = canvasContainer.value?.getBoundingClientRect();
     if (rect) {
-      tempConnection.value.currentPosition = {
+      const mousePosition = {
         x: (event.clientX - rect.left) / scale.value - position.value.x,
         y: (event.clientY - rect.top) / scale.value - position.value.y
       };
+      
+      // Check for nearby input ports
+      tempConnection.value.nearestPort = findNearestInputPort(mousePosition);
+      
+      // Snap to nearest port if found, otherwise use mouse position
+      tempConnection.value.currentPosition = tempConnection.value.nearestPort
+        ? tempConnection.value.nearestPort.position
+        : mousePosition;
     }
   }
 }
@@ -204,10 +213,27 @@ function endPan() {
 
 // 处理全局鼠标抬起事件
 function handleGlobalMouseUp(event: MouseEvent) {
-  // 如果正在创建连接线，检查目标元素是否为节点
+  // 如果正在创建连接线
   if (tempConnection.value.isCreating) {
+    // If we have a nearest port, create the connection to that port
+    if (tempConnection.value.nearestPort) {
+      const targetNodeId = tempConnection.value.nearestPort.nodeId;
+      
+      if (tempConnection.value.sourceNodeId !== targetNodeId) {
+        store.addConnection(
+          tempConnection.value.sourceNodeId, 
+          targetNodeId, 
+          tempConnection.value.sourceCondition || 'default'
+        );
+      }
+      
+      tempConnection.value.isCreating = false;
+      tempConnection.value.nearestPort = null;
+      return;
+    }
+    
+    // Otherwise check if we're over a node
     const targetElement = event.target as HTMLElement;
-    // 如果目标元素不是节点组件，取消连接创建
     if (!targetElement.closest('.workflow-node')) {
       tempConnection.value.isCreating = false;
     }
@@ -235,26 +261,31 @@ function startConnection(nodeId: string, isOutput: boolean, event: MouseEvent, c
     currentPosition: {
       x: (event.clientX - rect.left) / scale.value - position.value.x,
       y: (event.clientY - rect.top) / scale.value - position.value.y
-    }
+    },
+    nearestPort: null
   };
 }
 
 function endConnection(nodeId: string, isOutput: boolean) {
   if (isOutput || !tempConnection.value.isCreating) return;
 
-  if (tempConnection.value.sourceNodeId !== nodeId) {
+  // If we have a nearest port and mouse is released near a node, use that node instead
+  const targetNodeId = tempConnection.value.nearestPort?.nodeId || nodeId;
+  
+  if (tempConnection.value.sourceNodeId !== targetNodeId) {
     const sourceNode = getNode(tempConnection.value.sourceNodeId);
     if (!sourceNode) return;
 
-    // Use the condition from the tempConnection that was set in startConnection
     store.addConnection(
       tempConnection.value.sourceNodeId, 
-      nodeId, 
+      targetNodeId, 
       tempConnection.value.sourceCondition || 'default'
     );
   }
 
+  // Reset connection state
   tempConnection.value.isCreating = false;
+  tempConnection.value.nearestPort = null;
 }
 
 // 计算临时连接线路径
@@ -309,6 +340,38 @@ const connections = computed(() => {
     }))
   );
 });
+
+// 找到最近的输入端口
+function findNearestInputPort(mousePosition: Position) {
+  const snapThreshold = 30; // 距离像素到激活 snapping
+  let nearestPort = null;
+  let minDistance = snapThreshold;
+  
+  // 遍历所有节点以找到输入端口
+  if (!workflow.value) return null;
+  
+  for (const node of workflow.value.nodes) {
+    // 跳过源节点 - 不能连接到自身
+    if (node.id === tempConnection.value.sourceNodeId) continue;
+    
+    // 获取输入端口位置
+    const portPosition = PositionManager.getPortPosition(node, PortType.INPUT);
+    
+    // 计算到此端口的距离
+    const distance = calculateDistance(mousePosition, portPosition);
+    
+    // 如果此端口比之前的最近端口更近，则更新最近端口
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestPort = {
+        nodeId: node.id,
+        position: portPosition
+      };
+    }
+  }
+  
+  return nearestPort;
+}
 
 onMounted(() => {
   // 添加全局鼠标抬起事件监听
