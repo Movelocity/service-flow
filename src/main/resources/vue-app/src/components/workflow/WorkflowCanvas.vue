@@ -147,8 +147,9 @@ function onWheel(event: WheelEvent) {
   const rect = canvasContainer.value?.getBoundingClientRect();
   if (!rect) return;
   
-  const mouseX = event.clientX - rect.left;
-  const mouseY = event.clientY - rect.top;
+  // 计算鼠标相对于画布原点的位置（考虑当前的缩放和平移）
+  const mouseX = (event.clientX - rect.left);
+  const mouseY = (event.clientY - rect.top);
 
   // 计算新的缩放比例
   const delta = event.deltaY > 0 ? 0.9 : 1.1;
@@ -310,15 +311,15 @@ const connections = computed(() => {
 });
 
 onMounted(() => {
-  if (canvasContainer.value) {
-    const rect = canvasContainer.value.getBoundingClientRect();
-    store.updateCanvasState({
-      position: {
-        x: rect.width / 5,
-        y: rect.height / 5
-      }
-    });
-  }
+  // if (canvasContainer.value) {
+  //   const rect = canvasContainer.value.getBoundingClientRect();
+  //   store.updateCanvasState({
+  //     position: {
+  //       x: rect.width / 5,
+  //       y: rect.height / 5
+  //     }
+  //   });
+  // }
   // 添加全局鼠标抬起事件监听
   window.addEventListener('mouseup', handleGlobalMouseUp);
 });
@@ -341,8 +342,8 @@ onUnmounted(() => {
 
 .workflow-svg {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  width: 300%;
+  height: 300%;
   transform-origin: 0 0;
   pointer-events: none;
 }
