@@ -381,24 +381,25 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     // 编辑器状态操作
-    updateCanvasState(updates: Partial<EditorState['canvasState']>, mousePosition?: { x: number, y: number }) {
-      if (updates.scale && mousePosition && this.editorState.canvasState.scale) {
-        // 计算缩放前的鼠标世界坐标
-        const oldScale = this.editorState.canvasState.scale;
-        const oldPos = this.editorState.canvasState.position;
-        const worldX = (mousePosition.x - oldPos.x) / oldScale;
-        const worldY = (mousePosition.y - oldPos.y) / oldScale;
-        
-        // 计算新的画布位置，以保持鼠标位置下的点不变
+    updateCanvasState(
+      updates: Partial<EditorState['canvasState']>, 
+      mousePos?: { x: number, y: number }
+    ) {
+      if (updates.scale && mousePos && this.editorState.canvasState.scale) {
+        // 计算新位置，以鼠标位置为缩放中心点
+        const currentScale = this.editorState.canvasState.scale;
         const newScale = updates.scale;
-        const newX = mousePosition.x - worldX * newScale;
-        const newY = mousePosition.y - worldY * newScale;
+        const currentPos = this.editorState.canvasState.position;
         
+        // 计算新的位置，保持鼠标下方的点不变
+        const newX = mousePos.x * (1/newScale - 1/currentScale) + currentPos.x;
+        const newY = mousePos.y * (1/newScale - 1/currentScale) + currentPos.y;
+
         this.editorState.canvasState = {
           ...this.editorState.canvasState,
           ...updates,
           position: { x: newX, y: newY }
-        };
+        }
       } else {
         Object.assign(this.editorState.canvasState, updates);
       }

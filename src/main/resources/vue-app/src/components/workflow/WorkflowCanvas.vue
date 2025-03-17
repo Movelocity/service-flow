@@ -9,7 +9,9 @@
     @mouseleave="endPan"
     @contextmenu.prevent="showContextMenu"
   >
+    <!-- 网格和连接线-->
     <svg
+      ref="workflowSvg"
       class="workflow-svg"
       :style="{
         transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`
@@ -101,11 +103,13 @@ import { PositionManager, PortType } from '@/utils/PositionManager';
 
 const store = useWorkflowStore();
 const canvasContainer = ref<HTMLElement | null>(null);
+const workflowSvg = ref<SVGSVGElement | null>(null);
 
 const workflow = computed(() => store.currentWorkflow);
 const selectedNodeId = computed(() => store.editorState.selectedNodeId);
 const selectedCondition = computed(() => store.editorState.selectedCondition);
 const scale = computed(() => store.editorState.canvasState.scale);
+/** 画布起点 */
 const position = computed(() => store.editorState.canvasState.position);
 
 const tempConnection = ref({
@@ -144,21 +148,17 @@ function onWheel(event: WheelEvent) {
   event.preventDefault();
   
   // 获取鼠标相对于画布的位置
-  const rect = canvasContainer.value?.getBoundingClientRect();
+  const rect = workflowSvg.value?.getBoundingClientRect();
   if (!rect) return;
-  
-  // 计算鼠标相对于画布原点的位置（考虑当前的缩放和平移）
-  const mouseX = (event.clientX - rect.left);
-  const mouseY = (event.clientY - rect.top);
-
-  // 计算新的缩放比例
   const delta = event.deltaY > 0 ? 0.9 : 1.1;
   const newScale = Math.max(0.5, Math.min(2, scale.value * delta));
-
-  // 使用 store 的 updateCanvasState 方法，传入鼠标位置
+  // 更新画布状态，传入鼠标位置以保持缩放中心点
   store.updateCanvasState({
     scale: newScale
-  }, { x: mouseX, y: mouseY });
+  }, {
+    x: event.clientX,
+    y: event.clientY-60  // 减去顶部横条的高度
+  });
 }
 
 // 画布平移
@@ -311,15 +311,6 @@ const connections = computed(() => {
 });
 
 onMounted(() => {
-  // if (canvasContainer.value) {
-  //   const rect = canvasContainer.value.getBoundingClientRect();
-  //   store.updateCanvasState({
-  //     position: {
-  //       x: rect.width / 5,
-  //       y: rect.height / 5
-  //     }
-  //   });
-  // }
   // 添加全局鼠标抬起事件监听
   window.addEventListener('mouseup', handleGlobalMouseUp);
 });
