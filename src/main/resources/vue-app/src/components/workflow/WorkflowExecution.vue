@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { Workflow } from '@/types/workflow';
-import type { VariableDefinition } from '@/types/fields';
+import type { VariableDef } from '@/types/fields';
 import { VariableType } from '@/types/fields';
 // import { useWorkflowStore } from '@/stores/workflow';
 import { workflowApi } from '@/services/workflowApi';
@@ -78,7 +78,7 @@ const initializeInputs = () => {
 };
 
 // Get default value based on variable type
-const getDefaultValue = (def: VariableDefinition) => {
+const getDefaultValue = (def: VariableDef) => {
   switch (def.type) {
     case VariableType.STRING:
       return '';

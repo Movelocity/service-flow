@@ -6,6 +6,7 @@
     :modal-class="'variable-dialog'"
     :append-to-body="true"
     destroy-on-close
+    style="background-color: var(--node-bg);"
   >
     <div v-if="localVariable" class="variable-form">
       <div class="form-group mb-3">
@@ -58,10 +59,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { VariableDefinition } from '@/types/fields';
+import type { VariableDef } from '@/types/fields';
 import { VariableType } from '@/types/fields';
 
-interface EditingVariable extends VariableDefinition {
+interface EditingVariable extends VariableDef {
   name: string;
 }
 

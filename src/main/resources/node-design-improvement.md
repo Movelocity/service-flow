@@ -17,10 +17,10 @@ public class WorkflowNode {
 ```
 
 ### 2. 字段定义增强
-扩展 `FieldDefinition` 类的功能：
+扩展 `FieldDef` 类的功能：
 
 ```java
-public class FieldDefinition {
+public class FieldDef {
     // 新增字段验证和转换功能
     private List<Validator> validators;     // 字段验证器
     private DataTransformer transformer;    // 数据转换器

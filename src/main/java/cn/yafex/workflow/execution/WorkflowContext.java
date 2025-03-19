@@ -1,6 +1,6 @@
 package cn.yafex.workflow.execution;
 
-import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.VariableDef;
 import cn.yafex.workflow.model.Workflow;
 import java.util.Map;
 import java.util.HashMap;
@@ -14,7 +14,7 @@ public class WorkflowContext {
     private String executionId;
     private String workflowId;
     private Workflow workflow;
-    private Map<String, VariableDefinition> variables;
+    private Map<String, VariableDef> variables;
     private String currentNodeId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -53,11 +53,11 @@ public class WorkflowContext {
 	 * 
 	 * @return 一个包含工作流执行上下文变量的映射。
 	 */
-    public Map<String, VariableDefinition> getVariables() {
+    public Map<String, VariableDef> getVariables() {
         return variables;
     }
 
-    public void setVariables(Map<String, VariableDefinition> variables) {
+    public void setVariables(Map<String, VariableDef> variables) {
         this.variables = variables;
     }
 
@@ -102,7 +102,7 @@ public class WorkflowContext {
      * @param key Variable name
      * @param value Variable value
      */
-    public void setVariable(String key, VariableDefinition value) {
+    public void setVariable(String key, VariableDef value) {
         this.variables.put(key, value);
     }
 
@@ -112,7 +112,7 @@ public class WorkflowContext {
      * @param key 变量名称
      * @return 变量值
      */
-    public VariableDefinition getVariable(String key) {
+    public VariableDef getVariable(String key) {
         return this.variables.get(key);
     }
 
@@ -123,8 +123,8 @@ public class WorkflowContext {
 	 * @param parent 变量父级名称
 	 * @return 变量值
 	 */
-	public VariableDefinition getVariable(String name, String parent) {
-		for (VariableDefinition variable : this.variables.values()) {
+	public VariableDef getVariable(String name, String parent) {
+		for (VariableDef variable : this.variables.values()) {
 			if (variable.getName().equals(name) && variable.getParent().equals(parent)) {
 				return variable;
 			}

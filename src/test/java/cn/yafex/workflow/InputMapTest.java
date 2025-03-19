@@ -1,7 +1,7 @@
 package cn.yafex.workflow;
 
 import cn.yafex.workflow.model.WorkflowNode;
-import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.VariableDef;
 import cn.yafex.workflow.model.NodeType;
 import com.alibaba.fastjson.JSON;
 import org.junit.jupiter.api.Test;
@@ -25,14 +25,14 @@ public class InputMapTest {
         node.setToolName("text_process");
         
         // Create a variable definition for a constant text input
-        VariableDefinition textInput = new VariableDefinition();
+        VariableDef textInput = new VariableDef();
         textInput.setName("CONSTANT");
         textInput.setType("STRING");
         textInput.setDescription("Input text to process");
         textInput.setValue("你好\n我好\n大家好");
         
         // Add to inputMap
-        Map<String, VariableDefinition> inputMap = new HashMap<>();
+        Map<String, VariableDef> inputMap = new HashMap<>();
         inputMap.put("text", textInput);
         node.setInputMap(inputMap);
         
@@ -45,7 +45,7 @@ public class InputMapTest {
         assertEquals("你好\n我好\n大家好", node.getInputMap().get("text").getValue());
         
         // Test add/get input mapping methods
-        VariableDefinition modeInput = new VariableDefinition();
+        VariableDef modeInput = new VariableDef();
         modeInput.setName("CONSTANT");
         modeInput.setType("STRING");
         modeInput.setValue("LOWERCASE");
@@ -75,7 +75,7 @@ public class InputMapTest {
         node.setToolName("text_process");
         
         // Create a variable definition for a variable reference
-        VariableDefinition textInput = new VariableDefinition();
+        VariableDef textInput = new VariableDef();
         textInput.setName("previousOutput");
         textInput.setType("STRING");
         textInput.setDescription("Input text from previous node");

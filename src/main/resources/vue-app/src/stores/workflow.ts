@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import type { Node, Workflow, Position, EditorState } from '@/types/workflow';
-import type { VariableDefinition } from '@/types/fields';
+import type { VariableDef } from '@/types/fields';
 import type { Tool } from '@/types/tools';
 import { convertApiToAppWorkflow, convertAppToApiWorkflow, NodeType } from '@/types/workflow';
 import { WorkflowApi } from '@/services/workflowApi';
@@ -268,7 +268,7 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     /** 传递更新节点及其下游节点的context */
-    updateNodeContextChain(nodeId: string, visitedNodes: Set<string> = new Set(), upstreamContext?: VariableDefinition[]) {
+    updateNodeContextChain(nodeId: string, visitedNodes: Set<string> = new Set(), upstreamContext?: VariableDef[]) {
       if (!this.currentWorkflow || visitedNodes.has(nodeId)) return;
       
       const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
@@ -276,7 +276,7 @@ export const useWorkflowStore = defineStore('workflow', {
 
       visitedNodes.add(nodeId);
       node.context?.push(...upstreamContext||[]);  // 保留已有context，添加上游context
-      const newContext: VariableDefinition[] = []
+      const newContext: VariableDef[] = []
       if (node.type === NodeType.FUNCTION && node.toolName) {
         const toolIndex = this.currentWorkflow.tools?.findIndex(tool => tool.name === node.toolName);
         if (toolIndex !== -1) {

@@ -2,7 +2,7 @@ package cn.yafex.workflow.model;
 
 import com.alibaba.fastjson.annotation.JSONCreator;
 import com.alibaba.fastjson.annotation.JSONField;
-import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.VariableDef;
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
@@ -20,7 +20,7 @@ public class WorkflowNode {
     private Position position;      // 节点在画布上的位置，用于可视化
     private String toolName;        // 仅用于FUNCTION类型节点
     private List<ConditionCase> conditions; // 仅用于CONDITION类型节点
-    private Map<String, VariableDefinition> inputMap; // 用于FUNCTION类型节点的输入参数映射
+    private Map<String, VariableDef> inputMap; // 用于FUNCTION类型节点的输入参数映射
 
     public WorkflowNode() {
         this.nextNodes = new HashMap<>();
@@ -141,7 +141,7 @@ public class WorkflowNode {
      * 获取此节点的输入参数映射
      * @return 参数名称到变量定义的映射
      */
-    public Map<String, VariableDefinition> getInputMap() {
+    public Map<String, VariableDef> getInputMap() {
         return inputMap;
     }
 
@@ -149,7 +149,7 @@ public class WorkflowNode {
      * 设置此节点的输入参数映射
      * @param inputMap 参数名称到变量定义的映射
      */
-    public void setInputMap(Map<String, VariableDefinition> inputMap) {
+    public void setInputMap(Map<String, VariableDef> inputMap) {
         this.inputMap = inputMap != null ? inputMap : new HashMap<>();
     }
 
@@ -158,7 +158,7 @@ public class WorkflowNode {
      * @param paramName 参数名称
      * @param variableDefinition 参数的变量定义
      */
-    public void addInputMapping(String paramName, VariableDefinition variableDefinition) {
+    public void addInputMapping(String paramName, VariableDef variableDefinition) {
         if (paramName != null && variableDefinition != null) {
             this.inputMap.put(paramName, variableDefinition);
         }
@@ -169,7 +169,7 @@ public class WorkflowNode {
      * @param paramName 参数名称
      * @return 参数的变量定义或null如果未找到
      */
-    public VariableDefinition getInputMapping(String paramName) {
+    public VariableDef getInputMapping(String paramName) {
         return this.inputMap.get(paramName);
     }
 

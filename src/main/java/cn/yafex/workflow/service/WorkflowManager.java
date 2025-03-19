@@ -8,8 +8,8 @@ import cn.yafex.workflow.util.WorkflowLoader;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.core.ToolRegistry;
-import cn.yafex.tools.schema.FieldDefinition;
-import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.FieldDef;
+import cn.yafex.tools.schema.VariableDef;
 import cn.yafex.tools.schema.FieldType;
 import cn.yafex.tools.exceptions.ToolException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,17 +101,17 @@ public class WorkflowManager {
             WorkflowContext context = new WorkflowContext(workflowId);
             
             // 设置初始变量
-			Map<String, VariableDefinition> initContext = new HashMap<>();
+			Map<String, VariableDef> initContext = new HashMap<>();
 			// 检查所有参数
-			Map<String, FieldDefinition> definedInputs = workflow.getInputs();
-			for (Map.Entry<String, FieldDefinition> entry : definedInputs.entrySet()) {
+			Map<String, FieldDef> definedInputs = workflow.getInputs();
+			for (Map.Entry<String, FieldDef> entry : definedInputs.entrySet()) {
 				String key = entry.getKey();
-				FieldDefinition value = entry.getValue();
+				FieldDef value = entry.getValue();
 				// 必填参数
 				if (value.isRequired() && !inputs.containsKey(key)) {
 					throw new RuntimeException("缺少必填参数: " + key);
 				}
-				VariableDefinition varDef = VariableDefinition.fromFieldDefinition(value, "global");
+				VariableDef varDef = VariableDef.fromFieldDef(value, "global");
 				// 如果输入参数为空，则使用默认值
 				varDef.setValue(inputs.get(key)!=null?inputs.get(key):value.getDefaultValue());
 				initContext.put(key, varDef);
@@ -256,21 +256,21 @@ public class WorkflowManager {
      * @param context 执行上下文
      * @return 准备好的工具输入
      */
-    private Map<String, VariableDefinition> prepareToolInputs(WorkflowNode node, WorkflowContext context) {
-        Map<String, VariableDefinition> toolInputs = context.getVariables();
+    private Map<String, VariableDef> prepareToolInputs(WorkflowNode node, WorkflowContext context) {
+        Map<String, VariableDef> toolInputs = context.getVariables();
         
         // 如果inputMap没有定义或为空，则使用所有上下文变量作为输入
         if (node.getInputMap() == null || node.getInputMap().isEmpty()) {
             return toolInputs;
         }
-        Map<String, FieldDefinition> toolOutputSchema = ToolRegistry.getHandler(node.getToolName()).getDefinition().getOutputs();
+        Map<String, FieldDef> toolOutputSchema = ToolRegistry.getHandler(node.getToolName()).getDefinition().getOutputs();
         // 创建一个新的工具输入映射
-        Map<String, VariableDefinition> filteredInputs = new HashMap<>();
+        Map<String, VariableDef> filteredInputs = new HashMap<>();
         
         // 处理每个输入映射
-        for (Map.Entry<String, VariableDefinition> entry : node.getInputMap().entrySet()) {
+        for (Map.Entry<String, VariableDef> entry : node.getInputMap().entrySet()) {
             String paramName = entry.getKey();
-            VariableDefinition varDef = entry.getValue();
+            VariableDef varDef = entry.getValue();
             
             if (varDef == null) {
                 continue;
@@ -282,7 +282,7 @@ public class WorkflowManager {
             } else {
                 String varName = varDef.getName();
 				String parent = varDef.getParent();
-				VariableDefinition var = context.getVariable(varName, parent); // 从 context 获取变量
+				VariableDef var = context.getVariable(varName, parent); // 从 context 获取变量
 				if(var == null && toolOutputSchema.get(varName).isRequired()) {
 					throw new RuntimeException("未找到必填变量: " + varName);
 				}
@@ -299,7 +299,7 @@ public class WorkflowManager {
      * @param inputs 工具输入参数
      * @return 工具执行结果
      */
-    private Map<String, Object> executeTool(String toolName, Map<String, VariableDefinition> inputs) throws ToolException {
+    private Map<String, Object> executeTool(String toolName, Map<String, VariableDef> inputs) throws ToolException {
         ToolHandler handler = ToolRegistry.getHandler(toolName);
         if (handler == null) {
 			System.out.println("tools: " + JSON.toJSONString(ToolRegistry.getAllHandlers()));
@@ -307,7 +307,7 @@ public class WorkflowManager {
         }
 
         try {
-            // 将Map<String, VariableDefinition>转换为Map<String, Object>
+            // 将Map<String, VariableDef>转换为Map<String, Object>
             Map<String, Object> inputValues = new HashMap<>();
             inputs.forEach((key, varDef) -> {
                 if (varDef != null) {
@@ -342,21 +342,21 @@ public class WorkflowManager {
 				throw new RuntimeException("Tool name is empty");
 			}
 			// 准备工具输入参数
-			Map<String, VariableDefinition> toolInputs = prepareToolInputs(node, context);
+			Map<String, VariableDef> toolInputs = prepareToolInputs(node, context);
 			// 执行工具并获取其输出
 			Map<String, Object> toolResults = executeTool(toolName, toolInputs);
 
-			Map<String, VariableDefinition> resultAsVars = new HashMap<>();
-			Map<String, FieldDefinition> toolOutputSchema = ToolRegistry.getHandler(toolName).getDefinition().getOutputs();
+			Map<String, VariableDef> resultAsVars = new HashMap<>();
+			Map<String, FieldDef> toolOutputSchema = ToolRegistry.getHandler(toolName).getDefinition().getOutputs();
 			
 			// 对于包装的结果需要特殊处理
 			// 如果只有一个输出字段，并且是array类型，同时工具结果包含"items"字段，则直接使用items对应的值
 			// 这种情况是当工具返回了Collection，系统将其包装成了带items字段的map
 			if (toolOutputSchema.size() == 1) {
-				for (Map.Entry<String, FieldDefinition> entry : toolOutputSchema.entrySet()) {
-					FieldDefinition fieldDef = entry.getValue();
+				for (Map.Entry<String, FieldDef> entry : toolOutputSchema.entrySet()) {
+					FieldDef fieldDef = entry.getValue();
 					if (fieldDef.getType() == FieldType.ARRAY && toolResults.containsKey("items")) {
-						VariableDefinition varDef = VariableDefinition.fromFieldDefinition(fieldDef, node.getId());
+						VariableDef varDef = VariableDef.fromFieldDef(fieldDef, node.getId());
 						varDef.setName(entry.getKey());
 						varDef.setValue(toolResults.get("items"));
 						resultAsVars.put(entry.getKey(), varDef);
@@ -373,12 +373,12 @@ public class WorkflowManager {
 					// 没有这个输出，跳过
 					return;
 				}
-				FieldDefinition fieldDef = toolOutputSchema.get(key);
+				FieldDef fieldDef = toolOutputSchema.get(key);
 				if (fieldDef == null) {
 					// 没有这个输出定义，跳过
 					return;
 				}
-				VariableDefinition varDef = VariableDefinition.fromFieldDefinition(fieldDef, node.getId());
+				VariableDef varDef = VariableDef.fromFieldDef(fieldDef, node.getId());
 				varDef.setName(key);
 				varDef.setValue(value);
 				resultAsVars.put(key, varDef);
@@ -414,18 +414,18 @@ public class WorkflowManager {
                 boolean caseResult = true;
                 for (Condition condition : conditionCase.getConditions()) {
                     // 更新左操作数值
-                    VariableDefinition leftOp = condition.getLeftOperand();
+                    VariableDef leftOp = condition.getLeftOperand();
                     if (leftOp != null) {
 						// 填充值
-                        VariableDefinition var = context.getVariable(leftOp.getName(), leftOp.getParent());
+                        VariableDef var = context.getVariable(leftOp.getName(), leftOp.getParent());
                         leftOp.setValue(var.getValue());
                     }
 
                     // 更新右操作数值
-                    VariableDefinition rightOp = condition.getRightOperand();
+                    VariableDef rightOp = condition.getRightOperand();
                     if (rightOp != null && "VARIABLE".equals(condition.getType())) {
 						// 填充值
-                        VariableDefinition var = context.getVariable(rightOp.getName(), rightOp.getParent());
+                        VariableDef var = context.getVariable(rightOp.getName(), rightOp.getParent());
                         rightOp.setValue(var.getValue());
                     } 
                     

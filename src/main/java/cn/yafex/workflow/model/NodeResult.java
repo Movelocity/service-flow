@@ -3,7 +3,7 @@ package cn.yafex.workflow.model;
 import java.util.Map;
 import java.util.HashMap;
 
-import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.VariableDef;
 
 /** 节点执行结果，包含节点类型、输出结果、异常信息、条件节点对应输出、
  * 有多种构造方法，根据节点类型和执行结果构造不同的节点执行结果，请根据实际情况选择使用
@@ -12,7 +12,7 @@ import cn.yafex.tools.schema.VariableDefinition;
  */
 public class NodeResult {
 	private NodeType nodeType;
-	private Map<String, VariableDefinition> outputs;
+	private Map<String, VariableDef> outputs;
 
 	/** 异常输出信息 */
 	private String errorCode;
@@ -24,7 +24,7 @@ public class NodeResult {
 	private boolean evaluated;
 	
 	/** 函数节点执行结果 */
-	public NodeResult(NodeType nodeType, Map<String, VariableDefinition> outputs) {
+	public NodeResult(NodeType nodeType, Map<String, VariableDef> outputs) {
 		this.nodeType = nodeType;
 		this.outputs = outputs;
 	}
@@ -36,8 +36,8 @@ public class NodeResult {
 		this.evaluated = evaluated;
 
 		this.outputs = new HashMap<>();
-		this.outputs.put("matchedCase", new VariableDefinition("matchedCase", matchedCase));
-		this.outputs.put("evaluated", new VariableDefinition("evaluated", evaluated));
+		this.outputs.put("matchedCase", new VariableDef("matchedCase", matchedCase));
+		this.outputs.put("evaluated", new VariableDef("evaluated", evaluated));
 	}
 
 	/** 节点执行异常 */
@@ -59,7 +59,7 @@ public class NodeResult {
 	}
 
 	/** 获取节点执行结果 */
-	public Map<String, VariableDefinition> getOutputs() {
+	public Map<String, VariableDef> getOutputs() {
 		return outputs;
 	}
 

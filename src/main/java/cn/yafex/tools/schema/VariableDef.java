@@ -6,7 +6,7 @@ import com.alibaba.fastjson.annotation.JSONField;
  * 变量定义，用于描述变量的名称、类型、描述、默认值、父级等属性。
  * 适用于在节点间传递变量
  */
-public class VariableDefinition {
+public class VariableDef {
     @JSONField(name = "name")
     private String name;
 
@@ -25,17 +25,17 @@ public class VariableDefinition {
     @JSONField(name = "parent")
     private String parent;
 
-    public VariableDefinition() {
+    public VariableDef() {
         // 默认构造函数，便于 JSON 序列化
     }
 
-    public VariableDefinition(String name, String type, String description) {
+    public VariableDef(String name, String type, String description) {
         this.name = name;
         this.type = type;
         this.description = description;
     }
 
-	public VariableDefinition(String name, Object value) {
+	public VariableDef(String name, Object value) {
 		this.name = name;
 		this.value = value;
 	}
@@ -95,8 +95,8 @@ public class VariableDefinition {
             name, type, description, value, defaultValue, parent);
     }
 
-	public static VariableDefinition fromFieldDefinition(FieldDefinition fieldDefinition, String parent) {
-		VariableDefinition varDef = new VariableDefinition();
+	public static VariableDef fromFieldDef(FieldDef fieldDefinition, String parent) {
+		VariableDef varDef = new VariableDef();
 		varDef.name = fieldDefinition.getName();
 		varDef.type = fieldDefinition.getType().toString();
 		varDef.description = fieldDefinition.getDescription();

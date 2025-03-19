@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import type { VariableDefinition } from '@/types/fields'
+import type { VariableDef } from '@/types/fields'
 import { computed } from 'vue'
 import { useWorkflowStore } from '@/stores/workflow'
 
@@ -33,7 +33,7 @@ const store = useWorkflowStore()
 
 const props = defineProps<{
   modelValue: string
-  availableContext: VariableDefinition[]
+  availableContext: VariableDef[]
   placeholder?: string
   fullWidth?: boolean
 }>()
@@ -55,7 +55,7 @@ const handleUpdate = (val: string) => {
 interface GroupedVariables {
   parent: string
   parentName: string
-  variables: VariableDefinition[]
+  variables: VariableDef[]
 }
 
 // 未分组变量（没有父级）

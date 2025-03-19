@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { useWorkflowStore } from '@/stores/workflow'
-import type { VariableDefinition } from '@/types/fields'
+import type { VariableDef } from '@/types/fields'
 
 /**
  * Composable hook to get available context for a node
@@ -11,7 +11,7 @@ export function useAvailableContext(nodeId: string) {
   const workflowStore = useWorkflowStore()
 
   return computed(() => {
-    const context: VariableDefinition[] = []
+    const context: VariableDef[] = []
     
     // Add workflow inputs with 'global.' prefix
     if (workflowStore.currentWorkflow?.inputs) {

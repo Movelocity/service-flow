@@ -1,6 +1,6 @@
 package cn.yafex.workflow.model;
 
-import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.VariableDef;
 import com.alibaba.fastjson.annotation.JSONField;
 
 /**
@@ -9,13 +9,13 @@ import com.alibaba.fastjson.annotation.JSONField;
  */
 public class Condition {
     @JSONField(name = "leftOperand")
-    private VariableDefinition leftOperand;
+    private VariableDef leftOperand;
 
     @JSONField(name = "operator")
     private String operator;
 
     @JSONField(name = "rightOperand")
-    private VariableDefinition rightOperand;
+    private VariableDef rightOperand;
 
     @JSONField(name = "type")
     private String type;  // "VARIABLE" or "CONSTANT"
@@ -24,7 +24,7 @@ public class Condition {
         // Default constructor for JSON serialization
     }
 
-    public Condition(VariableDefinition leftOperand, String operator, VariableDefinition rightOperand, String type) {
+    public Condition(VariableDef leftOperand, String operator, VariableDef rightOperand, String type) {
         this.leftOperand = leftOperand;
         this.operator = operator;
         this.rightOperand = rightOperand;
@@ -32,11 +32,11 @@ public class Condition {
     }
 
     // Getters and setters
-    public VariableDefinition getLeftOperand() {
+    public VariableDef getLeftOperand() {
         return leftOperand;
     }
 
-    public void setLeftOperand(VariableDefinition leftOperand) {
+    public void setLeftOperand(VariableDef leftOperand) {
         this.leftOperand = leftOperand;
     }
 
@@ -48,11 +48,11 @@ public class Condition {
         this.operator = operator;
     }
 
-    public VariableDefinition getRightOperand() {
+    public VariableDef getRightOperand() {
         return rightOperand;
     }
 
-    public void setRightOperand(VariableDefinition rightOperand) {
+    public void setRightOperand(VariableDef rightOperand) {
         this.rightOperand = rightOperand;
     }
 

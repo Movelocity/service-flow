@@ -34,12 +34,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useWorkflowStore } from '@/stores/workflow';
-import type { VariableDefinition } from '@/types/fields';
+import type { VariableDef } from '@/types/fields';
 import { VariableType } from '@/types/fields';
 import VariableModal from '../VariableModal.vue';
 import { Delete, Edit } from '@element-plus/icons-vue';
 
-interface EditingVariable extends VariableDefinition {
+interface EditingVariable extends VariableDef {
   name: string;
   originalName?: string;
 }
@@ -59,7 +59,7 @@ const addVariable = () => {
   showVariableModal.value = true;
 };
 
-const editVariable = (variable: VariableDefinition) => {
+const editVariable = (variable: VariableDef) => {
   editingVariable.value = { 
     ...variable,
     originalName: variable.name 

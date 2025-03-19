@@ -13,7 +13,7 @@ cn.yafex.tools/
 │   └── ToolRegistry.java      # 工具注册中心
 ├── schema/         # 参数定义
 │   ├── FieldType.java         # 字段类型枚举
-│   └── FieldDefinition.java   # 字段定义类
+│   └── FieldDef.java   # 字段定义类
 ├── exceptions/     # 异常处理
 │   ├── ToolException.java     # 基础异常类
 │   └── ValidationException.java# 参数验证异常
@@ -35,8 +35,8 @@ cn.yafex.tools/
 
        public MyNewTool() {
            // 定义输入参数
-           Map<String, FieldDefinition> inputs = new HashMap<>();
-           inputs.put("param1", new FieldDefinition(
+           Map<String, FieldDef> inputs = new HashMap<>();
+           inputs.put("param1", new FieldDef(
                "param1",
                "Parameter description",
                FieldType.STRING,
@@ -46,8 +46,8 @@ cn.yafex.tools/
            ));
 
            // 定义输出参数
-           Map<String, FieldDefinition> outputs = new HashMap<>();
-           outputs.put("result", new FieldDefinition(
+           Map<String, FieldDef> outputs = new HashMap<>();
+           outputs.put("result", new FieldDef(
                "result",
                "Result description",
                FieldType.OBJECT,
@@ -107,7 +107,7 @@ cn.yafex.tools/
    ```
 
 2. **参数定义**
-   - 使用 `FieldDefinition` 定义输入和输出参数
+   - 使用 `FieldDef` 定义输入和输出参数
    - 支持的字段类型（`FieldType`）：
      * STRING: 字符串
      * NUMBER: 数字

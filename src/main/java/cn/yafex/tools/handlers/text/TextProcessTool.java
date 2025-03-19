@@ -1,7 +1,8 @@
 package cn.yafex.tools.handlers.text;
 
 import cn.yafex.tools.annotations.Tool;
-import cn.yafex.tools.annotations.ToolField;
+import cn.yafex.tools.annotations.InputVar;
+import cn.yafex.tools.annotations.ReturnVal;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.exceptions.ToolException;
@@ -15,13 +16,13 @@ import java.util.Map;
 )
 public class TextProcessTool implements ToolHandler {
     @Override
-    @ToolField(name = "length", description = "Length of the input text", type = FieldType.NUMBER)
-    @ToolField(name = "words", description = "Number of words in the text", type = FieldType.NUMBER)
-    @ToolField(name = "uppercase", description = "Text converted to uppercase", type = FieldType.STRING)
-    @ToolField(name = "lowercase", description = "Text converted to lowercase", type = FieldType.STRING)
-    @ToolField(name = "trimmed", description = "Text with leading and trailing whitespace removed", type = FieldType.STRING)
+    @ReturnVal(name = "length", description = "Length of the input text", type = FieldType.NUMBER)
+    @ReturnVal(name = "words", description = "Number of words in the text", type = FieldType.NUMBER)
+    @ReturnVal(name = "uppercase", description = "Text converted to uppercase", type = FieldType.STRING)
+    @ReturnVal(name = "lowercase", description = "Text converted to lowercase", type = FieldType.STRING)
+    @ReturnVal(name = "trimmed", description = "Text with leading and trailing whitespace removed", type = FieldType.STRING)
     public <T> ToolResponse<T> execute(
-        @ToolField(
+        @InputVar(
             name = "text",
             description = "Input text to process",
             type = FieldType.STRING,

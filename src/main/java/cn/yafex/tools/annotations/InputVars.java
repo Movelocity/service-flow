@@ -6,10 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 可重复的 ToolField 注解的容器注解
+ * InputVar 注解的容器注解
  */
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ToolFields {
-    ToolField[] value();
-} 
+public @interface InputVars {
+    InputVar[] value();
+}

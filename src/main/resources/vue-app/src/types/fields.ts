@@ -14,7 +14,7 @@ export enum VariableType {
 /**
  * 变量定义接口
  */
-export interface VariableDefinition {
+export interface VariableDef {
   // definition
   name: string;
   type: VariableType;
@@ -29,9 +29,9 @@ export interface VariableDefinition {
  * Represents a single condition with operands and operator
  */
 export interface Condition {
-  leftOperand: VariableDefinition;
+  leftOperand: VariableDef;
   operator: string;
-  rightOperand: VariableDefinition;
+  rightOperand: VariableDef;
   type: 'VARIABLE' | 'CONSTANT';
 }
 

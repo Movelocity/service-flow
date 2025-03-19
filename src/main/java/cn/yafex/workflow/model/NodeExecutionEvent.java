@@ -3,7 +3,7 @@ package cn.yafex.workflow.model;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.VariableDef;
 
 /**
  * 工作流执行过程中的调试信息，可以用于前端调试和后端存日志
@@ -14,8 +14,8 @@ public class NodeExecutionEvent {
     private String nodeName;
     private String nodeType;
     private String eventType; // ENTER or COMPLETE
-	private Map<String, VariableDefinition> nodeResult;
-    private Map<String, VariableDefinition> contextVariables;
+	private Map<String, VariableDef> nodeResult;
+    private Map<String, VariableDef> contextVariables;
     private LocalDateTime timestamp;
     private Long duration; // 仅在COMPLETE事件中使用
 
@@ -49,19 +49,19 @@ public class NodeExecutionEvent {
         return eventType;
     }
 
-	public Map<String, VariableDefinition> getNodeResult() {
+	public Map<String, VariableDef> getNodeResult() {
 		return nodeResult;
 	}
 
-	public void setNodeResult(Map<String, VariableDefinition> nodeResult) {
+	public void setNodeResult(Map<String, VariableDef> nodeResult) {
 		this.nodeResult = nodeResult;
 	}
 
-    public Map<String, VariableDefinition> getContextVariables() {
+    public Map<String, VariableDef> getContextVariables() {
         return contextVariables;
     }
 
-    public void setContextVariables(Map<String, VariableDefinition> contextVariables) {
+    public void setContextVariables(Map<String, VariableDef> contextVariables) {
         this.contextVariables = contextVariables;
     }
 

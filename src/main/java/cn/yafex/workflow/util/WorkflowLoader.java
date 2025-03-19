@@ -10,7 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONArray;
 import cn.yafex.workflow.model.Workflow;
 import cn.yafex.tools.core.ToolDefinition;
-import cn.yafex.tools.schema.FieldDefinition;
+import cn.yafex.tools.schema.FieldDef;
 import cn.yafex.tools.schema.FieldType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -70,7 +70,7 @@ public class WorkflowLoader {
         globalConfig.setAutoTypeSupport(true);
         
         // 添加类型映射为我们自己的类
-        globalConfig.putDeserializer(FieldDefinition.class, new FieldDefinitionDeserializer());
+        globalConfig.putDeserializer(FieldDef.class, new FieldDefDeserializer());
     }
 
     @PostConstruct
@@ -231,14 +231,14 @@ public class WorkflowLoader {
     }
 
     /**
-     * 自定义FieldDefinition反序列化器以确保正确初始化
+     * 自定义FieldDef反序列化器以确保正确初始化
      */
-    private static class FieldDefinitionDeserializer implements ObjectDeserializer {
+    private static class FieldDefDeserializer implements ObjectDeserializer {
         @Override
         @SuppressWarnings("unchecked")
         public <T> T deserialze(DefaultJSONParser parser, Type type, Object fieldName) {
             JSONObject jsonObject = parser.parseObject();
-            FieldDefinition field = new FieldDefinition();
+            FieldDef field = new FieldDef();
             
             // 设置基本字段
             field.setName(jsonObject.getString("name"));
@@ -255,12 +255,12 @@ public class WorkflowLoader {
             
             JSONObject properties = jsonObject.getJSONObject("properties");
             if (properties != null) {
-                Map<String, FieldDefinition> propertyMap = new HashMap<>();
+                Map<String, FieldDef> propertyMap = new HashMap<>();
                 for (Map.Entry<String, Object> entry : properties.entrySet()) {
                     if (entry.getValue() instanceof JSONObject) {
                         propertyMap.put(entry.getKey(), 
                             deserialze(new DefaultJSONParser(((JSONObject)entry.getValue()).toJSONString()),
-                                     FieldDefinition.class, null));
+                                     FieldDef.class, null));
                     }
                 }
                 field.setProperties(propertyMap);
@@ -269,7 +269,7 @@ public class WorkflowLoader {
             JSONObject itemDef = jsonObject.getJSONObject("itemDefinition");
             if (itemDef != null) {
                 field.setItemDefinition(deserialze(new DefaultJSONParser(itemDef.toJSONString()),
-                                                 FieldDefinition.class, null));
+                                                 FieldDef.class, null));
             }
             
             return (T) field;

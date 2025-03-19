@@ -9,7 +9,7 @@ import com.alibaba.fastjson.annotation.JSONType;
  * 定义工具输入或输出字段的结构和约束
  */
 @JSONType(includes = {"name", "description", "type", "required", "defaultValue", "constraints", "properties", "itemDefinition"})
-public class FieldDefinition {
+public class FieldDef {
     @JSONField(name = "name", ordinal = 1)
     private String name;
 
@@ -29,18 +29,18 @@ public class FieldDefinition {
     private Map<String, Object> constraints;
 
     @JSONField(name = "properties", ordinal = 7)
-    private Map<String, FieldDefinition> properties;
+    private Map<String, FieldDef> properties;
 
     @JSONField(name = "itemDefinition", ordinal = 8)
-    private FieldDefinition itemDefinition;
+    private FieldDef itemDefinition;
 
-    public FieldDefinition() {
+    public FieldDef() {
         // Default constructor for Fastjson
         this.properties = new HashMap<>();
         this.constraints = new HashMap<>();
     }
 
-    public FieldDefinition(
+    public FieldDef(
         String name,
         String description,
         FieldType type,
@@ -58,7 +58,7 @@ public class FieldDefinition {
     }
 
     // Copy constructor for deep cloning
-    public FieldDefinition(FieldDefinition other) {
+    public FieldDef(FieldDef other) {
         this.name = other.name;
         this.description = other.description;
         this.type = other.type;
@@ -70,13 +70,13 @@ public class FieldDefinition {
         // Deep copy properties
         this.properties = new HashMap<>();
         if (other.properties != null) {
-            for (Map.Entry<String, FieldDefinition> entry : other.properties.entrySet()) {
-                this.properties.put(entry.getKey(), new FieldDefinition(entry.getValue()));
+            for (Map.Entry<String, FieldDef> entry : other.properties.entrySet()) {
+                this.properties.put(entry.getKey(), new FieldDef(entry.getValue()));
             }
         }
         
         // Deep copy itemDefinition
-        this.itemDefinition = other.itemDefinition != null ? new FieldDefinition(other.itemDefinition) : null;
+        this.itemDefinition = other.itemDefinition != null ? new FieldDef(other.itemDefinition) : null;
     }
 
     // Getters and setters
@@ -105,17 +105,17 @@ public class FieldDefinition {
     //     this.enumValues = enumValues != null ? enumValues : new ArrayList<>(); 
     // }
 
-    public Map<String, FieldDefinition> getProperties() { return properties; }
-    public void setProperties(Map<String, FieldDefinition> properties) { 
+    public Map<String, FieldDef> getProperties() { return properties; }
+    public void setProperties(Map<String, FieldDef> properties) { 
         this.properties = properties != null ? properties : new HashMap<>(); 
     }
 
-    public FieldDefinition getItemDefinition() { return itemDefinition; }
-    public void setItemDefinition(FieldDefinition itemDefinition) { this.itemDefinition = itemDefinition; }
+    public FieldDef getItemDefinition() { return itemDefinition; }
+    public void setItemDefinition(FieldDef itemDefinition) { this.itemDefinition = itemDefinition; }
 
     @Override
     public String toString() {
-        return String.format("FieldDefinition{name='%s', description='%s', type=%s, required=%s}", 
+        return String.format("FieldDef{name='%s', description='%s', type=%s, required=%s}", 
             name, description, type, required);
     }
 } 

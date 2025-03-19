@@ -1,7 +1,8 @@
 package cn.yafex.tools.handlers.system;
 
 import cn.yafex.tools.annotations.Tool;
-import cn.yafex.tools.annotations.ToolField;
+import cn.yafex.tools.annotations.InputVar;
+import cn.yafex.tools.annotations.ReturnVal;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.exceptions.ToolException;
@@ -17,13 +18,13 @@ import java.util.Map;
 public class FileInfoTool implements ToolHandler {
 
     @Override  // @ToolField 注解可以声明一个工具的返回值，多返回值表示返回的是 map
-    @ToolField(name = "name", description = "Name of the file", type = FieldType.STRING)
-    @ToolField(name = "absolutePath", description = "Absolute path of the file", type = FieldType.STRING)
-    @ToolField(name = "size", description = "Size of the file in bytes", type = FieldType.NUMBER)
-    @ToolField(name = "isDirectory", description = "Whether the file is a directory", type = FieldType.BOOLEAN)
-    @ToolField(name = "lastModified", description = "Last modified timestamp of the file", type = FieldType.NUMBER)
+    @ReturnVal(name = "name", description = "Name of the file", type = FieldType.STRING)
+    @ReturnVal(name = "absolutePath", description = "Absolute path of the file", type = FieldType.STRING)
+    @ReturnVal(name = "size", description = "Size of the file in bytes", type = FieldType.NUMBER)
+    @ReturnVal(name = "isDirectory", description = "Whether the file is a directory", type = FieldType.BOOLEAN)
+    @ReturnVal(name = "lastModified", description = "Last modified timestamp of the file", type = FieldType.NUMBER)
     public <T> ToolResponse<T> execute(  // 工具的执行方法，返回值类型为 ToolResponse<T>，T 为泛型，表示返回值的类型
-        @ToolField(  // @ToolField 注解可以声明一个工具的参数，多参数应有多个注解
+        @InputVar(  // @ToolField 注解可以声明一个工具的参数，多参数应有多个注解
             name = "path",
             description = "Path to the file",
             type = FieldType.STRING,

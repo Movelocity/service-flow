@@ -1,7 +1,8 @@
 package cn.yafex.tools.handlers.system;
 
 import cn.yafex.tools.annotations.Tool;
-import cn.yafex.tools.annotations.ToolField;
+import cn.yafex.tools.annotations.InputVar;
+import cn.yafex.tools.annotations.ReturnVal;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.exceptions.ToolException;
@@ -18,14 +19,14 @@ import java.util.*;
 )
 public class ListDirectoryTool implements ToolHandler {
     @Override
-    @ToolField(
+    @ReturnVal(
         name = "entries",
         description = "List of directory entries with details",
         type = FieldType.ARRAY,
         required = true
     )
     public <T> ToolResponse<T> execute(
-        @ToolField(
+        @InputVar(
             name = "path",
             description = "Directory path to list",
             type = FieldType.STRING,

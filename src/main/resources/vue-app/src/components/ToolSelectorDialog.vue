@@ -4,6 +4,7 @@
     v-model="dialog"
     title="选择工具"
     width="600px"
+    style="background-color: var(--node-bg);"
     :close-on-click-modal="false"
     class="theme-dark"
   >

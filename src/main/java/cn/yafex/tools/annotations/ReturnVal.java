@@ -8,12 +8,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 声明工具输入/输出字段的注解
+ * 声明工具返回值的便捷注解
+ * 内部使用 ToolField 并设置 purpose 为 OUTPUT
  */
 @Target({ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(ToolFields.class)
-public @interface ToolField {
+@Repeatable(ReturnVals.class)
+public @interface ReturnVal {
     /**
      * 字段名称
      */
@@ -43,4 +44,4 @@ public @interface ToolField {
      * 字段验证模式（如果存在）
      */
     String pattern() default "";
-} 
+}

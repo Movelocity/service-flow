@@ -1,6 +1,6 @@
 package cn.yafex.tools.core;
 
-import cn.yafex.tools.schema.FieldDefinition;
+import cn.yafex.tools.schema.FieldDef;
 import cn.yafex.tools.exceptions.ToolException;
 import com.alibaba.fastjson.annotation.JSONField;
 
@@ -18,10 +18,10 @@ public class ToolDefinition {
     private String description;
 
     @JSONField(name = "inputs")
-    private Map<String, FieldDefinition> inputs;
+    private Map<String, FieldDef> inputs;
 
     @JSONField(name = "outputs")
-    private Map<String, FieldDefinition> outputs;
+    private Map<String, FieldDef> outputs;
 
     @JSONField(name = "possibleExceptions")
     private List<Class<? extends ToolException>> possibleExceptions;
@@ -31,8 +31,8 @@ public class ToolDefinition {
     }
 
     public ToolDefinition(String name, String description,
-                         Map<String, FieldDefinition> inputs,
-                         Map<String, FieldDefinition> outputs,
+                         Map<String, FieldDef> inputs,
+                         Map<String, FieldDef> outputs,
                          List<Class<? extends ToolException>> possibleExceptions) {
         this.name = name;
         this.description = description;
@@ -48,11 +48,11 @@ public class ToolDefinition {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public Map<String, FieldDefinition> getInputs() { return inputs; }
-    public void setInputs(Map<String, FieldDefinition> inputs) { this.inputs = inputs; }
+    public Map<String, FieldDef> getInputs() { return inputs; }
+    public void setInputs(Map<String, FieldDef> inputs) { this.inputs = inputs; }
 
-    public Map<String, FieldDefinition> getOutputs() { return outputs; }
-    public void setOutputs(Map<String, FieldDefinition> outputs) { this.outputs = outputs; }
+    public Map<String, FieldDef> getOutputs() { return outputs; }
+    public void setOutputs(Map<String, FieldDef> outputs) { this.outputs = outputs; }
 
     public List<Class<? extends ToolException>> getPossibleExceptions() { return possibleExceptions; }
     public void setPossibleExceptions(List<Class<? extends ToolException>> possibleExceptions) {

@@ -1,10 +1,11 @@
 package cn.yafex.tools.core;
 
 import cn.yafex.tools.annotations.Tool;
-import cn.yafex.tools.annotations.ToolField;
+import cn.yafex.tools.annotations.InputVar;
+import cn.yafex.tools.annotations.ReturnVal;
 import cn.yafex.tools.exceptions.ToolException;
 import cn.yafex.tools.exceptions.ValidationException;
-import cn.yafex.tools.schema.FieldDefinition;
+import cn.yafex.tools.schema.FieldDef;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
@@ -48,11 +49,11 @@ public interface ToolHandler {
         }
         
         // 从参数构建输入字段
-        Map<String, FieldDefinition> inputFields = new HashMap<>();
+        Map<String, FieldDef> inputFields = new HashMap<>();
         for (Parameter param : executeMethod.getParameters()) {
-            ToolField field = param.getAnnotation(ToolField.class);
+            InputVar field = param.getAnnotation(InputVar.class);
             if (field != null) {
-                inputFields.put(field.name(), new FieldDefinition(
+                inputFields.put(field.name(), new FieldDef(
                     field.name(),
                     field.description(),
                     field.type(),
@@ -64,13 +65,13 @@ public interface ToolHandler {
         }
         
         // 从方法构建输出字段
-        Map<String, FieldDefinition> outputFields = new HashMap<>();
+        Map<String, FieldDef> outputFields = new HashMap<>();
         
         // 首先尝试获取可重复的注解
-        ToolField[] fields = executeMethod.getAnnotationsByType(ToolField.class);
+        ReturnVal[] fields = executeMethod.getAnnotationsByType(ReturnVal.class);
         if (fields.length > 0) {
-            for (ToolField field : fields) {
-                outputFields.put(field.name(), new FieldDefinition(
+            for (ReturnVal field : fields) {
+                outputFields.put(field.name(), new FieldDef(
                     field.name(),
                     field.description(),
                     field.type(),
@@ -113,12 +114,12 @@ public interface ToolHandler {
      */
     default void validateParams(Map<String, Object> params) throws ValidationException {
         ToolDefinition definition = getDefinition();
-        Map<String, FieldDefinition> inputFields = definition.getInputs();
+        Map<String, FieldDef> inputFields = definition.getInputs();
 
         // 检查必填字段
-        for (Map.Entry<String, FieldDefinition> entry : inputFields.entrySet()) {
+        for (Map.Entry<String, FieldDef> entry : inputFields.entrySet()) {
             String fieldName = entry.getKey();
-            FieldDefinition field = entry.getValue();
+            FieldDef field = entry.getValue();
 
             if (field.isRequired() && !params.containsKey(fieldName)) {
                 throw new ValidationException("缺少必填参数: " + fieldName);

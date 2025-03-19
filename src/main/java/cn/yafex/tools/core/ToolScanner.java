@@ -1,8 +1,9 @@
 package cn.yafex.tools.core;
 
 import cn.yafex.tools.annotations.Tool;
-import cn.yafex.tools.annotations.ToolField;
-import cn.yafex.tools.schema.FieldDefinition;
+import cn.yafex.tools.annotations.InputVar;
+import cn.yafex.tools.annotations.ReturnVal;
+import cn.yafex.tools.schema.FieldDef;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
@@ -60,11 +61,11 @@ public class ToolScanner {
         }
         
         // 从参数构建输入字段
-        Map<String, FieldDefinition> inputFields = new HashMap<>();
+        Map<String, FieldDef> inputFields = new HashMap<>();
         for (Parameter param : executeMethod.getParameters()) {
-            ToolField field = param.getAnnotation(ToolField.class);
+            InputVar field = param.getAnnotation(InputVar.class);
             if (field != null) {
-                inputFields.put(field.name(), new FieldDefinition(
+                inputFields.put(field.name(), new FieldDef(
                     field.name(),
                     field.description(),
                     field.type(),
@@ -76,10 +77,10 @@ public class ToolScanner {
         }
         
         // 从方法构建输出字段
-        Map<String, FieldDefinition> outputFields = new HashMap<>();
-        ToolField returnField = executeMethod.getAnnotation(ToolField.class);
+        Map<String, FieldDef> outputFields = new HashMap<>();
+        ReturnVal returnField = executeMethod.getAnnotation(ReturnVal.class);
         if (returnField != null) {
-            outputFields.put(returnField.name(), new FieldDefinition(
+            outputFields.put(returnField.name(), new FieldDef(
                 returnField.name(),
                 returnField.description(),
                 returnField.type(),

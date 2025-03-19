@@ -31,17 +31,17 @@ interface ConditionCase {
 Each individual condition is defined as:
 ```typescript
 interface Condition {
-    leftOperand: VariableDefinition;   // Left side of the condition
+    leftOperand: VariableDef;   // Left side of the condition
     operator: string;                  // Comparison operator
-    rightOperand: VariableDefinition;  // Right side of the condition
+    rightOperand: VariableDef;  // Right side of the condition
     type: 'VARIABLE' | 'CONSTANT';     // Type of comparison
 }
 ```
 
 ### Variable Definition
-Both operands use the VariableDefinition structure:
+Both operands use the VariableDef structure:
 ```typescript
-interface VariableDefinition {
+interface VariableDef {
     name: string;              // Variable name
     type: VariableType;        // Data type (string, number, boolean, object, array)
     description: string;       // Description of the variable

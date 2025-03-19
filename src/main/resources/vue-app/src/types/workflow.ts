@@ -1,4 +1,4 @@
-import type { VariableType, VariableDefinition, ConditionCase } from '@/types/fields';
+import type { VariableType, VariableDef, ConditionCase } from '@/types/fields';
 /**
  * 工作流节点类型枚举
  */
@@ -47,8 +47,8 @@ export interface Position {
 export interface ToolDefinition {
   name: string;
   description: string;
-  inputs: { [key: string]: VariableDefinition };
-  outputs: { [key: string]: VariableDefinition };
+  inputs: { [key: string]: VariableDef };
+  outputs: { [key: string]: VariableDef };
 }
 
 /**
@@ -73,8 +73,8 @@ export interface ApiWorkflow {
   id: string;
   name: string;
   description: string;
-  inputs: { [key: string]: Omit<VariableDefinition, 'name'> };
-  outputs: { [key: string]: Omit<VariableDefinition, 'name'> };
+  inputs: { [key: string]: Omit<VariableDef, 'name'> };
+  outputs: { [key: string]: Omit<VariableDef, 'name'> };
   tools: { [name: string]: Omit<ToolDefinition, 'name'> };
   nodes: ApiNode[];
   startNodeId: string;
@@ -94,9 +94,9 @@ export interface Node {
     [key: string]: string; // key可以是'default'/'case1'/'case2'/'else', value是目标节点id
   };
   toolName?: string;             // 仅用于 FUNCTION 类型节点
-  context?:VariableDefinition[]; // 新增：存储函数节点的输出
+  context?:VariableDef[]; // 新增：存储函数节点的输出
   conditions?: ConditionCase[];
-  inputMap?: Record<string, VariableDefinition>;
+  inputMap?: Record<string, VariableDef>;
 }
 
 /**
@@ -106,8 +106,8 @@ export interface Workflow {
   id: string;
   name: string;
   description: string;
-  inputs: VariableDefinition[];  // 新增：工作流级别输入
-  outputs: VariableDefinition[]; // 新增：工作流级别输出
+  inputs: VariableDef[];  // 新增：工作流级别输入
+  outputs: VariableDef[]; // 新增：工作流级别输出
   tools: ToolDefinition[];      // 新增：工具定义移至工作流级别
   nodes: Node[];
   startNodeId: string;
@@ -184,14 +184,14 @@ export function convertApiToAppWorkflow(apiWorkflow: ApiWorkflow): Workflow {
  */
 export function convertAppToApiWorkflow(workflow: Workflow): ApiWorkflow {
   // Convert array to map for inputs
-  const inputs: { [key: string]: Omit<VariableDefinition, 'name'> } = {};
+  const inputs: { [key: string]: Omit<VariableDef, 'name'> } = {};
   workflow.inputs.forEach(input => {
     const { name } = input;
     inputs[name] = input;
   });
 
   // Convert array to map for outputs
-  const outputs: { [key: string]: Omit<VariableDefinition, 'name'> } = {};
+  const outputs: { [key: string]: Omit<VariableDef, 'name'> } = {};
   workflow.outputs.forEach(output => {
     const { name, ...def } = output;
     outputs[name] = def;

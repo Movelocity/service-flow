@@ -1,9 +1,9 @@
 package cn.yafex.workflow.service;
 
 import cn.yafex.tools.core.ToolDefinition;
-import cn.yafex.tools.schema.FieldDefinition;
+import cn.yafex.tools.schema.FieldDef;
 import cn.yafex.tools.schema.FieldType;
-import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.VariableDef;
 import cn.yafex.workflow.model.*;
 
 import java.util.*;
@@ -136,18 +136,18 @@ public class WorkflowChecker {
         }
         
         // 检查必填参数
-        Map<String, FieldDefinition> requiredParams = toolDef.getInputs();
+        Map<String, FieldDef> requiredParams = toolDef.getInputs();
         if (requiredParams != null) {
-            for (Map.Entry<String, FieldDefinition> entry : requiredParams.entrySet()) {
+            for (Map.Entry<String, FieldDef> entry : requiredParams.entrySet()) {
                 String paramName = entry.getKey();
-                FieldDefinition paramDef = entry.getValue();
+                FieldDef paramDef = entry.getValue();
                 
                 // 跳过非必填参数
                 if (!paramDef.isRequired()) {
                     continue;
                 }
                 
-                VariableDefinition varDef = node.getInputMap().get(paramName);
+                VariableDef varDef = node.getInputMap().get(paramName);
                 if (varDef == null) {
                     result.addError("Function node '" + node.getName() + "' (ID: " + node.getId() + 
                             ") is missing required parameter: " + paramName);
@@ -234,7 +234,7 @@ public class WorkflowChecker {
     /**
      * Validate a variable reference in a condition
      */
-    // private void validateConditionVariable(Workflow workflow, WorkflowNode node, VariableDefinition varDef, String operandType, ValidationResult result) {
+    // private void validateConditionVariable(Workflow workflow, WorkflowNode node, VariableDef varDef, String operandType, ValidationResult result) {
     //     if (varDef == null) {
     //         result.addError("Condition node '" + node.getName() + "' (ID: " + node.getId() + 
     //                 ") has null " + operandType);
