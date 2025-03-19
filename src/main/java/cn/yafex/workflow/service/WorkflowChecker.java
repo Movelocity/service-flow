@@ -10,18 +10,17 @@ import java.util.*;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for validating workflow structures
- * Can check for:
- * 1. Missing required parameters in function nodes
- * 2. Missing variables in condition nodes
- * 3. Type mismatches in parameters and conditions
- * 4. Missing output nodes for condition branches
+ * 检查工作流配置中可能存在的问题
+ * 包括：
+ * 1. 缺失必填参数
+ * 2. 参数类型不匹配
+ * 3. 主干的条件分支存在未连接的输出
  */
 @Service
 public class WorkflowChecker {
     
     /**
-     * Result class to hold validation results
+     * 验证结果类
      */
     public static class ValidationResult {
         private boolean valid;
@@ -56,10 +55,10 @@ public class WorkflowChecker {
     }
     
     /**
-     * Validate a workflow starting from a specified node
-     * @param workflow The workflow to validate
-     * @param startNodeId Optional start node ID (if null, uses workflow.startNodeId)
-     * @return Validation result with any errors found
+     * 从指定节点开始验证工作流
+     * @param workflow 要验证的工作流
+     * @param startNodeId 可选的开始节点ID（如果为null，使用工作流的默认开始节点）
+     * @return 包含任何错误的验证结果
      */
     public ValidationResult validateWorkflow(Workflow workflow, String startNodeId) {
         ValidationResult result = new ValidationResult();
@@ -69,33 +68,33 @@ public class WorkflowChecker {
             return result;
         }
         
-        // If no startNodeId specified, use the workflow's default
+        // 如果未指定startNodeId，使用工作流的默认开始节点
         if (startNodeId == null || startNodeId.isEmpty()) {
             startNodeId = workflow.getStartNodeId();
         }
         
-        // Check if start node exists
+        // 检查开始节点是否存在
         WorkflowNode startNode = workflow.getNodeById(startNodeId);
         if (startNode == null) {
             result.addError("Start node not found: " + startNodeId);
             return result;
         }
         
-        // Track visited nodes to avoid cycles
+        // 跟踪已访问节点以避免循环
         Set<String> visitedNodes = new HashSet<>();
         
-        // Start traversal from the start node
+        // 从开始节点开始遍历
         validateNode(workflow, startNode, visitedNodes, result);
         
         return result;
     }
     
     /**
-     * Recursively validate a node and its children
+     * 递归验证节点及其子节点
      */
     private void validateNode(Workflow workflow, WorkflowNode node, Set<String> visitedNodes, ValidationResult result) {
         if (node == null || visitedNodes.contains(node.getId())) {
-            return; // Skip null nodes or already visited nodes
+            return; // 跳过空节点或已访问节点
         }
         
         visitedNodes.add(node.getId());
@@ -109,18 +108,18 @@ public class WorkflowChecker {
                 break;
             case START:
             case END:
-                // No special validation needed for START/END nodes
+                // 不需要对START/END节点进行特殊验证
                 break;
         }
         
-        // Continue with next nodes (except for END nodes which have no next)
+        // 继续验证下一个节点（除了END节点，它们没有下一个节点）
         if (node.getType() != NodeType.END) {
             validateNextNodes(workflow, node, visitedNodes, result);
         }
     }
     
     /**
-     * Validate a function node's parameters
+     * 验证函数节点的参数
      */
     private void validateFunctionNode(Workflow workflow, WorkflowNode node, ValidationResult result) {
         String toolName = node.getToolName();
@@ -136,14 +135,14 @@ public class WorkflowChecker {
             return;
         }
         
-        // Check required parameters
+        // 检查必填参数
         Map<String, FieldDefinition> requiredParams = toolDef.getInputs();
         if (requiredParams != null) {
             for (Map.Entry<String, FieldDefinition> entry : requiredParams.entrySet()) {
                 String paramName = entry.getKey();
                 FieldDefinition paramDef = entry.getValue();
                 
-                // Skip non-required parameters
+                // 跳过非必填参数
                 if (!paramDef.isRequired()) {
                     continue;
                 }
@@ -155,7 +154,7 @@ public class WorkflowChecker {
                     continue;
                 }
                 
-                // Check type compatibility
+                // 检查类型兼容性
                 if (varDef.getValue() != null || varDef.getDefaultValue() != null) {
                     if (!isTypeCompatible(paramDef.getType(), varDef.getType())) {
                         result.addError("Function node '" + node.getName() + "' (ID: " + node.getId() + 
@@ -163,11 +162,11 @@ public class WorkflowChecker {
                                 paramDef.getType() + ", Found: " + varDef.getType());
                     }
                 } else if (varDef.getParent() != null && !varDef.getParent().isEmpty()) {
-                    // If has parent reference, make sure parent exists and outputs compatible value
-                    // This could be more complex and would require tracking execution context
-                    // For simplicity, we'll just check parent node exists
+                    // 如果存在父引用，确保父节点存在并且输出兼容的值
+                    // 这可能更复杂，需要跟踪执行上下文
+                    // 为简单起见，我们只检查父节点是否存在
                     String parentNodeId = varDef.getParent();
-                    if (!"global".equals(parentNodeId)) { // Skip global variables
+                    if (!"global".equals(parentNodeId)) { // 跳过全局变量
                         WorkflowNode parentNode = workflow.getNodeById(parentNodeId);
                         if (parentNode == null) {
                             result.addError("Function node '" + node.getName() + "' (ID: " + node.getId() + 

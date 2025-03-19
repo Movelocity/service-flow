@@ -124,6 +124,4 @@ const handleModalClose = () => {
   align-items: center;
   gap: 0.5rem;
 }
-
-
 </style> 

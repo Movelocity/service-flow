@@ -7,6 +7,11 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.boot.web.server.ErrorPage;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
 
 /**
  * 静态资源和CORS配置，用于展示前端页面
@@ -23,6 +28,19 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("forward:/index.html");
+        // Add a view controller for handling 404
+        registry.addViewController("/notFound").setViewName("forward:/index.html");
+    }
+
+    /**
+     * 配置自定义错误页面，将404错误重定向到index.html
+     */
+    @Bean
+    public WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> containerCustomizer() {
+        return factory -> {
+            ErrorPage errorPage404 = new ErrorPage(HttpStatus.NOT_FOUND, "/notFound");
+            factory.addErrorPages(errorPage404);
+        };
     }
 
     @Override

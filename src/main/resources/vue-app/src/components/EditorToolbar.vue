@@ -49,13 +49,10 @@ import { useWorkflowStore } from '@/stores/workflow';
 import { useDebugStore } from '@/stores/debug';
 import ThemeButton from '@/components/common/ThemeButton.vue';
 
+const executionStatus = ref<string | null>(null);
 const router = useRouter();
 const debugStore = useDebugStore();
-
-
-
-const executionStatus = ref<string | null>(null);
-const isDebugging = ref(false);
+const isDebugging = computed(() => debugStore.isDebugging);
 const store = useWorkflowStore();
 
 const workflowId = computed(() => store.currentWorkflow?.id || '');
