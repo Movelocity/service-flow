@@ -3,7 +3,7 @@ package cn.yafex.workflow.controller;
 import cn.yafex.workflow.model.Workflow;
 import cn.yafex.workflow.service.WorkflowManager;
 import cn.yafex.workflow.service.WorkflowDebugService;
-import cn.yafex.workflow.util.JsonFileHandler;
+import cn.yafex.workflow.util.WorkflowLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +22,11 @@ import java.util.Date;
 @RequestMapping("/api/workflows")
 public class WorkflowController {
     private final WorkflowManager workflowManager;
-    private final JsonFileHandler jsonFileHandler;
+    private final WorkflowLoader jsonFileHandler;
     private final WorkflowDebugService debugService;
 
     @Autowired
-    public WorkflowController(WorkflowManager workflowManager, JsonFileHandler jsonFileHandler, WorkflowDebugService debugService) {
+    public WorkflowController(WorkflowManager workflowManager, WorkflowLoader jsonFileHandler, WorkflowDebugService debugService) {
         this.workflowManager = workflowManager;
         this.jsonFileHandler = jsonFileHandler;
         this.debugService = debugService;

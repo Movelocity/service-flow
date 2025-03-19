@@ -6,3 +6,4 @@ saved_workflows/
 workflow_logs/
 logs_workflow/
 static-previous
+src/main/resources/static/*

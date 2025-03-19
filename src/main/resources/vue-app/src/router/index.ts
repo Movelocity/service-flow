@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import WorkflowEditor from '../views/WorkflowEditor.vue';
-import { useWorkflowStore } from '../stores/workflow';
 
 const router = createRouter({
   history: createWebHistory(),

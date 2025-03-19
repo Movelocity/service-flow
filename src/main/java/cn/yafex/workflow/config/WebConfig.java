@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * 静态资源和CORS配置
+ * 静态资源和CORS配置，用于展示前端页面
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -22,7 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/").setViewName("forward:/workflow-editor.html");
+        registry.addViewController("/").setViewName("forward:/index.html");
     }
 
     @Override

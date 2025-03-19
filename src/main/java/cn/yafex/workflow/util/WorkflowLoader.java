@@ -33,8 +33,8 @@ import java.lang.reflect.Type;
  * 用于处理JSON工作流定义
  */
 @Component
-public class JsonFileHandler {
-    private static final Logger logger = LoggerFactory.getLogger(JsonFileHandler.class);
+public class WorkflowLoader {
+    private static final Logger logger = LoggerFactory.getLogger(WorkflowLoader.class);
     
     static {
         // 配置自定义日志格式
@@ -57,7 +57,7 @@ public class JsonFileHandler {
     
     private Path workflowDir;
 
-    public JsonFileHandler() {
+    public WorkflowLoader() {
         // 配置Fastjson全局设置
         JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.PrettyFormat.getMask();
         JSON.DEFAULT_GENERATE_FEATURE |= SerializerFeature.WriteMapNullValue.getMask();
@@ -80,7 +80,7 @@ public class JsonFileHandler {
         
         // 如果目录不存在，则创建目录
         Files.createDirectories(workflowDir);
-        logger.info("使用工作流目录: {}", workflowDir);
+        logger.info("工作流保存目录: {}", workflowDir);
     }
 
     /**

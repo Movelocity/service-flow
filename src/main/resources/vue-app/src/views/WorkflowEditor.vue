@@ -7,7 +7,7 @@
     </div>
 
     <!-- 工具栏 -->
-    <div class="editor-toolbar">
+    <!-- <div class="editor-toolbar">
       <div class="toolbar-left">
         <button class="btn btn-link" @click="navigateBack">
           <span class="back-icon">←</span> 返回
@@ -47,7 +47,8 @@
           {{ isDebugging ? '终止调试' : '调试' }}
         </button>
       </div>
-    </div>
+    </div> -->
+    <EditorToolbar :workflow-name="workflowName" :workflow-description="workflowDescription" />
 
     <!-- 主编辑区域 -->
     <div class="editor-main">
@@ -65,9 +66,9 @@ import { useWorkflowStore } from '@/stores/workflow';
 import { useDebugStore } from '@/stores/debug';
 import WorkflowCanvas from '@/components/workflow/WorkflowCanvas.vue';
 import NodeEditor from '@/components/NodeEditor.vue';
-import ThemeButton from '@/components/common/ThemeButton.vue';
-import DebugPanel from '@/components/DebugPanel.vue';
 
+import DebugPanel from '@/components/DebugPanel.vue';
+import EditorToolbar from '@/components/EditorToolbar.vue';
 const router = useRouter();
 const route = useRoute();
 const store = useWorkflowStore();
@@ -77,22 +78,10 @@ const debugStore = useDebugStore();
 const workflowName = ref('');
 const workflowDescription = ref('');
 const isLoading = ref(true);
-const executionStatus = ref<string | null>(null);
-const workflowId = computed(() => store.currentWorkflow?.id || '');
 
 // 计算属性
 const isDirty = computed(() => store.isDirty);
 const isDebugging = computed(() => debugStore.isDebugging);
-const canTest = computed(() => {
-  const workflow = store.currentWorkflow;
-  if (!workflow) return false;
-  
-  // 检查是否有开始节点和结束节点
-  const hasStart = workflow.nodes.some(node => node.type === 'START');
-  const hasEnd = workflow.nodes.some(node => node.type === 'END');
-  
-  return hasStart && hasEnd && workflow.nodes.length >= 2;
-});
 
 // 编辑器状态
 const isEditorPanelOpen = computed(() => store.editorState.isEditorPanelOpen);
@@ -106,55 +95,9 @@ function onWorkflowChange() {
   }
 }
 
-// 更新工作流信息
-function updateWorkflowInfo() {
-  if (!store.currentWorkflow) return;
-  
-  store.currentWorkflow.name = workflowName.value;
-  store.currentWorkflow.description = workflowDescription.value;
-}
-
-// 保存工作流
-async function saveWorkflow() {
-  console.log('saveWorkflow');
-  try {
-    await store.saveWorkflow();
-    store.isDirty = false;
-  } catch (error) {
-    console.error('Failed to save workflow:', error);
-    alert('保存工作流失败');
-  }
-}
-
-// 调试工作流
-async function debugWorkflow() {
-  if (!workflowId.value) return;
-  
-  console.log('debugWorkflow', isDebugging.value);
-  
-  if(!isDebugging.value) {
-    if(!canTest.value){
-      alert('请先添加开始和结束节点');
-      return;
-    }
-    try {
-      await debugStore.initDebug(workflowId.value);
-    } catch (error) {
-      alert(error instanceof Error ? error.message : '获取工作流参数失败');
-    }
-  } else {
-    debugStore.stopDebug();
-  }
-}
-
 // 关闭编辑器面板
 function closeEditor() {
   store.selectNode(null);
-}
-
-// 返回上一页
-function navigateBack() {
-  router.back();
 }
 
 // 添加全局 beforeunload 事件处理
@@ -223,64 +166,15 @@ async function loadWorkflow(id: string) {
   background-color: var(--background-color);
 }
 
-.editor-toolbar {
-  height: 60px;
-  padding: 0 20px;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
 .back-icon {
   font-size: 1.2em;
   margin-right: 4px;
-}
-
-.workflow-info {
-  display: flex;
-  gap: 10px;
-}
-
-.workflow-info .form-control {
-  width: auto;
-  background-color: var(--node-bg);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-.workflow-info .form-control:focus {
-  background-color: var(--node-bg);
-  border-color: var(--node-selected);
-  color: var(--text-color);
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .editor-main {
   flex: 1;
   position: relative;
   overflow: hidden;
-}
-
-.toolbar-right {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .workflow-info {
-    flex-direction: column;
-    gap: 5px;
-  }
 }
 
 .loading-overlay {
@@ -309,16 +203,6 @@ async function loadWorkflow(id: string) {
 
 .loading-text {
   margin-top: 1rem;
-  color: var(--text-color);
-}
-
-.execution-status {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  background: var(--node-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
   color: var(--text-color);
 }
 

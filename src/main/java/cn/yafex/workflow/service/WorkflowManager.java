@@ -4,7 +4,7 @@ import cn.yafex.workflow.model.*;
 import cn.yafex.workflow.execution.WorkflowContext;
 import cn.yafex.workflow.execution.WorkflowStatus;
 import cn.yafex.workflow.util.WorkflowLogger;
-import cn.yafex.workflow.util.JsonFileHandler;
+import cn.yafex.workflow.util.WorkflowLoader;
 import cn.yafex.tools.core.ToolHandler;
 import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.core.ToolRegistry;
@@ -72,14 +72,14 @@ enum ConditionOperator {
  */
 @Service
 public class WorkflowManager {
-    private final JsonFileHandler jsonFileHandler;
+    private final WorkflowLoader jsonFileHandler;
     private final WorkflowLogger workflowLogger;
     private final ExecutorService executorService;
     private final Map<String, WorkflowContext> activeWorkflows;
     private final WorkflowDebugService debugService;
 	
     @Autowired
-    public WorkflowManager(JsonFileHandler jsonFileHandler, WorkflowLogger workflowLogger, WorkflowDebugService debugService) {
+    public WorkflowManager(WorkflowLoader jsonFileHandler, WorkflowLogger workflowLogger, WorkflowDebugService debugService) {
         this.jsonFileHandler = jsonFileHandler;
         this.workflowLogger = workflowLogger;
         this.debugService = debugService;
