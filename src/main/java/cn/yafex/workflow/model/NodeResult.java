@@ -1,6 +1,7 @@
 package cn.yafex.workflow.model;
 
 import java.util.Map;
+import java.util.HashMap;
 
 import cn.yafex.tools.schema.VariableDefinition;
 
@@ -33,6 +34,10 @@ public class NodeResult {
 		this.nodeType = nodeType;
 		this.matchedCase = matchedCase;
 		this.evaluated = evaluated;
+
+		this.outputs = new HashMap<>();
+		this.outputs.put("matchedCase", new VariableDefinition("matchedCase", matchedCase));
+		this.outputs.put("evaluated", new VariableDefinition("evaluated", evaluated));
 	}
 
 	/** 节点执行异常 */

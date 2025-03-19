@@ -10,6 +10,7 @@ import cn.yafex.tools.core.ToolResponse;
 import cn.yafex.tools.core.ToolRegistry;
 import cn.yafex.tools.schema.FieldDefinition;
 import cn.yafex.tools.schema.VariableDefinition;
+import cn.yafex.tools.schema.FieldType;
 import cn.yafex.tools.exceptions.ToolException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -101,16 +102,18 @@ public class WorkflowManager {
             
             // 设置初始变量
 			Map<String, VariableDefinition> initContext = new HashMap<>();
-			// 检查必填参数
+			// 检查所有参数
 			Map<String, FieldDefinition> definedInputs = workflow.getInputs();
 			for (Map.Entry<String, FieldDefinition> entry : definedInputs.entrySet()) {
 				String key = entry.getKey();
 				FieldDefinition value = entry.getValue();
+				// 必填参数
 				if (value.isRequired() && !inputs.containsKey(key)) {
-					throw new RuntimeException("Required input parameter not provided: " + key);
+					throw new RuntimeException("缺少必填参数: " + key);
 				}
 				VariableDefinition varDef = VariableDefinition.fromFieldDefinition(value, "global");
-				varDef.setValue(inputs.get(key));
+				// 如果输入参数为空，则使用默认值
+				varDef.setValue(inputs.get(key)!=null?inputs.get(key):value.getDefaultValue());
 				initContext.put(key, varDef);
 			}
 			context.setVariables(initContext);
@@ -165,7 +168,8 @@ public class WorkflowManager {
 					// 出错直接中断
 					throw new RuntimeException(nodeResult.getErrorCode() + " : " + nodeResult.getErrorMessage());
 				}
-				if(nodeResult.getOutputs() != null) {
+				if(nodeResult.getOutputs() != null && node.getType() != NodeType.CONDITION) {
+					// 非条件节点，将结果写入上下文
 					context.getVariables().putAll(nodeResult.getOutputs());
 				}
 
@@ -311,11 +315,12 @@ public class WorkflowManager {
                 }
             });
             
-            ToolResponse<Map<String, Object>> response = handler.execute(inputValues);
+            ToolResponse<?> response = handler.execute(inputValues);
             if (!response.isSuccess()) {
                 throw new ToolException(response.getMessage(), response.getErrorCode());
             }
-            return response.getData();
+            // 确保返回值是一个Map<String, Object>，对于List等非Map类型的返回值会自动包装
+            return ToolResponse.ensureMapResponse(response.getData());
         } catch (ToolException e) {
             throw e;
         } catch (Exception e) {
@@ -343,6 +348,25 @@ public class WorkflowManager {
 
 			Map<String, VariableDefinition> resultAsVars = new HashMap<>();
 			Map<String, FieldDefinition> toolOutputSchema = ToolRegistry.getHandler(toolName).getDefinition().getOutputs();
+			
+			// 对于包装的结果需要特殊处理
+			// 如果只有一个输出字段，并且是array类型，同时工具结果包含"items"字段，则直接使用items对应的值
+			// 这种情况是当工具返回了Collection，系统将其包装成了带items字段的map
+			if (toolOutputSchema.size() == 1) {
+				for (Map.Entry<String, FieldDefinition> entry : toolOutputSchema.entrySet()) {
+					FieldDefinition fieldDef = entry.getValue();
+					if (fieldDef.getType() == FieldType.ARRAY && toolResults.containsKey("items")) {
+						VariableDefinition varDef = VariableDefinition.fromFieldDefinition(fieldDef, node.getId());
+						varDef.setName(entry.getKey());
+						varDef.setValue(toolResults.get("items"));
+						resultAsVars.put(entry.getKey(), varDef);
+						// 跳过常规处理逻辑
+						result = new NodeResult(NodeType.FUNCTION, resultAsVars);
+						return result;
+					}
+				}
+			}
+			
 			// 将 parent 设置成自己的id
 			toolResults.forEach((key, value) -> {
 				if (value == null) {

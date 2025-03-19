@@ -35,6 +35,11 @@ public class VariableDefinition {
         this.description = description;
     }
 
+	public VariableDefinition(String name, Object value) {
+		this.name = name;
+		this.value = value;
+	}
+
     // Getters and setters
     public String getName() {
         return name;

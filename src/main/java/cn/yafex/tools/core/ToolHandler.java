@@ -94,7 +94,15 @@ public interface ToolHandler {
      * 使用给定的参数执行工具
      * @param params 参数名称到值的映射
      * @return 包含执行结果的响应
-     * @throws ToolException 如果执行失败
+     * @throws ToolException 如果执行失败则返回这个异常
+     * 
+     * <p>实现说明：</p>
+     * <ul>
+     *     <li>工具可以返回任何类型的数据作为ToolResponse的泛型参数，系统会自动处理</li>
+     *     <li>如果返回Map<String, Object>，数据将直接传递</li>
+     *     <li>如果返回Collection（如List、Set等），数据将被包装在"items"字段下</li>
+     *     <li>如果返回其他类型，数据将被包装在"value"字段下</li>
+     * </ul>
      */
     <T> ToolResponse<T> execute(Map<String, Object> params) throws ToolException;
 
@@ -113,7 +121,7 @@ public interface ToolHandler {
             FieldDefinition field = entry.getValue();
 
             if (field.isRequired() && !params.containsKey(fieldName)) {
-                throw new ValidationException("Missing required field: " + fieldName);
+                throw new ValidationException("缺少必填参数: " + fieldName);
             }
         }
 

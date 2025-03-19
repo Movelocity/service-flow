@@ -38,12 +38,11 @@ public class ListDirectoryTool implements ToolHandler {
         File dir = new File(path);
 
         if (!dir.exists() || !dir.isDirectory()) {
-			@SuppressWarnings("unchecked")
+            @SuppressWarnings("unchecked")
             ToolResponse<T> response = (ToolResponse<T>) ToolResponse.error(
-                "Directory does not exist: " + path,
-                "DIRECTORY_NOT_FOUND"
+                "目录不存在: " + path, "DIRECTORY_NOT_FOUND"
             );
-			return response;
+            return response;
         }
 
         try {
@@ -62,17 +61,19 @@ public class ListDirectoryTool implements ToolHandler {
                     entries.add(entry);
                 }
             }
-			@SuppressWarnings("unchecked")
+            
+            // Now we can directly return the entries list, the system will automatically
+            // wrap it in a map with key "items" based on our ToolResponse.ensureMapResponse method
+            @SuppressWarnings("unchecked")
             ToolResponse<T> response = (ToolResponse<T>) ToolResponse.success(
                 entries,
-                "Successfully listed directory contents"
+                "成功列出目录内容"
             );
-			return response;
+            return response;
 
         } catch (Exception e) {
             throw new ToolException(
-                "Failed to list directory: " + e.getMessage(),
-                "LIST_DIRECTORY_ERROR"
+                "列出目录失败: " + e.getMessage(), "LIST_DIRECTORY_ERROR"
             );
         }
     }

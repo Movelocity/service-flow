@@ -26,24 +26,28 @@
         </div>
       </div>
       <div v-else>
-        <div v-for="(event, index) in events" :key="index" class="debug-event">
+        <div v-for="(node, index) in groupedEvents" :key="index" class="debug-event">
           <div class="event-header">
             <div class="row">
-              <NodeIcon v-if="event.nodeType" :type="event.nodeType" :size="24" />
-              <span class="node-name">{{ event.nodeName }}</span>
+              <NodeIcon v-if="node.enterEvent.nodeType" :type="node.enterEvent.nodeType" :size="24" />
+              <span class="node-name">{{ node.enterEvent.nodeName }}</span>
             </div>
-            <span class="event-type" :class="event.eventType.toLowerCase()">
-              {{ event.eventType === 'ENTER' ? '开始' : '完成' }}
+            <span v-if="node.completeEvent" class="event-status complete">
+              完成
+              <span class="event-duration" v-if="node.duration">({{ node.duration }}ms)</span>
             </span>
-            <span class="event-time">{{ new Date(event.timestamp).toLocaleTimeString() }}</span>
+            <span v-else class="event-status running">
+              运行中...
+            </span>
+            <span class="event-time">{{ new Date(node.enterEvent.timestamp).toLocaleTimeString() }}</span>
           </div>
-          <div v-if="event.contextVariables" class="event-context">
-            <strong>Context: </strong>
-            <pre>{{ JSON.stringify(event.contextVariables, null, 2) }}</pre>
+          <div v-if="node.enterEvent.contextVariables" class="event-context">
+            <strong>输入: </strong>
+            <pre>{{ JSON.stringify(node.enterEvent.contextVariables, null, 2) }}</pre>
           </div>
-          <div v-if="event.eventType === 'COMPLETE' && event.nodeResult" class="event-variables">
-            <strong>Outputs: </strong>
-            <pre>{{ JSON.stringify(event.nodeResult, null, 2) }}</pre>
+          <div v-if="node.completeEvent && node.completeEvent.nodeResult" class="event-variables">
+            <strong>输出: </strong>
+            <pre>{{ JSON.stringify(node.completeEvent.nodeResult, null, 2) }}</pre>
           </div>
         </div>
       </div>
@@ -55,14 +59,66 @@
 import { ref, computed, onMounted } from 'vue';
 import { useDebugStore } from '@/stores/debug';
 import NodeIcon from '@/components/common/NodeIcon.vue';
+import type { NodeExecutionEvent } from '@/types/debug';
 
 // Use the debug store instead of props
 const debugStore = useDebugStore();
+
+// Interface for grouped events
+interface GroupedEvent {
+  enterEvent: NodeExecutionEvent;
+  completeEvent?: NodeExecutionEvent;
+  duration?: number;
+}
 
 // Compute properties from the store
 const events = computed(() => debugStore.debugEvents);
 const requiredInputs = computed(() => debugStore.workflowInputs);
 const showInputForm = computed(() => debugStore.showInputForm);
+
+// Group ENTER and COMPLETE events with the same nodeId
+const groupedEvents = computed<GroupedEvent[]>(() => {
+  const result: GroupedEvent[] = [];
+  const pendingNodes = new Map<string, GroupedEvent>();
+  
+  for (const event of events.value) {
+    if (event.eventType === 'ENTER') {
+      // Create a new node execution group
+      pendingNodes.set(event.nodeId, {
+        enterEvent: event,
+      });
+      result.push(pendingNodes.get(event.nodeId)!);
+    } else if (event.eventType === 'COMPLETE') {
+      // Look for the matching ENTER event
+      const pendingNode = pendingNodes.get(event.nodeId);
+      
+      if (pendingNode) {
+        // Calculate duration if timestamps are available
+        let duration: number | undefined = undefined;
+        if (pendingNode.enterEvent.timestamp && event.timestamp) {
+          const enterTime = new Date(pendingNode.enterEvent.timestamp).getTime();
+          const completeTime = new Date(event.timestamp).getTime();
+          duration = completeTime - enterTime;
+        }
+        
+        // Update the node with COMPLETE info
+        pendingNode.completeEvent = event;
+        pendingNode.duration = duration;
+        
+        // Remove from pending map as it's now complete
+        pendingNodes.delete(event.nodeId);
+      } else {
+        // If we somehow get a COMPLETE without an ENTER, create a standalone entry
+        result.push({
+          enterEvent: event,
+          completeEvent: event
+        });
+      }
+    }
+  }
+  
+  return result;
+});
 
 const isCollapsed = ref(false);
 const inputValues = ref<Record<string, any>>({});
@@ -226,18 +282,23 @@ onMounted(() => {
   margin-left: 10px;
 }
 
-.event-type {
+.event-status {
   padding: 0rem 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
 }
 
-.event-type.enter {
+.event-status.running {
   color: var(--el-color-primary);
 }
 
-.event-type.complete {
+.event-status.complete {
   color: var(--el-color-success);
+}
+
+.event-duration {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .event-time {
@@ -267,5 +328,15 @@ onMounted(() => {
   font-size: 0.875rem;
   overflow-x: auto;
   color: var(--text-color);
+}
+
+.text-btn {
+  cursor: pointer;
+  color: var(--el-color-primary);
+  font-size: 0.875rem;
+}
+
+.text-btn:hover {
+  text-decoration: underline;
 }
 </style> 
