@@ -33,7 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     /**
-     * 配置自定义错误页面，将404错误重定向到index.html
+     * 配置自定义错误页面，将404错误重定向到index.html。在子页面刷新时出现一个404错误属于正常现象
      */
     @Bean
     public WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> containerCustomizer() {

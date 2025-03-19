@@ -75,7 +75,7 @@ html.dark {
   color: var(--text-color);
   border: none;
   cursor: pointer;
-  font-size: 1.2em;
+  font-size: 1em;
   border-radius: 4px;
 }
 

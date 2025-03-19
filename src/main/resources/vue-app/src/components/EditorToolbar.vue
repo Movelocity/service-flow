@@ -35,7 +35,7 @@
         class="btn btn-secondary btn-sm me-2"
         @click="debugWorkflow"
       >
-        {{ isDebugging ? '终止调试' : '调试' }}
+        {{ isDebugging ? '退出调试' : '调试' }}
       </button>
     </div>
   </div>

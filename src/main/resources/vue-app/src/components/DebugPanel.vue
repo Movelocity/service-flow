@@ -6,8 +6,8 @@
           <span class="collapse-icon" :class="{ 'collapsed': isCollapsed }"> &gt; </span>
         </button>
         <h5>调试信息</h5>
+        <div class="text-btn" @click="resetDebug">reset</div>
       </div>
-      <!-- <button class="btn btn-sm btn-danger" @click="$emit('stop')">停止调试</button> -->
     </div>
     <div class="debug-panel-content">
       <div v-if="showInputForm" class="input-form">
@@ -62,9 +62,9 @@ const debugStore = useDebugStore();
 // Compute properties from the store
 const events = computed(() => debugStore.debugEvents);
 const requiredInputs = computed(() => debugStore.workflowInputs);
+const showInputForm = computed(() => debugStore.showInputForm);
 
 const isCollapsed = ref(false);
-const showInputForm = ref(true);
 const inputValues = ref<Record<string, any>>({});
 
 const toggleCollapse = () => {
@@ -73,11 +73,21 @@ const toggleCollapse = () => {
 
 const startDebug = async () => {
   try {
-    showInputForm.value = false;
+    debugStore.showInputForm = false;
     await debugStore.startDebug(inputValues.value);
   } catch (error) {
     console.error('Debug start error:', error);
     alert(error instanceof Error ? error.message : '启动调试失败');
+  }
+};
+
+const resetDebug = () => {
+  debugStore.resetDebugEvents();
+  // 重置本地输入值
+  if (requiredInputs.value) {
+    Object.keys(requiredInputs.value).forEach(key => {
+      inputValues.value[key] = '';
+    });
   }
 };
 

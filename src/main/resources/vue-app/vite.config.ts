@@ -10,7 +10,7 @@ export default defineConfig({
       '@': resolve(__dirname, './src')
     }
   },
-  base: '',
+  base: '/',
   build: {
     // 输出到Spring Boot的static目录
     outDir: resolve(__dirname, '../static'),

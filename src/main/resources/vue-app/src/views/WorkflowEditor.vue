@@ -7,47 +7,6 @@
     </div>
 
     <!-- 工具栏 -->
-    <!-- <div class="editor-toolbar">
-      <div class="toolbar-left">
-        <button class="btn btn-link" @click="navigateBack">
-          <span class="back-icon">←</span> 返回
-        </button>
-        <div class="workflow-info">
-          <input
-            v-model="workflowName"
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="工作流名称"
-            @change="updateWorkflowInfo"
-          >
-          <input
-            v-model="workflowDescription"
-            type="text"
-            class="form-control form-control-sm ms-2"
-            placeholder="描述"
-            @change="updateWorkflowInfo"
-          >
-        </div>
-      </div>
-      <div class="toolbar-right">
-        <ThemeButton />
-        <span v-if="executionStatus" class="execution-status me-2">
-          执行状态: {{ executionStatus }}
-        </span>
-        <button
-          class="btn btn-primary btn-sm me-2"
-          @click="saveWorkflow"
-        >
-          保存
-        </button>
-        <button
-          class="btn btn-secondary btn-sm me-2"
-          @click="debugWorkflow"
-        >
-          {{ isDebugging ? '终止调试' : '调试' }}
-        </button>
-      </div>
-    </div> -->
     <EditorToolbar :workflow-name="workflowName" :workflow-description="workflowDescription" />
 
     <!-- 主编辑区域 -->

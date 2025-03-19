@@ -14,6 +14,7 @@ interface DebugState {
   _handleNodeExecution: ((event: Event) => void) | null;
   _handleDebugError: ((event: Event) => void) | null;
   runningNodeId: string | null; // Track currently executing node
+  showInputForm: boolean;
 }
 
 export const useDebugStore = defineStore('debug', {
@@ -25,7 +26,8 @@ export const useDebugStore = defineStore('debug', {
     currentWorkflowId: null,
     _handleNodeExecution: null,
     _handleDebugError: null,
-    runningNodeId: null
+    runningNodeId: null,
+    showInputForm: true
   }),
 
   getters: {
@@ -51,6 +53,7 @@ export const useDebugStore = defineStore('debug', {
           this.isDebugging = true;
           this.debugEvents = [];
           this.runningNodeId = null; // Reset running node
+          this.showInputForm = true; // 显示输入表单
         } catch (error) {
           console.error('Failed to get workflow inputs:', error);
           throw new Error('获取工作流参数失败');
@@ -67,6 +70,9 @@ export const useDebugStore = defineStore('debug', {
       if (!this.currentWorkflowId) return;
       
       try {
+        // 标记输入表单已处理
+        this.showInputForm = false;
+        
         // 注册事件监听器
         const handleNodeExecution = ((event: Event) => {
           if (event instanceof CustomEvent) {
@@ -134,6 +140,34 @@ export const useDebugStore = defineStore('debug', {
       }
       this.isDebugging = false;
       this.runningNodeId = null; // Clear running node when stopping debug
+      this.showInputForm = true; // Reset input form state
+    },
+
+    /**
+     * 重置调试状态但保持调试面板打开
+     */
+    resetDebugEvents() {
+      // 如果有正在运行的调试，停止它但不改变isDebugging状态
+      if (this.eventSource) {
+        // 移除事件监听器
+        if (this._handleNodeExecution) {
+          window.removeEventListener('node-execution', this._handleNodeExecution as EventListener);
+          this._handleNodeExecution = null;
+        }
+        if (this._handleDebugError) {
+          window.removeEventListener('debug-error', this._handleDebugError as EventListener);
+          this._handleDebugError = null;
+        }
+        // 调用清理函数关闭连接
+        this.eventSource();
+        this.eventSource = null;
+      }
+      
+      // 清空调试事件但保持调试状态
+      this.debugEvents = [];
+      this.runningNodeId = null;
+      // 重新显示输入表单
+      this.showInputForm = true;
     },
 
     /**
@@ -145,6 +179,7 @@ export const useDebugStore = defineStore('debug', {
       this.workflowInputs = {};
       this.currentWorkflowId = null;
       this.runningNodeId = null; // Clear running node when resetting
+      this.showInputForm = true; // Reset input form state
     }
   }
 }); 

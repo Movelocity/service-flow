@@ -1,5 +1,5 @@
 <template>
-  <button class="text-btn" @click="toggleTheme" title="切换主题">
+  <button class="text-btn" style="font-size: 1.2em;" @click="toggleTheme" title="切换主题">
     {{ theme === 'dark' ? '🌞' : '🌙' }}
   </button>
 </template>
