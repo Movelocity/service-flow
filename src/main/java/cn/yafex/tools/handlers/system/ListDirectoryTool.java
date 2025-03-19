@@ -15,20 +15,20 @@ import java.util.*;
  */
 @Tool(
     name = "list_directory",
-    description = "List contents of a directory with detailed information"
+    description = "列出目录内容"
 )
 public class ListDirectoryTool implements ToolHandler {
     @Override
     @ReturnVal(
         name = "entries",
-        description = "List of directory entries with details",
+        description = "目录条目列表",
         type = FieldType.ARRAY,
         required = true
     )
     public <T> ToolResponse<T> execute(
         @InputVar(
             name = "path",
-            description = "Directory path to list",
+            description = "要列出的目录路径",
             type = FieldType.STRING,
             required = true,
             defaultValue = "."

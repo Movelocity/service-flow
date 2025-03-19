@@ -15,25 +15,25 @@ import java.util.*;
  */
 @Tool(
     name = "system_info",
-    description = "Get system information"
+    description = "获取系统信息"
 )
 public class SystemInfoTool implements ToolHandler {
     @Override
-    @ReturnVal(name = "osName", description = "Operating system name", type = FieldType.STRING)
-    @ReturnVal(name = "osVersion", description = "Operating system version", type = FieldType.STRING)
-    @ReturnVal(name = "osArch", description = "Operating system architecture", type = FieldType.STRING)
-    @ReturnVal(name = "processors", description = "Number of available processors", type = FieldType.NUMBER)
-    @ReturnVal(name = "javaVersion", description = "Java runtime version", type = FieldType.STRING)
-    @ReturnVal(name = "javaVendor", description = "Java vendor name", type = FieldType.STRING)
-    @ReturnVal(name = "javaHome", description = "Java installation directory", type = FieldType.STRING)
-    @ReturnVal(name = "totalMemory", description = "Total memory available to JVM", type = FieldType.NUMBER)
-    @ReturnVal(name = "freeMemory", description = "Free memory available to JVM", type = FieldType.NUMBER)
-    @ReturnVal(name = "maxMemory", description = "Maximum memory JVM will attempt to use", type = FieldType.NUMBER)
-    @ReturnVal(name = "userName", description = "Current user name", type = FieldType.STRING)
-    @ReturnVal(name = "userHome", description = "User home directory", type = FieldType.STRING)
-    @ReturnVal(name = "userDir", description = "User working directory", type = FieldType.STRING)
-    @ReturnVal(name = "timeZone", description = "System default timezone ID", type = FieldType.STRING)
-    @ReturnVal(name = "currentTime", description = "Current system time", type = FieldType.STRING)
+    @ReturnVal(name = "osName", description = "操作系统名称", type = FieldType.STRING)
+    @ReturnVal(name = "osVersion", description = "操作系统版本", type = FieldType.STRING)
+    @ReturnVal(name = "osArch", description = "操作系统架构", type = FieldType.STRING)
+    @ReturnVal(name = "processors", description = "可用处理器数量", type = FieldType.NUMBER)
+    @ReturnVal(name = "javaVersion", description = "Java 运行时版本", type = FieldType.STRING)
+    @ReturnVal(name = "javaVendor", description = "Java 供应商名称", type = FieldType.STRING)
+    @ReturnVal(name = "javaHome", description = "Java 安装目录", type = FieldType.STRING)
+    @ReturnVal(name = "totalMemory", description = "JVM 可用内存", type = FieldType.NUMBER)
+    @ReturnVal(name = "freeMemory", description = "JVM 空闲内存", type = FieldType.NUMBER)
+    @ReturnVal(name = "maxMemory", description = "JVM 最大内存", type = FieldType.NUMBER)
+    @ReturnVal(name = "userName", description = "当前用户名", type = FieldType.STRING)
+    @ReturnVal(name = "userHome", description = "用户主目录", type = FieldType.STRING)
+    @ReturnVal(name = "userDir", description = "用户工作目录", type = FieldType.STRING)
+    @ReturnVal(name = "timeZone", description = "系统默认时区ID", type = FieldType.STRING)
+    @ReturnVal(name = "currentTime", description = "当前系统时间", type = FieldType.STRING)
     public <T> ToolResponse<T> execute(Map<String, Object> params) throws ToolException {
         try {
             Map<String, Object> systemInfo = new HashMap<>();

@@ -12,30 +12,32 @@ import java.util.Map;
 
 @Tool(
     name = "text_process",
-    description = "Process text with basic operations"
+    description = "处理文本的基本操作"
 )
 public class TextProcessTool implements ToolHandler {
     @Override
-    @ReturnVal(name = "length", description = "Length of the input text", type = FieldType.NUMBER)
-    @ReturnVal(name = "words", description = "Number of words in the text", type = FieldType.NUMBER)
-    @ReturnVal(name = "uppercase", description = "Text converted to uppercase", type = FieldType.STRING)
-    @ReturnVal(name = "lowercase", description = "Text converted to lowercase", type = FieldType.STRING)
-    @ReturnVal(name = "trimmed", description = "Text with leading and trailing whitespace removed", type = FieldType.STRING)
+    @ReturnVal(name = "length", description = "输入文本的长度", type = FieldType.NUMBER)
+    @ReturnVal(name = "words", description = "文本中的单词数量", type = FieldType.NUMBER)
+    @ReturnVal(name = "uppercase", description = "转换为大写", type = FieldType.STRING)
+    @ReturnVal(name = "lowercase", description = "转换为小写", type = FieldType.STRING)
+    @ReturnVal(name = "trimmed", description = "去除前后空白", type = FieldType.STRING)
     public <T> ToolResponse<T> execute(
-        @InputVar(
-            name = "text",
-            description = "Input text to process",
-            type = FieldType.STRING,
-            required = true
-        ) Map<String, Object> params
+        @InputVar(name = "text", description = "输入的文本", type = FieldType.STRING, required = true)
+        @InputVar(name = "truncate", description = "截断长度", type = FieldType.NUMBER, required = false, defaultValue = "100") 
+		Map<String, Object> params
     ) throws ToolException {
         String text = (String) params.get("text");
-        
+        Integer truncate = (Integer) params.get("truncate");
+
         if (text == null || text.isEmpty()) {
 			@SuppressWarnings("unchecked")
             ToolResponse<T> response = (ToolResponse<T>) ToolResponse.error("Input text cannot be empty", "INVALID_INPUT");
             return response;
         }
+
+		if (truncate != null) {
+			text = text.substring(0, truncate);
+		}
 
         Map<String, Object> result = new HashMap<>();
         result.put("length", text.length());
@@ -44,7 +46,7 @@ public class TextProcessTool implements ToolHandler {
         result.put("lowercase", text.toLowerCase());
         result.put("trimmed", text.trim());
 
-		@SuppressWarnings("unchecked")
+		
         ToolResponse<T> response = (ToolResponse<T>) ToolResponse.success(result);
         return response;
     }
