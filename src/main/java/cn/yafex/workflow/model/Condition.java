@@ -65,8 +65,8 @@ public class Condition {
     }
 
     /**
-     * Evaluates this condition based on the current values of its operands
-     * @return true if the condition is satisfied, false otherwise
+	 * 基于当前Condition的配置执行单个条件判断
+     * @return 条件是否成立。有可能报错，请注意处理
      */
     public boolean evaluate() {
         Object leftValue = leftOperand.getValue();
@@ -105,7 +105,7 @@ public class Condition {
             }
         } catch (Exception e) {
             // Log error and return original value if conversion fails
-            System.err.println("Error converting value: " + e.getMessage());
+            System.err.println("类型转换错误: " + e.getMessage());
         }
         return value;
     }

@@ -62,19 +62,15 @@ import { ref, computed, watch } from 'vue';
 import type { VariableDef } from '@/types/fields';
 import { VariableType } from '@/types/fields';
 
-interface EditingVariable extends VariableDef {
-  name: string;
-}
-
 // Props
 const props = defineProps<{
-  modelValue: EditingVariable | null;
+  modelValue: VariableDef | null;
   visible: boolean;
 }>();
 
 // Emits
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: EditingVariable | null): void;
+  (e: 'update:modelValue', value: VariableDef | null): void;
   (e: 'save'): void;
   (e: 'close'): void;
   (e: 'update:visible', value: boolean): void;
@@ -84,7 +80,7 @@ const emit = defineEmits<{
 const variableTypes = Object.values(VariableType);
 
 // Local state
-const localVariable = ref<EditingVariable | null>(null);
+const localVariable = ref<VariableDef | null>(null);
 const isNewVariable = computed(() => !props.modelValue?.name);
 
 // Computed for dialog visibility with two-way binding

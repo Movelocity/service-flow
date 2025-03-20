@@ -19,7 +19,6 @@
           </el-icon>
         </div>
       </div>
-      
     </div>
 
     <VariableModal
@@ -99,8 +98,10 @@ const handleModalClose = () => {
 </script>
 
 <style scoped>
-.start-node-editor {
-  padding: 1rem 0;
+.variables {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .variable-row {
@@ -109,7 +110,7 @@ const handleModalClose = () => {
   align-items: center;
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .description {

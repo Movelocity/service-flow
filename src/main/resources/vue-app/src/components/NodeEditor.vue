@@ -273,7 +273,7 @@ function onClose() {
   margin-bottom: 8px;
   background: var(--node-bg);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .connection-info {

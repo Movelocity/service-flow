@@ -65,6 +65,7 @@
                     :model-value="condition.rightOperand.value"
                     @change="updateRightOperand"
                     placeholder="输入比较值"
+                    spellcheck="false"
                   />
                 </template>
                 <VariableSelector
@@ -120,8 +121,7 @@ const condition = computed(() => ({
 
 // 当前选中变量的类型
 const selectedVarType = computed(() => {
-  const type = condition.value.leftOperand.type
-  return type;
+  return condition.value.leftOperand.type;
 });
 
 // 根据变量类型获取可用的操作符
@@ -154,6 +154,13 @@ const availableOperators = computed(() => {
       return [
         { label: '等于', value: '==' },
         { label: '不等于', value: '!=' }
+      ];
+    case VariableType.ARRAY:
+      return [
+        { label: '包含', value: 'contains' },
+        { label: '不包含', value: 'notContains' },
+        { label: '为空', value: 'isEmpty' },
+        { label: '不为空', value: 'isNotEmpty' }
       ];
     default:
       return [
