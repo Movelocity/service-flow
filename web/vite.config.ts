@@ -13,7 +13,7 @@ export default defineConfig({
   base: '/',
   build: {
     // 输出到Spring Boot的static目录
-    outDir: resolve(__dirname, '../static'),
+    outDir: resolve(__dirname, '../src/main/resources/static'),
     // 将资源放在assets子目录
     assetsDir: 'assets',
     // 生成sourcemap以便调试
